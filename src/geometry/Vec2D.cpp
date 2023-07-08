@@ -6,8 +6,6 @@
 #include <ostream>
 #include <cmath>
 
-Vec2D::Vec2D() { }
-
 Vec2D::Vec2D(float x, float y) : x(x), y(y) { }
 
 Vec2D Vec2D::direction() const
@@ -19,7 +17,7 @@ Vec2D Vec2D::direction() const
 
 float Vec2D::length() const
 {
-  return sqrt(x * x + y * y);
+  return std::sqrt(x * x + y * y);
 }
 
 float Vec2D::squareLength() const

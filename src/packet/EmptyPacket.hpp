@@ -8,7 +8,8 @@
 
 class EmptyPacket : public Packet {
 public:
-  EmptyPacket(uint8_t type);
+  explicit EmptyPacket(uint8_t type);
+
   void format(MemoryStream& ms);
 
   uint8_t type;

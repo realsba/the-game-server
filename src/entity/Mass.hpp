@@ -8,7 +8,7 @@
 
 class Mass : public Cell {
 public:
-  Mass(Room& room);
+  explicit Mass(Room& room);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;

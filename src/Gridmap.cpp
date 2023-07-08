@@ -8,8 +8,8 @@
 
 void Gridmap::resize(uint32_t width, uint32_t height, uint8_t power)
 {
-  m_box.b.x = width - 1;
-  m_box.b.y = height - 1;
+  m_box.b.x = static_cast<float>(width - 1);
+  m_box.b.y = static_cast<float>(height - 1);
   m_width = width;
   m_height = height;
   m_power = power;

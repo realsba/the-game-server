@@ -15,7 +15,7 @@ class TSRoom;
 
 class User {
 public:
-  User(uint32_t id);
+  explicit User(uint32_t id);
 
   uint32_t getId() const;
   std::string getSessId() const;

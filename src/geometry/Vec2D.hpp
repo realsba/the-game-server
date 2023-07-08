@@ -8,7 +8,7 @@
 
 class Vec2D {
 public:
-  Vec2D();
+  Vec2D() = default;
   Vec2D(float x, float y);
 
   Vec2D direction() const;

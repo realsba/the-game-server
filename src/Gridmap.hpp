@@ -4,7 +4,7 @@
 #ifndef GRIDMAP_HPP
 #define GRIDMAP_HPP
 
-#include <stdint.h>
+#include <cstdint>
 #include <functional>
 #include <vector>
 #include <set>

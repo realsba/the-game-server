@@ -10,7 +10,7 @@
 
 class Logger {
 public:
-  Logger(int priority);
+  explicit Logger(int priority);
   ~Logger();
 
   template <class T> Logger& operator<<(const T& t)

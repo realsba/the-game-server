@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 #include <algorithm>
 #include <fstream>
-#include <errno.h>
+#include <cerrno>
 
 MemoryStream::MemoryStream(size_t blockSize)  noexcept :
   m_blockSize((blockSize + DefBlockSize - 1) & ~(DefBlockSize - 1))

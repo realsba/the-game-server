@@ -8,7 +8,7 @@
 
 class Circle {
 public:
-  Circle() { }
+  Circle() = default;
   Circle(float x, float y, float r) : position(x, y), radius(r) { }
   Circle(const Vec2D& position, float r) : position(position), radius(r) { }
 

@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include <queue>
 
 namespace details {
 
@@ -75,11 +76,13 @@ public:
 protected:
   class Deleter {
   public:
-    Deleter(ObjectPool<T, Reseter>& pool) : m_pool(pool) { }
+    explicit Deleter(ObjectPool<T, Reseter>& pool) : m_pool(pool) { }
+
     void operator()(T* p)
     {
       m_pool.free(p);
     }
+
   protected:
     ObjectPool& m_pool;
   };

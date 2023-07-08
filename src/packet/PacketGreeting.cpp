@@ -6,8 +6,6 @@
 #include "OutputPacketTypes.hpp"
 #include "src/MemoryStream.hpp"
 
-PacketGreeting::PacketGreeting() { }
-
 PacketGreeting::PacketGreeting(const std::string& sid) : sid(sid) { }
 
 void PacketGreeting::format(MemoryStream& ms)

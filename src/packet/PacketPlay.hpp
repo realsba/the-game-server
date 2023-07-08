@@ -12,7 +12,7 @@ class Player;
 
 class PacketPlay : public Packet {
 public:
-  PacketPlay(const Player& player);
+  explicit PacketPlay(const Player& player);
 
   void format(MemoryStream& ms);
 

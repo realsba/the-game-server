@@ -11,9 +11,10 @@ class MemoryStream {
 public:
   enum class Direction {Begin, Current, End};
 
-  MemoryStream(size_t block_size=DefBlockSize) noexcept;
+  explicit MemoryStream(size_t block_size=DefBlockSize) noexcept;
   MemoryStream(const MemoryStream& ms);
-  MemoryStream(const std::string& str);
+  explicit MemoryStream(const std::string& str);
+
   virtual ~MemoryStream();
 
   MemoryStream& operator=(const MemoryStream& ms);

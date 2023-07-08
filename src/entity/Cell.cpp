@@ -15,16 +15,13 @@ Cell::Cell(Room& room) :
   resistanceRatio = config.resistanceRatio;
 }
 
-
-Cell::~Cell() { }
-
 AABB Cell::getAABB() const
 {
   Vec2D delta(radius, radius);
-  return AABB(position - delta, position + delta);
+  return {position - delta, position + delta};
 }
 
-void Cell::applayImpulse(const Vec2D& value)
+void Cell::applyImpulse(const Vec2D& value)
 {
   velocity += value / mass;
 }
@@ -56,8 +53,8 @@ void Cell::format(MemoryStream& ms)
   ms.writeUInt32(id);
   ms.writeFloat(position.x);
   ms.writeFloat(position.y);
-  ms.writeUInt32(mass);
-  ms.writeUInt16(radius);
+  ms.writeUInt32(static_cast<uint32_t>(mass));
+  ms.writeUInt16(static_cast<uint16_t>(radius));
   ms.writeUInt8(color);
   if (moving) {
     ms.writeFloat(velocity.x);

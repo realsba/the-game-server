@@ -25,7 +25,7 @@ class MemoryStream;
 
 class Application : private boost::noncopyable {
 public:
-  Application(const std::string& configFileName);
+  explicit Application(std::string configFileName);
 
   void start();
   void stop();

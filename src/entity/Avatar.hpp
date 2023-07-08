@@ -8,7 +8,7 @@
 
 class Avatar : public Cell {
 public:
-  Avatar(Room& room);
+  explicit Avatar(Room& room);
 
   void simulate(float dt) override;
   void format(MemoryStream& ms) override;

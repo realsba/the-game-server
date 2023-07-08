@@ -8,9 +8,9 @@
 
 class Food : public Cell {
 public:
-  Food(Room& room);
+  explicit Food(Room& room);
 
-  bool intersects(const AABB& box);
+  bool intersects(const AABB& box) override;
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;

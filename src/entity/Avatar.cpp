@@ -32,8 +32,8 @@ void Avatar::format(MemoryStream& ms)
   ms.writeUInt32(id);
   ms.writeFloat(position.x);
   ms.writeFloat(position.y);
-  ms.writeUInt32(mass);
-  ms.writeUInt16(radius);
+  ms.writeUInt32(static_cast<uint32_t>(mass));
+  ms.writeUInt16(static_cast<uint16_t>(radius));
   ms.writeUInt8(color);
   ms.writeUInt32(player->getId());
   // ms.writeUInt32(protection);

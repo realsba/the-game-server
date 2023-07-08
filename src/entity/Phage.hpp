@@ -10,7 +10,7 @@
 
 class Phage : public Cell {
 public:
-  Phage(Room& room);
+  explicit Phage(Room& room);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;

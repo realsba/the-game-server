@@ -5,18 +5,29 @@
 #define SCOPE_EXIT_HPP
 
 #include <functional>
+#include <utility>
 
-class ScopeExit {
+class ScopeExit
+{
 public:
-  ScopeExit(std::function<void ()> f) : m_Function(f) { }
+  using Handler = std::function<void ()>;
+
+  explicit ScopeExit(Handler&& handler) : m_handler(std::move(handler)) { }
 
   ~ScopeExit()
   {
-    m_Function();
+    if (m_handler) {
+      m_handler();
+    }
+  }
+
+  void cancel()
+  {
+    m_handler = Handler();
   }
 
 private:
-  std::function<void ()> m_Function;
+  Handler m_handler;
 };
 
 #endif /* SCOPE_EXIT_HPP */

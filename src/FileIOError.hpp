@@ -19,7 +19,7 @@ public:
     m_msg = ss.str();
   }
 
-  virtual const char* what() const noexcept
+  const char* what() const noexcept override
   {
     return m_msg.c_str();
   }

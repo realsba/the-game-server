@@ -10,7 +10,7 @@
 
 class Virus : public Cell {
 public:
-  Virus(Room& room);
+  explicit Virus(Room& room);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;

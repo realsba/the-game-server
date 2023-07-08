@@ -11,7 +11,7 @@ Mother::Mother(Room& room) :
 {
   type = typeMother;
   const auto& config = room.getConfig();
-  startRadius = config.cellRadiusRatio * sqrt(config.motherStartMass / M_PI);
+  startRadius = static_cast<float>(config.cellRadiusRatio * sqrt(config.motherStartMass / M_PI));
 }
 
 void Mother::interact(Cell& cell)

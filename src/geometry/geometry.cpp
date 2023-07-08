@@ -62,7 +62,7 @@ float distance(const Vec2D& p1, const Vec2D& p2)
 {
   float a = p1.x - p2.x;
   float b = p1.y - p2.y;
-  return sqrt(a * a + b * b);
+  return std::sqrt(a * a + b * b);
 }
 
 float squareDistance(const Vec2D& p1, const Vec2D& p2)

@@ -12,7 +12,7 @@ class Player;
 
 class PacketSpectate : public Packet {
 public:
-  PacketSpectate(const Player& player);
+  explicit PacketSpectate(const Player& player);
 
   void format(MemoryStream& ms);
 

@@ -6,11 +6,13 @@
 #include <ostream>
 #include <utility>
 
-AABB::AABB() { }
+AABB::AABB(float ax, float ay, float bx, float by)
+  : a(ax, ay), b(bx, by)
+{ }
 
-AABB::AABB(float ax, float ay, float bx, float by) : a(ax, ay), b(bx, by) { }
-
-AABB::AABB(const Vec2D& a, const Vec2D& b) : a(a), b(b) { }
+AABB::AABB(const Vec2D& a, const Vec2D& b)
+  : a(a), b(b)
+{ }
 
 void AABB::normalize()
 {

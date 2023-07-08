@@ -2,12 +2,9 @@
 // author    : sba <bohdan.sadovyak@gmail.com>
 
 #include "Config.hpp"
-
 #include "Logger.hpp"
-//#include "chrono_io"
 
 #include <libconfig.h++>
-#include <iostream>
 
 using namespace boost;
 using namespace std::chrono;
@@ -50,7 +47,6 @@ Config::Config()
   room.spawnPosTryCount = 10;
 
   room.viewportBase = 743;
-  room.viewportBase = 0.05;
   room.aspectRatio = 16.0/9.0;
 
   room.width = 6000;

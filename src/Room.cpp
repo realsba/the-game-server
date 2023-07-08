@@ -549,7 +549,7 @@ void Room::interact(Virus& virus, Mass& mass)
   auto d = virus.radius + mass.radius;
   if (geometry::squareDistance(virus.position, mass.position) < d * d) {
     Vec2D direction((virus.position - mass.position).direction());
-    virus.applayImpulse(direction * (mass.velocity.length() * mass.mass * m_config.massImpulseRatio));
+    virus.applyImpulse(direction * (mass.velocity.length() * mass.mass * m_config.massImpulseRatio));
     m_modifiedCells.insert(&virus);
     m_activatedCells.insert(&virus);
     m_zombieMasses.push_back(&mass);
@@ -600,7 +600,7 @@ void Room::interact(Phage& phage, Mass& mass)
   auto d = phage.radius + mass.radius;
   if (geometry::squareDistance(phage.position, mass.position) < d * d) {
     Vec2D direction((phage.position - mass.position).direction());
-    phage.applayImpulse(direction * (mass.velocity.length() * mass.mass * m_config.massImpulseRatio));
+    phage.applyImpulse(direction * (mass.velocity.length() * mass.mass * m_config.massImpulseRatio));
     m_modifiedCells.insert(&phage);
     m_activatedCells.insert(&phage);
     m_zombieMasses.push_back(&mass);
@@ -832,7 +832,7 @@ void Room::update()
       float angle = (m_generator() % 3600) * M_PI / 1800;
       Vec2D direction(sin(angle), cos(angle));
       obj.position = mother->position;
-      obj.applayImpulse(direction * (obj.mass * m_config.explodeImpulse));
+      obj.applyImpulse(direction * (obj.mass * m_config.explodeImpulse));
       modifyMass(*mother, -static_cast<float>(m_config.motherStartMass));
     }
   }
@@ -1001,7 +1001,7 @@ bool Room::eject(Avatar& avatar, const Vec2D& point)
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.applayImpulse(direction * obj.mass * m_config.avatarEjectImpulse);
+    obj.applyImpulse(direction * obj.mass * m_config.avatarEjectImpulse);
     obj.position += direction * avatar.radius;
   }
   m_updateLeaderboard = true;
@@ -1024,7 +1024,7 @@ bool Room::split(Avatar& avatar, const Vec2D& point)
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.applayImpulse(direction * (obj.mass * m_config.avatarSplitImpulse));
+    obj.applyImpulse(direction * (obj.mass * m_config.avatarSplitImpulse));
   }
   obj.recombination(m_config.avatarRecombineTime);
   avatar.recombination(m_config.avatarRecombineTime);
@@ -1055,7 +1055,7 @@ void Room::explode(Avatar& avatar)
     Vec2D direction(sin(angle), cos(angle));
     obj.position = avatar.position + direction * (avatar.radius + obj.radius);
     obj.color = avatar.color;
-    obj.applayImpulse(direction * (obj.mass * m_config.explodeImpulse));
+    obj.applyImpulse(direction * (obj.mass * m_config.explodeImpulse));
     obj.recombination(m_config.avatarRecombineTime);
     avatar.player->addAvatar(&obj);
     if (avatars.size() >= m_config.playerMaxCells) {
@@ -1512,7 +1512,7 @@ void Room::mothersProduce()
       obj.mass = m_config.foodMass;
       obj.radius = m_config.foodRadius;
       float k = obj.mass * (m_config.foodMinImpulse + (m_generator() % impulse));
-      obj.applayImpulse(direction * k);
+      obj.applyImpulse(direction * k);
       m_mass += obj.mass;
     }
   }

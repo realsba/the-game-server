@@ -25,12 +25,13 @@ class Mother;
 
 class Cell : public Circle {
 public:
-  Cell(Room& room);
-  virtual ~Cell();
+  explicit Cell(Room& room);
+
+  virtual ~Cell() = default;
 
   AABB getAABB() const;
 
-  void applayImpulse(const Vec2D& value);
+  void applyImpulse(const Vec2D& value);
 
   virtual bool intersects(const AABB& box);
   virtual void simulate(float dt);

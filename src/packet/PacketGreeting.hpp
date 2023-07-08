@@ -10,7 +10,7 @@
 
 class PacketGreeting : public Packet {
 public:
-  PacketGreeting();
+  PacketGreeting() = default;
   PacketGreeting(const std::string& sid);
 
   void format(MemoryStream& ms);

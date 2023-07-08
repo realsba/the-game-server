@@ -8,7 +8,7 @@
 
 class AABB {
 public:
-  AABB();
+  AABB() = default;
   AABB(float ax, float ay, float bx, float by);
   AABB(const Vec2D& a, const Vec2D& b);
 

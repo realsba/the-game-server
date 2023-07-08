@@ -19,12 +19,13 @@
 #include <sys/syscall.h>
 #include <locale>
 #include <codecvt>
+#include <utility>
 
 namespace ph = std::placeholders;
 using namespace boost::asio;
 
-Application::Application(const std::string& configFileName) :
-  m_configFileName(configFileName),
+Application::Application(std::string configFileName) :
+  m_configFileName(std::move(configFileName)),
   m_timer(m_ioService, std::bind(&Application::update, this))
 {
   // контейнер m_handlers не захищений мютексом, після заповнення не модифікується
@@ -76,7 +77,7 @@ void Application::start()
 
   m_roomManager.start(m_config.roomThreads, m_config.room);
   for (uint i = 0; i < m_config.ioServiceThreads; ++i) {
-    m_threads.emplace_back(std::thread(
+    m_threads.emplace_back(
       [this]()
       {
         long int pid = syscall(SYS_gettid);
@@ -91,7 +92,7 @@ void Application::start()
         }
         LOG_INFO << "Stop \"IO worker\" (" << pid << ")";
       }
-    ));
+    );
   }
 }
 
@@ -383,11 +384,11 @@ void Application::checkConnections()
 {
   // TODO: при великій кількості з'єднань перебирати весь контейнер m_connections неефективно
   auto endTime = TimePoint::clock::now() - m_config.connectionTTL;
-  for (auto it = m_connections.begin(); it != m_connections.end(); ++it) {
+  for (const auto& it : m_connections) {
     try {
-      const auto& conn = m_websocketServer.get_con_from_hdl(*it);
+      const auto& conn = m_websocketServer.get_con_from_hdl(it);
       if (conn->lastActivity <= endTime) {
-        m_websocketServer.close(*it, websocketpp::close::status::normal, "Connection timed out");
+        m_websocketServer.close(it, websocketpp::close::status::normal, "Connection timed out");
       }
     } catch (const std::exception& e) {
       LOG_WARN << e.what();

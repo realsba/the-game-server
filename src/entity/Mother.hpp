@@ -10,7 +10,7 @@
 
 class Mother : public Cell {
 public:
-  Mother(Room& room);
+  explicit Mother(Room& room);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;
