@@ -57,7 +57,7 @@ private:
   typedef std::map<int, Handler> Handlers;
 
   mutable std::mutex                    m_mutex;
-  boost::asio::io_service               m_ioService;
+  boost::asio::io_context               m_ioService;
   boost::asio::ip::udp::socket          m_influxdb {m_ioService};
   WebsocketServer                       m_websocketServer;
   MySQLConnectionPool                   m_mysqlConnectionPool;

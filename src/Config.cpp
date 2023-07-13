@@ -5,6 +5,7 @@
 #include "Logger.hpp"
 
 #include <libconfig.h++>
+#include <chrono>
 
 using namespace boost;
 using namespace std::chrono;
@@ -131,15 +132,18 @@ bool Config::loadFromFile(const std::string& filename)
     }
     lookupValue(cfg, "updateInterval", updateInterval);
     if (updateInterval == std::chrono::system_clock::duration::zero()) {
-      LOG_WARN << "Bad updateInterval: " << updateInterval;
+      // TODO: implement
+      //LOG_WARN << "Bad updateInterval: " << updateInterval;
     }
     lookupValue(cfg, "statisticInterval", statisticInterval);
     if (statisticInterval == std::chrono::system_clock::duration::zero()) {
-      LOG_WARN << "Bad statisticInterval: " << statisticInterval;
+      // TODO: implement
+      //LOG_WARN << "Bad statisticInterval: " << statisticInterval;
     }
     lookupValue(cfg, "connectionTTL", connectionTTL);
     if (connectionTTL == std::chrono::system_clock::duration::zero()) {
-      LOG_WARN << "Bad connectionTTL: " << connectionTTL;
+      // TODO: implement
+      //LOG_WARN << "Bad connectionTTL: " << connectionTTL;
     }
 
     lookupValue(cfg, "influxdb.server", influxdbServer);
@@ -155,11 +159,13 @@ bool Config::loadFromFile(const std::string& filename)
 
     lookupValue(cfg, "room.updateInterval", room.updateInterval);
     if (room.updateInterval == std::chrono::system_clock::duration::zero()) {
-      LOG_WARN << "Bad room.updateInterval: " << room.updateInterval;
+      // TODO: implement
+      //LOG_WARN << "Bad room.updateInterval: " << room.updateInterval;
     }
     lookupValue(cfg, "room.tickInterval", room.tickInterval);
     if (room.tickInterval == std::chrono::system_clock::duration::zero()) {
-      LOG_WARN << "Bad room.tickInterval: " << room.tickInterval;
+      // TODO: implement
+      //LOG_WARN << "Bad room.tickInterval: " << room.tickInterval;
     }
     lookupValue(cfg, "room.simulationIterations", room.simulationIterations);
     lookupValue(cfg, "room.spawnPosTryCount", room.spawnPosTryCount);

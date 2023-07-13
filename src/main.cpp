@@ -13,7 +13,7 @@
 #include "util.hpp"
 #include "MemoryStream.hpp"
 
-boost::asio::io_service                 iosMain;
+boost::asio::io_context                 iosMain;
 boost::asio::signal_set                 sigHup(iosMain, SIGHUP);
 boost::asio::signal_set                 sigUsr1(iosMain, SIGUSR1);
 boost::asio::signal_set                 sigUsr2(iosMain, SIGUSR2);
@@ -25,7 +25,6 @@ void showStatistic()
 {
   application->info();
   LOG_INFO << "Uptime: " << (boost::posix_time::microsec_clock::universal_time() - startTime);
-  LOG_INFO << MemoryStream::cnt << "::" << MemoryStream::n;
 }
 
 void sigTermHandler(const boost::system::error_code& ec, int signal)

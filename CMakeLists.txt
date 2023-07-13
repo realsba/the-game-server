@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 project(thegame)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 add_compile_definitions(
     MYSQLPP_MYSQL_HEADERS_BURIED
@@ -90,3 +90,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}"
     libs/date
 )
+
+target_link_libraries(${PROJECT_NAME} log4cpp config++ mysqlpp)

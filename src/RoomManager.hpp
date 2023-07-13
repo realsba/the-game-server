@@ -17,7 +17,7 @@ class WebsocketServer;
 
 class RoomManager {
 public:
-  RoomManager(boost::asio::io_service& ios, WebsocketServer& wss);
+  RoomManager(boost::asio::io_context& ios, WebsocketServer& wss);
   ~RoomManager();
 
   void start(uint32_t numThreads, const RoomConfig& config);
@@ -38,7 +38,7 @@ private:
   std::vector<Group> m_groups;
   RoomConfig m_config;
   Items m_items;
-  boost::asio::io_service& m_ioService;
+  boost::asio::io_context& m_ioService;
   WebsocketServer&  m_websocketServer;
   uint32_t m_numThreads {0};
   uint32_t m_nextId {1};

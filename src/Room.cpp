@@ -25,7 +25,7 @@
 #include "packet/PacketPlay.hpp"
 #include "packet/PacketSpectate.hpp"
 
-#include "libs/chrono_io" // TODO: delete
+#include <chrono>
 
 Room::Room(uint32_t id, WebsocketServer& wss) :
   m_id(id),

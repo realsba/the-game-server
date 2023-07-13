@@ -7,7 +7,7 @@
 
 #include <sys/syscall.h>
 
-RoomManager::RoomManager(boost::asio::io_service& ios, WebsocketServer& wss) :
+RoomManager::RoomManager(boost::asio::io_context& ios, WebsocketServer& wss) :
   m_ioService(ios),
   m_websocketServer(wss)
 { }

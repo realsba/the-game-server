@@ -3,19 +3,21 @@
 
 #include "Timer.hpp"
 
-Timer::Timer(boost::asio::io_service& ios) :
-  m_timer(ios)
+#include <utility>
+
+Timer::Timer(boost::asio::io_context& ioc) :
+  m_timer(ioc)
 { }
 
-Timer::Timer(boost::asio::io_service& ios, const Handler& handler) :
-  m_timer(ios),
-  m_handler(handler)
+Timer::Timer(boost::asio::io_context& ioc, Handler handler) :
+  m_timer(ioc),
+  m_handler(std::move(handler))
 { }
 
-Timer::Timer(boost::asio::io_service& ios, const Handler& handler, const std::chrono::steady_clock::duration& interval) :
-  m_timer(ios),
+Timer::Timer(boost::asio::io_context& ioc, Handler handler, const std::chrono::steady_clock::duration& interval) :
+  m_timer(ioc),
   m_interval(interval),
-  m_handler(handler)
+  m_handler(std::move(handler))
 { }
 
 Timer::~Timer()

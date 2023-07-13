@@ -15,9 +15,9 @@ class Timer final : private boost::noncopyable {
 public:
   typedef std::function<void ()> Handler;
 
-  Timer(boost::asio::io_service& ios);
-  Timer(boost::asio::io_service& ios, const Handler& handler);
-  Timer(boost::asio::io_service& ios, const Handler& handler, const std::chrono::steady_clock::duration& interval);
+  explicit Timer(boost::asio::io_context& ioc);
+  Timer(boost::asio::io_context& ioc, Handler handler);
+  Timer(boost::asio::io_context& ioc, Handler handler, const std::chrono::steady_clock::duration& interval);
   ~Timer();
 
   void setInterval(const std::chrono::steady_clock::duration& interval);
@@ -32,7 +32,7 @@ protected:
   mutable std::mutex                    m_mutex;
   boost::asio::steady_timer             m_timer;
   std::chrono::steady_clock::time_point m_expiresTime;
-  std::chrono::steady_clock::duration   m_interval;
+  std::chrono::steady_clock::duration   m_interval {std::chrono::seconds(30)};
   Handler                               m_handler;
   bool                                  m_started {false};
 };

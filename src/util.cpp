@@ -3,7 +3,7 @@
 
 #include "util.hpp"
 
-#include "chrono_io"
+#include <chrono>
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
@@ -26,6 +26,7 @@ std::string randomString(size_t length)
 std::string toString(const std::chrono::system_clock::time_point& tp)
 {
   std::stringstream ss;
-  ss << std::chrono::utc_fmt("%Y-%m-%d %H:%M:%S") << tp;
+  // TODO: implement
+  //ss << std::chrono::utc_fmt("%Y-%m-%d %H:%M:%S") << tp;
   return ss.str();
 }
