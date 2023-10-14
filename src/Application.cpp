@@ -156,9 +156,9 @@ void Application::closeHandler(ConnectionHdl hdl)
   std::lock_guard<std::mutex> lock(m_mutex);
   if (m_connections.erase(hdl)) {
     try {
-      mysqlpp::Connection::thread_start();
-      ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
-      mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
+//      mysqlpp::Connection::thread_start();
+//      ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
+//      mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
       uint32_t userId = 0;
       const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
       auto& user = conn->user;
@@ -170,14 +170,14 @@ void Application::closeHandler(ConnectionHdl hdl)
         }
         user.reset();
       }
-      auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
-      query.parse();
-      query.execute(
-        userId,
-        toString(conn->create),
-        toString(SystemTimePoint::clock::now()),
-        conn->address.to_v4().to_ulong()
-      );
+//      auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
+//      query.parse();
+//      query.execute(
+//        userId,
+//        toString(conn->create),
+//        toString(SystemTimePoint::clock::now()),
+//        conn->address.to_v4().to_ulong()
+//      );
     } catch (const std::exception& e) {
       LOG_WARN << e.what();
     }
@@ -416,11 +416,11 @@ void Application::statistic()
   }
   const auto& data = ss.str();
   if (!data.empty()) {
-    try {
-      m_influxdb.send(boost::asio::buffer(data));
-    } catch (const std::exception& e) {
-      LOG_WARN << e.what();
-    }
+//    try {
+//      m_influxdb.send(boost::asio::buffer(data));
+//    } catch (const std::exception& e) {
+//      LOG_WARN << e.what();
+//    }
   }
   m_maxConnections = m_connections.size();
   m_registrations = 0;

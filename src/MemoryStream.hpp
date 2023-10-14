@@ -6,6 +6,7 @@
 
 #include <ostream>
 #include <string>
+#include <cstdint>
 
 class MemoryStream {
 public:

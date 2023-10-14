@@ -58,6 +58,15 @@ void Room::init(const RoomConfig& config)
   for (uint32_t i=0; i<m_config.botAmount; ++i) {
     spawnBot(101 + i);
   }
+
+  static std::array<std::string, 7> names = {"To", "start", "the game", "run", "help()", "in", "the console"};
+  auto it = m_bots.begin();
+  for (const auto& name: names) {
+    if (it == m_bots.end()) {
+      break;
+    }
+    (*it++)->name = name;
+  }
 }
 
 bool Room::hasFreeSpace() const
