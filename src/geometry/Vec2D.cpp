@@ -45,14 +45,14 @@ bool Vec2D::operator==(const Vec2D& other) const
   return x == other.x && y == other.y;
 }
 
-const Vec2D Vec2D::operator-() const
+Vec2D Vec2D::operator-() const
 {
-  return Vec2D(-x, -y);
+  return {-x, -y};
 }
 
-const Vec2D Vec2D::operator-(const Vec2D& other) const
+Vec2D Vec2D::operator-(const Vec2D& other) const
 {
-  return Vec2D(x - other.x, y - other.y);
+  return {x - other.x, y - other.y};
 }
 
 Vec2D& Vec2D::operator-=(const Vec2D& other)
@@ -62,9 +62,9 @@ Vec2D& Vec2D::operator-=(const Vec2D& other)
   return *this;
 }
 
-const Vec2D Vec2D::operator+(const Vec2D& other) const
+Vec2D Vec2D::operator+(const Vec2D& other) const
 {
-  return Vec2D(x + other.x, y + other.y);
+  return {x + other.x, y + other.y};
 }
 
 Vec2D& Vec2D::operator+=(const Vec2D& other)
@@ -79,9 +79,9 @@ float Vec2D::operator*(const Vec2D& other) const
   return x * other.x + y * other.y;
 }
 
-const Vec2D Vec2D::operator*(float k) const
+Vec2D Vec2D::operator*(float k) const
 {
-  return Vec2D(x * k, y * k);
+  return {x * k, y * k};
 }
 
 Vec2D& Vec2D::operator*=(float k)
@@ -91,9 +91,9 @@ Vec2D& Vec2D::operator*=(float k)
   return *this;
 }
 
-const Vec2D Vec2D::operator/(float k) const
+Vec2D Vec2D::operator/(float k) const
 {
-  return Vec2D(x / k, y / k);
+  return {x / k, y / k};
 }
 
 Vec2D& Vec2D::operator/=(float k)

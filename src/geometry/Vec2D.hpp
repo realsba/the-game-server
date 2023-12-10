@@ -19,17 +19,17 @@ public:
 
   bool operator==(const Vec2D& other) const;
 
-  const Vec2D operator-() const;
+  Vec2D operator-() const;
 
-  const Vec2D operator-(const Vec2D& other) const;
+  Vec2D operator-(const Vec2D& other) const;
   Vec2D& operator-=(const Vec2D& other);
-  const Vec2D operator+(const Vec2D& other) const;
+  Vec2D operator+(const Vec2D& other) const;
   Vec2D& operator+=(const Vec2D& other);
   float operator*(const Vec2D& other) const;
 
-  const Vec2D operator*(float k) const;
+  Vec2D operator*(float k) const;
   Vec2D& operator*=(float k);
-  const Vec2D operator/(float k) const;
+  Vec2D operator/(float k) const;
   Vec2D& operator/=(float k);
 
   explicit operator bool() const;
