@@ -14,8 +14,8 @@ void PacketPlay::format(MemoryStream& ms)
   prepareHeader(ms);
   ms.writeUInt32(m_player.getId());
   const auto& position = m_player.getPosition();
-  ms.writeUInt16(position.x);
-  ms.writeUInt16(position.y);
+  ms.writeUInt16(static_cast<uint16_t>(position.x));
+  ms.writeUInt16(static_cast<uint16_t>(position.y));
   ms.writeUInt32(m_player.getMaxMass());
   writeHeader(ms, OutputPacketTypes::Play);
 }

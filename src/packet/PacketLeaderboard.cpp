@@ -7,8 +7,6 @@
 #include "src/MemoryStream.hpp"
 #include "src/Player.hpp"
 
-#include <algorithm>
-
 void PacketLeaderboard::format(MemoryStream& ms, const std::vector<Player*>& items, uint32_t max)
 {
   prepareHeader(ms);

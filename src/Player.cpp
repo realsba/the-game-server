@@ -6,7 +6,6 @@
 #include "WebsocketServer.hpp"
 #include "MemoryStream.hpp"
 #include "Room.hpp"
-#include "geometry/geometry.hpp"
 #include "entity/Cell.hpp"
 #include "entity/Avatar.hpp"
 #include "packet/Packet.hpp"
@@ -150,7 +149,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     const auto& sectors = m_gridmap.getSectors(viewport);
     for (auto it = m_sectors.begin(); it != m_sectors.end();) {
       if (sectors.find(*it) == sectors.end()) {
-        Sector* sector = *it;
+        const Sector* sector = *it;
         for (Cell* cell : sector->cells) {
           if (!cell->intersects(m_viewbox)) {
             m_removedIds.insert(cell->id);
@@ -194,7 +193,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     ms.writeUInt32(id);
   }
   ms.writeInt8(m_avatars.size());
-  for (Avatar* avatar : m_avatars) {
+  for (const Avatar* avatar : m_avatars) {
     ms.writeUInt32(avatar->id);
     ms.writeFloat(avatar->maxSpeed);
     ms.writeUInt32(avatar->protection);

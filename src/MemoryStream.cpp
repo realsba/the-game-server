@@ -4,7 +4,6 @@
 #include "MemoryStream.hpp"
 
 #include "FileIOError.hpp"
-#include "Logger.hpp"
 
 #include <netinet/in.h>
 #include <algorithm>
@@ -84,7 +83,7 @@ void MemoryStream::reserve(size_t size)
   size_t capacity = (size + mask) & ~mask;
   if (capacity > m_capacity) {
     void* p = ::realloc(m_data, capacity);
-    if (p == 0 && size != 0) {
+    if (p == nullptr && size != 0) {
       throw std::runtime_error("MemoryStream bad realloc");
     }
     m_capacity = capacity;
@@ -98,7 +97,7 @@ void MemoryStream::resize(size_t size)
   size_t capacity = (size + mask) & ~mask;
   if (capacity != m_capacity) {
     void* p = ::realloc(m_data, capacity);
-    if (p == 0 && size != 0) {
+    if (p == nullptr && size != 0) {
       throw std::runtime_error("MemoryStream bad realloc");
     }
     m_capacity = capacity;
@@ -117,9 +116,9 @@ size_t MemoryStream::seekG(ssize_t pos, Direction dir)
 {
   size_t prev = m_posG;
   if (dir == Direction::Current) {
-    pos += m_posG;
+    pos += static_cast<ssize_t>(m_posG);
   } else if (dir == Direction::End) {
-    pos += m_length;
+    pos += static_cast<ssize_t>(m_length);
   }
 
   if (pos <= 0) {
@@ -141,9 +140,9 @@ size_t MemoryStream::seekP(ssize_t pos, Direction dir)
 {
   size_t prev = m_posP;
   if (dir == Direction::Current) {
-    pos += m_posP;
+    pos += static_cast<ssize_t>(m_posP);
   } else if (dir == Direction::End) {
-    pos += m_length;
+    pos += static_cast<ssize_t>(m_length);
   }
 
   if (pos <= 0) {
@@ -258,7 +257,7 @@ uint64_t MemoryStream::peekUInt64() const
 
 float MemoryStream::peekFloat() const
 {
-  union { float r; uint32_t i; } u;
+  union { float r; uint32_t i; } u{};
   peek(&u.i, sizeof(u.i));
   u.i = be32toh(u.i);
   return u.r;
@@ -266,7 +265,7 @@ float MemoryStream::peekFloat() const
 
 double MemoryStream::peekDouble() const
 {
-  union { double r; uint64_t i; } u;
+  union { double r; uint64_t i; } u{};
   peek(&u.i, sizeof(u.i));
   u.i = be64toh(u.i);
   return u.r;
@@ -341,7 +340,7 @@ uint64_t MemoryStream::readUInt64()
 
 float MemoryStream::readFloat()
 {
-  union { float r; uint32_t i; } u;
+  union { float r; uint32_t i; } u{};
   read(&u.i, sizeof(u.i));
   u.i = be32toh(u.i);
   return u.r;
@@ -349,7 +348,7 @@ float MemoryStream::readFloat()
 
 double MemoryStream::readDouble()
 {
-  union { double r; uint64_t i; } u;
+  union { double r; uint64_t i; } u{};
   read(&u.i, sizeof(u.i));
   u.i = be64toh(u.i);
   return u.r;
@@ -414,7 +413,7 @@ void MemoryStream::writeUInt64(uint64_t v)
 
 void MemoryStream::writeFloat(float v)
 {
-  union { float r; uint32_t i; } u;
+  union { float r; uint32_t i; } u{};
   u.r = v;
   u.i = htobe32(u.i);
   write(&u.i, sizeof(u.i));
@@ -422,7 +421,7 @@ void MemoryStream::writeFloat(float v)
 
 void MemoryStream::writeDouble(double v)
 {
-  union { double r; uint64_t i; } u;
+  union { double r; uint64_t i; } u{};
   u.r = v;
   u.i = htobe64(u.i);
   write(&u.i, sizeof(u.i));
@@ -434,7 +433,7 @@ void MemoryStream::writeString(const std::string& v)
   if (len > 0xFFFF) {
     len = 0xFFFF;
   }
-  writeInt16(len);
+  writeUInt16(static_cast<uint16_t>(len));
   write(v.c_str(), len);
 }
 
@@ -456,7 +455,7 @@ void MemoryStream::loadFromFile(const std::string& filename)
   reserve(len);
 
   fs.seekg(0, std::ios_base::beg);
-  fs.read(static_cast<char*>(m_data), len);
+  fs.read(static_cast<char*>(m_data), static_cast<ssize_t>(len));
   fs.close();
 
   m_posG    = 0;
@@ -470,9 +469,7 @@ void MemoryStream::saveToFile(const std::string& filename) const
   if (!fs.is_open()) {
     throw FileIoError(filename, errno);
   }
-
-  fs.write(static_cast<char*>(m_data), m_length);
-
+  fs.write(static_cast<char*>(m_data), static_cast<ssize_t>(m_length));
   fs.close();
 }
 
@@ -482,9 +479,9 @@ std::ostream& operator<<(std::ostream& os, const MemoryStream& obj)
 
   os << "blockSize=" << obj.m_blockSize << ", capacity=" << obj.m_capacity
     << ", posG=" << obj.m_posG << ", posP=" << obj.m_posP << ", length=" << obj.m_length << ", data=";
-  uint8_t *data = static_cast<uint8_t*>(obj.m_data);
-  for (uint8_t *it = data, *end = data + obj.m_length; it != end; ++it) {
-    uint8_t ch = *it;
+  auto* data = static_cast<uint8_t*>(obj.m_data);
+  for (auto *it = data, *end = data + obj.m_length; it != end; ++it) {
+    auto ch = *it;
     os << hex_val[ch >> 4] << hex_val[ch & 15];
   }
 

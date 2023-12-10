@@ -62,19 +62,19 @@ void Cell::format(MemoryStream& ms)
   }
 }
 
-void Cell::interact(Cell& cell) { }
+void Cell::interact(Cell&) { }
 
-void Cell::interact(Avatar& avatar) { }
+void Cell::interact(Avatar&) { }
 
-void Cell::interact(Food& food) { }
+void Cell::interact(Food&) { }
 
-void Cell::interact(Mass& mass) { }
+void Cell::interact(Mass&) { }
 
-void Cell::interact(Virus& virus) { }
+void Cell::interact(Virus&) { }
 
-void Cell::interact(Phage& phage) { }
+void Cell::interact(Phage&) { }
 
-void Cell::interact(Mother& mother) { }
+void Cell::interact(Mother&) { }
 
 void Cell::magnetism(Avatar& avatar) { }
 

@@ -141,6 +141,7 @@ void Application::info()
 
 void Application::openHandler(ConnectionHdl hdl)
 {
+  LOG_INFO << "Application::openHandler";
   std::lock_guard<std::mutex> lock(m_mutex);
   m_connections.emplace(hdl);
   const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
@@ -153,6 +154,7 @@ void Application::openHandler(ConnectionHdl hdl)
 
 void Application::closeHandler(ConnectionHdl hdl)
 {
+  LOG_INFO << "Application::closeHandler";
   std::lock_guard<std::mutex> lock(m_mutex);
   if (m_connections.erase(hdl)) {
     try {
