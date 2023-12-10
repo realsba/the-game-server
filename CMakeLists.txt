@@ -92,3 +92,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} log4cpp config++ mysqlpp)
+
+add_subdirectory(tests)
