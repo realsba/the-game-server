@@ -135,7 +135,7 @@ TEST_CASE("Vec2D: assignment by scalar division", "[Vec2D]")
   CHECK(v == Vec2D(3, 4));
 }
 
-TEST_CASE("Vec2D: operator bool()", "[Vec2D]")
+TEST_CASE("Vec2D: operator bool", "[Vec2D]")
 {
   Vec2D v;
   CHECK(!v);
@@ -146,3 +146,27 @@ TEST_CASE("Vec2D: operator bool()", "[Vec2D]")
   v = Vec2D(3, 4);
   CHECK(v);
 }
+
+TEST_CASE("Vec2D: operator less", "[Vec2D]")
+{
+  CHECK(Vec2D{10, 10} < Vec2D{20, 0});
+  CHECK(Vec2D{10, 10} < Vec2D{10, 20});
+  CHECK_FALSE(Vec2D{10, 10} < Vec2D{10, 10});
+  CHECK_FALSE(Vec2D{20, 10} < Vec2D{10, 10});
+}
+
+TEST_CASE("Vec2D: operator greater", "[Vec2D]")
+{
+  CHECK(Vec2D{20, 0} > Vec2D{10, 10});
+  CHECK(Vec2D{10, 20} > Vec2D{10, 10});
+  CHECK_FALSE(Vec2D{10, 10} > Vec2D{10, 10});
+  CHECK_FALSE(Vec2D{10, 10} > Vec2D{20, 10});
+}
+
+TEST_CASE("Vec2D: operator equal", "[Vec2D]")
+{
+  CHECK(Vec2D{10, 20} == Vec2D{10, 20});
+  CHECK_FALSE(Vec2D{10, 20} == Vec2D{10, 30});
+  CHECK_FALSE(Vec2D{10, 20} == Vec2D{20, 20});
+}
+
