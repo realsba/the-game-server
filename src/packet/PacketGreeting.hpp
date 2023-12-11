@@ -11,7 +11,7 @@
 class PacketGreeting : public Packet {
 public:
   PacketGreeting() = default;
-  PacketGreeting(const std::string& sid);
+  explicit PacketGreeting(std::string sid);
 
   void format(MemoryStream& ms);
 

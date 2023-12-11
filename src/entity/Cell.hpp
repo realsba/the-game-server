@@ -37,13 +37,13 @@ public:
   virtual void simulate(float dt);
   virtual void format(MemoryStream& ms);
 
-  virtual void interact(Cell& cell);
-  virtual void interact(Avatar& avatar);
-  virtual void interact(Food& food);
-  virtual void interact(Mass& mass);
-  virtual void interact(Virus& virus);
-  virtual void interact(Phage& phage);
-  virtual void interact(Mother& mother);
+  virtual void interact(Cell&);
+  virtual void interact(Avatar&);
+  virtual void interact(Food&);
+  virtual void interact(Mass&);
+  virtual void interact(Virus&);
+  virtual void interact(Phage&);
+  virtual void interact(Mother&);
 
   virtual void magnetism(Avatar& avatar);
   virtual bool isAttractive(const Avatar& avatar);
