@@ -8,7 +8,7 @@
 
 #include "../../src/geometry/AABB.hpp"
 
-TEST_CASE("AABB: default constructor", "[AABB]")
+TEST_CASE("AABB: Default Constructor", "[AABB]")
 {
   AABB aabb;
   CHECK(aabb.a.x == 0);
@@ -17,7 +17,7 @@ TEST_CASE("AABB: default constructor", "[AABB]")
   CHECK(aabb.b.y == 0);
 }
 
-TEST_CASE("AABB: constructor AABB(float, float, float, float)", "[AABB]")
+TEST_CASE("AABB: Constructor AABB(float, float, float, float)", "[AABB]")
 {
   AABB aabb{1, 2, 3, 4};
   CHECK(aabb.a.x == 1);
@@ -26,7 +26,7 @@ TEST_CASE("AABB: constructor AABB(float, float, float, float)", "[AABB]")
   CHECK(aabb.b.y == 4);
 }
 
-TEST_CASE("AABB: constructor AABB(const Vec2D&, const Vec2D&)", "[AABB]")
+TEST_CASE("AABB: Constructor AABB(const Vec2D&, const Vec2D&)", "[AABB]")
 {
   AABB aabb{{11, 22}, {33, 44}};
   CHECK(aabb.a.x == 11);
