@@ -3,14 +3,9 @@
 
 #include "RoomManager.hpp"
 #include "TSRoom.hpp"
-#include "Logger.hpp"
 
+#include <spdlog/spdlog.h>
 #include <sys/syscall.h>
-
-RoomManager::RoomManager(boost::asio::io_context& ios, WebsocketServer& wss) :
-  m_ioService(ios),
-  m_websocketServer(wss)
-{ }
 
 RoomManager::~RoomManager()
 {
@@ -30,7 +25,7 @@ void RoomManager::start(uint32_t numThreads, const RoomConfig& config)
       [&stopped=m_groups[i].stopped, &rooms=m_groups[i].rooms]()
       {
         long int pid = syscall(SYS_gettid);
-        LOG_INFO << "Start \"Room worker\" (" << pid << ")";
+        spdlog::info("Start \"Room worker\" ({})", pid);
         while (!stopped) {
           try {
             TimePoint start = TimePoint::clock::now();
@@ -42,10 +37,10 @@ void RoomManager::start(uint32_t numThreads, const RoomConfig& config)
               std::this_thread::sleep_for(std::chrono::milliseconds(5) - dt);
             }
           } catch (const std::exception& e) {
-            LOG_ERROR << e.what();
+            spdlog::error("Exception caught in RoomManager: {}", e.what());
           }
         }
-        LOG_INFO << "Stop \"Room worker\" (" << pid << ")";
+        spdlog::info("Stop \"Room worker\" ({})", pid);
       }
     );
   }
@@ -69,7 +64,7 @@ TSRoom* RoomManager::obtain()
       return room;
     }
   }
-  TSRoom* room = new TSRoom(m_nextId++, m_websocketServer);
+  auto* room = new TSRoom(m_nextId++);
   room->init(m_config);
   m_items.emplace_back(room);
   m_groups.at(room->getId() % m_numThreads).rooms.push_back(room);

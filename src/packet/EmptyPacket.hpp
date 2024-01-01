@@ -1,18 +1,18 @@
 // file   : packet/EmptyPacket.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef PACKET_EMPTY_PACKET_HPP
-#define PACKET_EMPTY_PACKET_HPP
+#ifndef THEGAME_PACKET_EMPTY_PACKET_HPP
+#define THEGAME_PACKET_EMPTY_PACKET_HPP
 
 #include "Packet.hpp"
 
-class EmptyPacket : public Packet {
+class EmptyPacket {
 public:
   explicit EmptyPacket(uint8_t type);
 
-  void format(MemoryStream& ms);
+  void format(std::vector<char>& buffer);
 
   uint8_t type;
 };
 
-#endif /* PACKET_EMPTY_PACKET_HPP */
+#endif /* THEGAME_PACKET_EMPTY_PACKET_HPP */

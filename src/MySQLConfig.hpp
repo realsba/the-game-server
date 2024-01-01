@@ -1,8 +1,8 @@
 // file   : MySQLConfig.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef MYSQL_CONFIG_HPP
-#define MYSQL_CONFIG_HPP
+#ifndef THEGAME_MYSQL_CONFIG_HPP
+#define THEGAME_MYSQL_CONFIG_HPP
 
 #include <string>
 
@@ -17,4 +17,4 @@ public:
   uint        maxIdleTime {0};
 };
 
-#endif /* MYSQL_CONFIG_HPP */
+#endif /* THEGAME_MYSQL_CONFIG_HPP */

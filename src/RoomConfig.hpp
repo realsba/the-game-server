@@ -1,8 +1,8 @@
 // file   : RoomConfig.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ROOM_CONFIG_HPP
-#define ROOM_CONFIG_HPP
+#ifndef THEGAME_ROOM_CONFIG_HPP
+#define THEGAME_ROOM_CONFIG_HPP
 
 #include <cstdint>
 #include <chrono>
@@ -103,4 +103,4 @@ public:
   float     spawnMotherMass {0};
 };
 
-#endif /* ROOM_CONFIG_HPP */
+#endif /* THEGAME_ROOM_CONFIG_HPP */

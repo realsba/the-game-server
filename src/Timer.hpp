@@ -1,8 +1,8 @@
 // file   : Timer.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef TIMER_HPP
-#define TIMER_HPP
+#ifndef THEGAME_TIMER_HPP
+#define THEGAME_TIMER_HPP
 
 #include <boost/asio/steady_timer.hpp>
 #include <boost/noncopyable.hpp>
@@ -13,7 +13,7 @@
 
 class Timer final : private boost::noncopyable {
 public:
-  typedef std::function<void ()> Handler;
+  using Handler = std::function<void()>;
 
   explicit Timer(boost::asio::io_context& ioc);
   Timer(boost::asio::io_context& ioc, Handler handler);
@@ -37,4 +37,4 @@ protected:
   bool                                  m_started {false};
 };
 
-#endif /* TIMER_HPP */
+#endif /* THEGAME_TIMER_HPP */

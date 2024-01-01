@@ -1,8 +1,8 @@
 // file   : entity/Phage.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ENTITY_PHAGE_HPP
-#define ENTITY_PHAGE_HPP
+#ifndef THEGAME_ENTITY_PHAGE_HPP
+#define THEGAME_ENTITY_PHAGE_HPP
 
 #include "Cell.hpp"
 
@@ -25,4 +25,4 @@ public:
   TimePoint created {TimePoint::clock::now()};
 };
 
-#endif /* ENTITY_PHAGE_HPP */
+#endif /* THEGAME_ENTITY_PHAGE_HPP */

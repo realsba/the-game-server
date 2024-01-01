@@ -1,8 +1,8 @@
 // file   : entity/Mother.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ENTITY_MOTHER_HPP
-#define ENTITY_MOTHER_HPP
+#ifndef THEGAME_ENTITY_MOTHER_HPP
+#define THEGAME_ENTITY_MOTHER_HPP
 
 #include "Cell.hpp"
 
@@ -21,9 +21,9 @@ public:
 
   void magnetism(Avatar& avatar) override;
 
-  TimePoint created {TimePoint::clock::now()};
-  uint32_t foodCount {0};
-  float startRadius {0};
+  TimePoint         created {TimePoint::clock::now()};
+  uint32_t          foodCount {0};
+  float             startRadius {0};
 };
 
-#endif /* ENTITY_MOTHER_HPP */
+#endif /* THEGAME_ENTITY_MOTHER_HPP */

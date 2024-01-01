@@ -4,10 +4,9 @@
 #include "Mother.hpp"
 
 #include "src/Room.hpp"
-#include "src/Logger.hpp"
 
-Mother::Mother(Room& room) :
-  Cell(room)
+Mother::Mother(Room& room)
+ : Cell(room)
 {
   type = typeMother;
   const auto& config = room.getConfig();

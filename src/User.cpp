@@ -3,7 +3,8 @@
 
 #include "User.hpp"
 
-User::User(uint32_t id) : m_id(id)
+User::User(uint32_t id)
+  : m_id(id)
 {
 }
 
@@ -44,16 +45,16 @@ void User::setLastAccess(const TimePoint& v)
   m_lastAccess = v;
 }
 
-ConnectionHdl User::getConnection() const
+SessionPtr User::getSession() const
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  return m_connection;
+  return m_session;
 }
 
-void User::setConnection(const ConnectionHdl& hdl)
+void User::setSession(const SessionPtr& sess)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_connection = hdl;
+  m_session = sess;
 }
 
 TSRoom* User::getRoom() const

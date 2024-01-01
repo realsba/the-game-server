@@ -1,14 +1,13 @@
 // file   : types.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef TYPES_HPP
-#define TYPES_HPP
+#ifndef THEGAME_TYPES_HPP
+#define THEGAME_TYPES_HPP
 
-#include <websocketpp/common/connection_hdl.hpp>
+#include "SessionFwd.hpp"
 
 #include <set>
 
-typedef websocketpp::connection_hdl ConnectionHdl;
-typedef std::set<ConnectionHdl, std::owner_less<ConnectionHdl>> Connections;
+using Sessions = std::set<SessionPtr>;
 
-#endif /* TYPES_HPP */
+#endif /* THEGAME_TYPES_HPP */

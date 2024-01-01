@@ -5,8 +5,7 @@
 
 #include "Room.hpp"
 
-#include "WebsocketServer.hpp"
-#include "MemoryStream.hpp"
+#include "Session.hpp"
 #include "Player.hpp"
 #include "User.hpp"
 
@@ -25,17 +24,17 @@
 #include "packet/PacketPlay.hpp"
 #include "packet/PacketSpectate.hpp"
 
+#include <spdlog/spdlog.h>
 #include <chrono>
 
-Room::Room(uint32_t id, WebsocketServer& wss) :
-  m_id(id),
-  m_websocketServer(wss)
+Room::Room(uint32_t id)
+  : m_id(id)
 {
 }
 
 Room::~Room()
 {
-  for (auto&& it : m_players) {
+  for (const auto& it : m_players) {
     delete it.second;
   }
 }
@@ -71,7 +70,6 @@ void Room::init(const RoomConfig& config)
 
 bool Room::hasFreeSpace() const
 {
-  // TODO: допиляти
   return m_players.size() < m_config.maxPlayers;
 }
 
@@ -80,51 +78,48 @@ const RoomConfig& Room::getConfig() const
   return m_config;
 }
 
-void Room::join(const ConnectionHdl& hdl)
+void Room::join(const SessionPtr& sess)
 {
-  if (!m_connections.emplace(hdl).second) {
+  if (!m_sessions.emplace(sess).second) {
     return;
   }
 
-  const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-  const auto& user = conn->user;
+  const auto& user = sess->connectionData.user;
   if (!user) {
     throw std::runtime_error("Room::join(): the user doesn't set");
   }
 
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt16(m_config.width);
-  ms.writeUInt16(m_config.height);
-  ms.writeUInt16(m_config.viewportBase);
-  ms.writeFloat(m_config.viewportBuffer);
-  ms.writeFloat(m_config.aspectRatio);
-  ms.writeFloat(m_config.resistanceRatio);
-  ms.writeFloat(m_config.elasticityRatio);
-  ms.writeFloat(m_config.foodResistanceRatio);
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::Room));
+  serialize(*buffer, static_cast<uint16_t>(m_config.width));
+  serialize(*buffer, static_cast<uint16_t>(m_config.height));
+  serialize(*buffer, static_cast<uint16_t>(m_config.viewportBase));
+  serialize(*buffer, m_config.viewportBuffer);
+  serialize(*buffer, m_config.aspectRatio);
+  serialize(*buffer, m_config.resistanceRatio);
+  serialize(*buffer, m_config.elasticityRatio);
+  serialize(*buffer, m_config.foodResistanceRatio);
   auto count = m_players.size();
   if (count > 255) {
-    LOG_WARN << "m_players.size() > 255";
+    spdlog::warn("The number of players exceeds the limit of 255");
   }
-  ms.writeUInt8(count);
-  for (auto&& it : m_players) {
+  serialize(*buffer, static_cast<uint8_t>(count));
+  for (const auto& it : m_players) {
     Player* player = it.second;
-    ms.writeUInt32(player->getId());
-    ms.writeString(player->name);
-    ms.writeUInt8(player->getStatus());
+    serialize(*buffer, player->getId());
+    serialize(*buffer, player->name);
+    serialize(*buffer, player->getStatus());
   }
   count = m_chatHistory.size();
   if (count > 255) {
-    LOG_WARN << "m_chat.size() > 255";
+    spdlog::warn("The size of chat history exceeds the limit of 255");
   }
-  ms.writeUInt8(count);
+  serialize(*buffer, static_cast<uint8_t>(count));
   for (const auto& msg  : m_chatHistory) {
-    ms.writeUInt32(msg.authorId);
-    ms.writeString(msg.author);
-    ms.writeString(msg.text);
+    serialize(*buffer, msg.authorId);
+    serialize(*buffer, msg.author);
+    serialize(*buffer, msg.text);
   }
-  packet.writeHeader(ms, OutputPacketTypes::Room);
 
   uint32_t playerId = 0;
   const auto& it = m_players.find(user->getId());
@@ -133,70 +128,68 @@ void Room::join(const ConnectionHdl& hdl)
     player->online = true;
     if (player->isDead()) {
       EmptyPacket packet(OutputPacketTypes::Finish);
-      packet.format(ms);
+      packet.format(*buffer);
     } else {
-      player->addConnection(hdl);
-      conn->player = player;
+      player->addConnection(sess);
+      sess->connectionData.player = player;
       PacketPlay packetPlay(*player);
-      packetPlay.format(ms);
+      packetPlay.format(*buffer);
     }
     playerId = player->getId();
   } else {
     EmptyPacket packet(OutputPacketTypes::Finish);
-    packet.format(ms);
+    packet.format(*buffer);
   }
-  m_websocketServer.send(hdl, ms);
+  sess->send(buffer);
   if (playerId) {
     sendPacketPlayerJoin(playerId);
     m_updateLeaderboard = true;
   }
 }
 
-void Room::leave(const ConnectionHdl& hdl)
+void Room::leave(const SessionPtr& sess)
 {
-  if (m_connections.erase(hdl)) {
-    m_pointerRequests.erase(hdl);
-    m_ejectRequests.erase(hdl);
-    m_splitRequests.erase(hdl);
-    // TODO: замінити код. (непотокобезпечний доступ до властивойстей conn)
-    const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-    Player* player = conn->player;
+  if (m_sessions.erase(sess)) {
+    m_pointerRequests.erase(sess);
+    m_ejectRequests.erase(sess);
+    m_splitRequests.erase(sess);
+    // TODO: замінити код. (непотокобезпечний доступ до властивойстей sess)
+    auto player = sess->connectionData.player;
     if (player) {
       sendPacketPlayerLeave(player->getId());
-      conn->player = nullptr;
+      sess->connectionData.player = nullptr;
       m_zombiePlayers.insert(player);
       player->online = false;
     }
-    // TODO: так як m_players не мають містить жодних з'єднань, то можна перебирати лише колекцію m_fighters
-    for (auto&& it : m_players) {
+    // TODO: так як m_players не мають містити жодних з'єднань, то можна перебирати лише колекцію m_fighters
+    for (const auto& it : m_players) {
       Player* player = it.second;
-      player->removeConnection(hdl);
+      player->removeConnection(sess);
     }
   }
 }
 
-void Room::play(const ConnectionHdl& hdl, const std::string& name, uint8_t color)
+void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
 {
-  const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-  const auto& user = conn->user;
+  const auto& user = sess->connectionData.user;
   if (!user) {
     throw std::runtime_error("Room::play(): the user doesn't set");
   }
 
   uint32_t playerId = user->getId();
-  Player* player = conn->player;
+  Player* player = sess->connectionData.player;
   if (!player) {
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(playerId, m_websocketServer, *this, m_gridmap);
+      player = new Player(playerId, *this, m_gridmap);
       player->name = name;
       m_players.emplace(playerId, player);
       sendPacketPlayer(*player);
     }
     player->online = true;
-    conn->player = player;
+    sess->connectionData.player = player;
     sendPacketPlayerJoin(player->getId());
   }
 
@@ -204,9 +197,9 @@ void Room::play(const ConnectionHdl& hdl, const std::string& name, uint8_t color
     return;
   }
 
-  if (conn->observable) {
-    conn->observable->removeConnection(hdl);
-    conn->observable = nullptr;
+  if (sess->connectionData.observable) {
+    sess->connectionData.observable->removeConnection(sess);
+    sess->connectionData.observable = nullptr;
   }
 
   player->init();
@@ -228,35 +221,34 @@ void Room::play(const ConnectionHdl& hdl, const std::string& name, uint8_t color
   m_leaderboard.emplace_back(player);
   m_updateLeaderboard = true;
   m_fighters.insert(player);
-  MemoryStream ms;
+  const auto& buffer = std::make_shared<Buffer>();
   PacketPlay packetPlay(*player);
-  packetPlay.format(ms);
-  m_websocketServer.send(hdl, ms);
-  player->addConnection(hdl); // TODO: розібратись з додаваннями і забираннями hdl
+  packetPlay.format(*buffer);
+  sess->send(buffer);
+  player->addConnection(sess); // TODO: розібратись з додаваннями і забираннями sess
 }
 
-void Room::spectate(const ConnectionHdl& hdl, uint32_t targetId)
+void Room::spectate(const SessionPtr& sess, uint32_t targetId)
 {
-  const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-  const auto& user = conn->user;
+  const auto& user = sess->connectionData.user;
   if (!user) {
     throw std::runtime_error("Room::spectate(): the user doesn't set");
   }
 
   uint32_t playerId = user->getId();
-  Player* player = conn->player;
+  Player* player = sess->connectionData.player;
   if (!player) {
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(playerId, m_websocketServer, *this, m_gridmap);
+      player = new Player(playerId, *this, m_gridmap);
       player->name = "Player " + std::to_string(user->getId());
       m_players.emplace(playerId, player);
       sendPacketPlayer(*player);
     }
     player->online = true;
-    conn->player = player;
+    sess->connectionData.player = player;
     sendPacketPlayerJoin(player->getId());
   }
 
@@ -274,55 +266,52 @@ void Room::spectate(const ConnectionHdl& hdl, uint32_t targetId)
   if (m_fighters.find(target) == m_fighters.end()) {
     return;
   }
-  if (player == target || conn->observable == target) {
+  if (player == target || sess->connectionData.observable == target) {
     return;
   }
   if (player) {
-    player->removeConnection(hdl);
+    player->removeConnection(sess);
   }
-  if (conn->observable) {
-    conn->observable->removeConnection(hdl);
+  if (sess->connectionData.observable) {
+    sess->connectionData.observable->removeConnection(sess);
   }
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
+  const auto& buffer = std::make_shared<Buffer>();
   PacketSpectate packet(*target);
-  packet.format(ms);
-  m_websocketServer.send(hdl, ms);
-  target->addConnection(hdl);
-  conn->observable = target;
+  packet.format(*buffer);
+  sess->send(buffer);
+  target->addConnection(sess);
+  sess->connectionData.observable = target;
 }
 
-void Room::pointer(const ConnectionHdl& hdl, const Vec2D& point)
+void Room::pointer(const SessionPtr& sess, const Vec2D& point)
 {
-  m_pointerRequests.emplace(hdl, point);
+  m_pointerRequests.emplace(sess, point);
 }
 
-void Room::eject(const ConnectionHdl& hdl, const Vec2D& point)
+void Room::eject(const SessionPtr& sess, const Vec2D& point)
 {
-  m_ejectRequests.emplace(hdl, point);
+  m_ejectRequests.emplace(sess, point);
 }
 
-void Room::split(const ConnectionHdl& hdl, const Vec2D& point)
+void Room::split(const SessionPtr& sess, const Vec2D& point)
 {
-  m_splitRequests.emplace(hdl, point);
+  m_splitRequests.emplace(sess, point);
 }
 
-void Room::chatMessage(const ConnectionHdl& hdl, const std::string& text)
+void Room::chatMessage(const SessionPtr& sess, const std::string& text)
 {
-  const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-  Player* player = conn->player;
+  Player* player = sess->connectionData.player;
   if (!player){
     return;
   }
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(player->getId());
-  ms.writeString(text);
-  packet.writeHeader(ms, OutputPacketTypes::ChatMessage);
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::ChatMessage));
+  serialize(*buffer, player->getId());
+  serialize(*buffer, text);
   if (text[0] == '#') {
+    serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::ChatMessage));
     std::stringstream ss;
-    packet.prepareHeader(ms);
-    ms.writeUInt32(0);
+    serialize(*buffer, 0);
     if (text == "#id") {
       ss << "id=" << player->getId();
     } else if (text == "#info") {
@@ -345,7 +334,7 @@ void Room::chatMessage(const ConnectionHdl& hdl, const std::string& text)
       for (const auto& it : m_avatarContainer) {
         mass += it.second.mass;
       }
-      ss << "roomId=" << m_id << "; connections=" << m_connections.size()
+      ss << "roomId=" << m_id << "; connections=" << m_sessions.size()
         << "; players=" << m_players.size()
         << "; totalMass=" << m_mass << ":" << mass
         << "; avatars=" << m_avatarContainer.size()
@@ -355,22 +344,18 @@ void Room::chatMessage(const ConnectionHdl& hdl, const std::string& text)
         << "; phages=" << m_phageContainer.size()
         << "; mothers=" << m_motherContainer.size();
     }
-    ms.writeString(ss.str());
-    packet.writeHeader(ms, OutputPacketTypes::ChatMessage);
+    serialize(*buffer, ss.str());
   }
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
-  }
+  send(buffer);
   m_chatHistory.emplace_front(player->getId(), player->name, text);
   while (m_chatHistory.size() > 128) {
     m_chatHistory.pop_back();
   }
 }
 
-void Room::watch(const ConnectionHdl& hdl, uint32_t playerId)
+void Room::watch(const SessionPtr& sess, uint32_t playerId)
 {
-  const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-  Player* player = conn->player;
+  Player* player = sess->connectionData.player;
   if (!player) {
     return;
   }
@@ -383,7 +368,7 @@ void Room::watch(const ConnectionHdl& hdl, uint32_t playerId)
   }
 }
 
-void Room::paint(const ConnectionHdl& hdl, const Vec2D& point)
+void Room::paint(const SessionPtr& sess, const Vec2D& point)
 {
   // TODO: add code here
 }
@@ -849,10 +834,6 @@ void Room::update()
   checkPlayers();
   synchronize();
   updateLeaderboard();
-
-  // TODO: remove
-  auto dur(TimePoint::clock::now() - now);
-  // LOG_DEBUG << (0.001 * std::chrono::duration_cast<std::chrono::microseconds>(dur).count());
 }
 
 Vec2D Room::getRandomPosition(uint32_t radius) const
@@ -863,7 +844,7 @@ Vec2D Room::getRandomPosition(uint32_t radius) const
     bool intersect = false;
     c.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
     c.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
-    for (auto&& cell : m_forCheckRandomPos) {
+    for (const auto& cell : m_forCheckRandomPos) {
       if (geometry::intersects(*cell, c)) {
         intersect = true;
         break;
@@ -969,7 +950,7 @@ void Room::spawnBot(uint32_t id)
   if (it != m_players.end()) {
     bot = it->second;
   } else {
-    bot = new Player(id, m_websocketServer, *this, m_gridmap);
+    bot = new Player(id, *this, m_gridmap);
     bot->name = "Bot " + std::to_string(id);
     bot->online = true;
     m_players.emplace(bot->getId(), bot);
@@ -1082,7 +1063,7 @@ void Room::modifyMass(Cell& cell, float value)
   cell.mass += value;
   m_mass += value;
   if (cell.mass < m_config.cellMinMass) {
-    LOG_WARN << "Bad cell mass. type=" << cell.type << ", mass=" << cell.mass << ", value=" << value;
+    spdlog::warn("Bad cell mass. type={}, mass={}, value={}", cell.type, cell.mass, value);
     cell.mass = m_config.cellMinMass;
   }
   cell.radius = m_config.cellRadiusRatio * sqrt(cell.mass / M_PI);
@@ -1230,14 +1211,9 @@ void Room::generate(float dt)
 
 void Room::handlePlayerRequests()
 {
-  websocketpp::lib::error_code ec;
-  for (auto&& it : m_pointerRequests) {
-    const auto& conn = m_websocketServer.get_con_from_hdl(it.first, ec);
-    if (ec) {
-      LOG_WARN << ec.message();
-      continue;
-    }
-    Player* player = conn->player;
+  for (const auto& it : m_pointerRequests) {
+    const auto& sess = it.first;
+    auto* player = sess->connectionData.player;
     if (player && !player->isDead()) {
       player->setPointer(it.second);
       const auto& avatars = player->getAvatars();
@@ -1246,28 +1222,20 @@ void Room::handlePlayerRequests()
   }
   m_pointerRequests.clear();
 
-  for (auto&& it : m_ejectRequests) {
-    const auto& conn = m_websocketServer.get_con_from_hdl(it.first, ec);
-    if (ec) {
-      LOG_WARN << ec.message();
-      continue;
-    }
-    Player* player = conn->player;
+  for (const auto& it : m_ejectRequests) {
+    const auto& sess = it.first;
+    auto* player = sess->connectionData.player;
     if (player && !player->isDead()) {
-      for (Avatar* avatar : player->getAvatars()) {
+      for (auto* avatar : player->getAvatars()) {
         eject(*avatar, it.second);
       }
     }
   }
   m_ejectRequests.clear();
 
-  for (auto&& it : m_splitRequests) {
-    const auto& conn = m_websocketServer.get_con_from_hdl(it.first, ec);
-    if (ec) {
-      LOG_WARN << ec.message();
-      continue;
-    }
-    Player* player = conn->player;
+  for (const auto& it : m_splitRequests) {
+    const auto& sess = it.first;
+    auto* player = sess->connectionData.player;
     if (player && !player->isDead()) {
       auto avatars = player->getAvatars();
       size_t count = avatars.size();
@@ -1395,7 +1363,7 @@ void Room::synchronize()
       ++it;
     }
   }
-  if (m_activatedCells.size()) {
+  if (!m_activatedCells.empty()) {
     m_processingCells.insert(m_activatedCells.begin(), m_activatedCells.end());
     m_activatedCells.clear();
   }
@@ -1420,21 +1388,20 @@ void Room::synchronize()
       if (!observable || observable->isDead()) {
         observable = topPlayer;
       }
-      MemoryStream ms; // TODO: оптимізувати використання MemoryStream
+      const auto& buffer = std::make_shared<Buffer>();
       if (observable) {
         PacketSpectate packet(*observable);
-        packet.format(ms);
-        for (auto&& hdl : player->getConnections()) {
-          const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-          m_websocketServer.send(hdl, ms);
-          observable->addConnection(hdl);
-          conn->observable = observable;
+        packet.format(*buffer);
+        for (const auto& sess : player->getSessions()) {
+          sess->send(buffer);
+          observable->addConnection(sess);
+          sess->connectionData.observable = observable;
         }
       } else {
         EmptyPacket packet(OutputPacketTypes::Finish);
-        packet.format(ms);
-        for (auto&& hdl : player->getConnections()) {
-          m_websocketServer.send(hdl, ms);
+        packet.format(*buffer);
+        for (const auto& sess : player->getSessions()) {
+          sess->send(buffer);
         }
       }
       player->clearConnections();
@@ -1443,11 +1410,11 @@ void Room::synchronize()
   m_leaderboard.erase(last, m_leaderboard.end());
   m_modifiedCells.clear();
   m_removedCellIds.clear();
-  if (m_createdAvatars.size()) {
+  if (!m_createdAvatars.empty()) {
     m_processingAvatars.insert(m_createdAvatars.begin(), m_createdAvatars.end());
     m_createdAvatars.clear();
   }
-  if (m_createdCells.size()) {
+  if (!m_createdCells.empty()) {
     for (Cell* cell : m_createdCells) {
       m_gridmap.insert(cell);
       cell->newly = false;
@@ -1473,12 +1440,10 @@ void Room::updateLeaderboard()
   m_lastUpdateLeaderboard += m_config.updateLeaderboard;
   if (m_updateLeaderboard) {
     std::sort(m_leaderboard.begin(), m_leaderboard.end(), [] (Player* a, Player* b) { return *b < *a; });
-    MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-    PacketLeaderboard packetLeaderboard;
-    packetLeaderboard.format(ms, m_leaderboard, m_config.leaderboardVisibleItems);
-    for (auto&& hdl : m_connections) {
-      m_websocketServer.send(hdl, ms);
-    }
+    const auto& buffer = std::make_shared<Buffer>();
+    PacketLeaderboard packetLeaderboard {m_leaderboard, m_config.leaderboardVisibleItems};
+    packetLeaderboard.format(*buffer);
+    send(buffer);
     m_updateLeaderboard = false;
   }
 }
@@ -1593,76 +1558,59 @@ void Room::spawnMothers(uint32_t count)
   }
 }
 
+void Room::send(const BufferPtr& buffer)
+{
+  for (const auto& sess : m_sessions) {
+    sess->send(buffer);
+  }
+}
+
 void Room::sendPacketPlayer(const Player& player)
 {
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(player.getId());
-  ms.writeString(player.name);
-  packet.writeHeader(ms, OutputPacketTypes::Player);
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
-  }
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::Player));
+  serialize(*buffer, player.getId());
+  serialize(*buffer, player.name);
+  send(buffer);
 }
 
 void Room::sendPacketPlayerRemove(uint32_t playerId)
 {
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(playerId);
-  packet.writeHeader(ms, OutputPacketTypes::PlayerRemove);
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
-  }
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerRemove));
+  serialize(*buffer, playerId);
+  send(buffer);
 }
 
 void Room::sendPacketPlayerJoin(uint32_t playerId)
 {
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(playerId);
-  packet.writeHeader(ms, OutputPacketTypes::PlayerJoin);
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
-  }
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerJoin));
+  serialize(*buffer, playerId);
+  send(buffer);
 }
 
 void Room::sendPacketPlayerLeave(uint32_t playerId)
 {
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(playerId);
-  packet.writeHeader(ms, OutputPacketTypes::PlayerLeave);
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
-  }
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerLeave));
+  serialize(*buffer, playerId);
+  send(buffer);
 }
 
 void Room::sendPacketPlayerBorn(uint32_t playerId)
 {
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(playerId);
-  packet.writeHeader(ms, OutputPacketTypes::PlayerBorn);
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
-  }
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerBorn));
+  serialize(*buffer, playerId);
+  send(buffer);
 }
 
 void Room::sendPacketPlayerDead(uint32_t playerId)
 {
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(playerId);
-  packet.writeHeader(ms, OutputPacketTypes::PlayerDead);
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
-  }
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerDead));
+  serialize(*buffer, playerId);
+  send(buffer);
 }
 

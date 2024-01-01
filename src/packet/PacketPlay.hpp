@@ -1,23 +1,21 @@
 // file   : packet/PacketPlay.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef PACKET_PACKET_PLAY_HPP
-#define PACKET_PACKET_PLAY_HPP
+#ifndef THEGAME_PACKET_PACKET_PLAY_HPP
+#define THEGAME_PACKET_PACKET_PLAY_HPP
 
 #include "Packet.hpp"
 
-#include "src/geometry/Vec2D.hpp"
-
 class Player;
 
-class PacketPlay : public Packet {
+class PacketPlay {
 public:
   explicit PacketPlay(const Player& player);
 
-  void format(MemoryStream& ms);
+  void format(std::vector<char>& buffer);
 
 private:
   const Player& m_player;
 };
 
-#endif /* PACKET_PACKET_PLAY_HPP */
+#endif /* THEGAME_PACKET_PACKET_PLAY_HPP */

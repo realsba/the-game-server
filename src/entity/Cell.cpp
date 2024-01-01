@@ -4,12 +4,13 @@
 #include "Cell.hpp"
 
 #include "src/geometry/geometry.hpp"
-#include "src/MemoryStream.hpp"
 #include "src/Player.hpp"
 #include "src/Room.hpp"
 
-Cell::Cell(Room& room) :
-  room(room)
+#include "src/packet/Packet.hpp" // TODO: use correct import
+
+Cell::Cell(Room& room)
+ : room(room)
 {
   const auto& config = room.getConfig();
   resistanceRatio = config.resistanceRatio;
@@ -33,12 +34,12 @@ bool Cell::intersects(const AABB& box)
 
 void Cell::simulate(float dt)
 {
-  Vec2D resistanceForce = velocity.direction() * (radius * resistanceRatio);
+  auto resistanceForce = velocity.direction() * (radius * resistanceRatio);
   force -= resistanceForce;
-  Vec2D acceleration = force / mass;
-  Vec2D prev = velocity;
+  auto acceleration = force / mass;
+  auto prevVelocity = velocity;
   velocity += acceleration * dt;
-  if (std::fabs(1 + velocity.direction() * prev.direction()) <= 0.01) {
+  if (std::fabs(1 + velocity.direction() * prevVelocity.direction()) <= 0.01) {
     velocity.zero();
   } else {
     position += velocity * dt;
@@ -46,19 +47,19 @@ void Cell::simulate(float dt)
   force.zero();
 }
 
-void Cell::format(MemoryStream& ms)
+void Cell::format(Buffer& buffer)
 {
-  bool moving = static_cast<bool>(velocity);
-  ms.writeUInt8(type | typeNew * newly | typeMoving * moving);
-  ms.writeUInt32(id);
-  ms.writeFloat(position.x);
-  ms.writeFloat(position.y);
-  ms.writeUInt32(static_cast<uint32_t>(mass));
-  ms.writeUInt16(static_cast<uint16_t>(radius));
-  ms.writeUInt8(color);
+  auto moving = static_cast<bool>(velocity);
+  serialize(buffer, static_cast<uint8_t>(type | isNew * newly | isMoving * moving));
+  serialize(buffer, id);
+  serialize(buffer, position.x);
+  serialize(buffer, position.y);
+  serialize(buffer, static_cast<uint32_t>(mass));
+  serialize(buffer, static_cast<uint16_t>(radius));
+  serialize(buffer, color);
   if (moving) {
-    ms.writeFloat(velocity.x);
-    ms.writeFloat(velocity.y);
+    serialize(buffer, velocity.x);
+    serialize(buffer, velocity.y);
   }
 }
 

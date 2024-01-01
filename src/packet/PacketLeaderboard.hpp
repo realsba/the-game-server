@@ -1,8 +1,8 @@
 // file   : packet/PacketLeaderboard.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef PACKET_PACKET_LEADERBOARD_HPP
-#define PACKET_PACKET_LEADERBOARD_HPP
+#ifndef THEGAME_PACKET_PACKET_LEADERBOARD_HPP
+#define THEGAME_PACKET_PACKET_LEADERBOARD_HPP
 
 #include <vector>
 
@@ -10,9 +10,15 @@
 
 class Player;
 
-class PacketLeaderboard : public Packet {
+class PacketLeaderboard {
 public:
-  void format(MemoryStream& ms, const std::vector<Player*>& items, uint32_t max);
+  PacketLeaderboard(const std::vector<Player*>& items, size_t limit);
+
+  void format(std::vector<char>& buffer);
+
+private:
+  const std::vector<Player*>& m_items;
+  const size_t m_limit {0};
 };
 
-#endif /* PACKET_PACKET_LEADERBOARD_HPP */
+#endif /* THEGAME_PACKET_PACKET_LEADERBOARD_HPP */

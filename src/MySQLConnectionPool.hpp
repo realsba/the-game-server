@@ -1,8 +1,8 @@
 // file   : MySQLConnectionPool.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef MYSQL_CONNECTION_POOL_HPP
-#define MYSQL_CONNECTION_POOL_HPP
+#ifndef THEGAME_MYSQL_CONNECTION_POOL_HPP
+#define THEGAME_MYSQL_CONNECTION_POOL_HPP
 
 #include "MySQLConfig.hpp"
 
@@ -26,4 +26,4 @@ private:
   MySQLConfig m_config;
 };
 
-#endif /* MYSQL_CONNECTION_POOL_HPP */
+#endif /* THEGAME_MYSQL_CONNECTION_POOL_HPP */

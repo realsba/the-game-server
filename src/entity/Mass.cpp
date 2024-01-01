@@ -5,8 +5,8 @@
 
 #include "src/Room.hpp"
 
-Mass::Mass(Room& room) :
-  Cell(room)
+Mass::Mass(Room& room)
+ : Cell(room)
 {
   type = typeMass;
 }

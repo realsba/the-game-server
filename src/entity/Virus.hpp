@@ -1,8 +1,8 @@
 // file   : entity/Virus.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ENTITY_VIRUS_HPP
-#define ENTITY_VIRUS_HPP
+#ifndef THEGAME_ENTITY_VIRUS_HPP
+#define THEGAME_ENTITY_VIRUS_HPP
 
 #include "Cell.hpp"
 
@@ -25,4 +25,4 @@ public:
   TimePoint created {TimePoint::clock::now()};
 };
 
-#endif /* ENTITY_VIRUS_HPP */
+#endif /* THEGAME_ENTITY_VIRUS_HPP */

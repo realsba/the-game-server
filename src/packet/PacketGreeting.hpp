@@ -1,21 +1,21 @@
 // file   : packet/PacketGreeting.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef PACKET_PACKET_GREETING_HPP
-#define PACKET_PACKET_GREETING_HPP
+#ifndef THEGAME_PACKET_PACKET_GREETING_HPP
+#define THEGAME_PACKET_PACKET_GREETING_HPP
 
 #include <string>
 
 #include "Packet.hpp"
 
-class PacketGreeting : public Packet {
+class PacketGreeting {
 public:
   PacketGreeting() = default;
   explicit PacketGreeting(std::string sid);
 
-  void format(MemoryStream& ms);
+  void format(std::vector<char>& buffer);
 
   std::string sid;
 };
 
-#endif /* PACKET_PACKET_GREETING_HPP */
+#endif /* THEGAME_PACKET_PACKET_GREETING_HPP */

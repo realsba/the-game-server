@@ -1,8 +1,8 @@
 // file   : geometry/geometry.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef GEOMETRY_GEOMETRY_HPP
-#define GEOMETRY_GEOMETRY_HPP
+#ifndef THEGAME_GEOMETRY_GEOMETRY_HPP
+#define THEGAME_GEOMETRY_GEOMETRY_HPP
 
 class Circle;
 class Vec2D;
@@ -20,4 +20,4 @@ float squareDistance(const Vec2D& a, const Vec2D& b);
 
 } // namespace geometry
 
-#endif /* GEOMETRY_GEOMETRY_HPP */
+#endif /* THEGAME_GEOMETRY_GEOMETRY_HPP */

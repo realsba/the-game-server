@@ -1,6 +1,5 @@
-//
-// Created by sba <bohdan.sadovyak@gmail.com> on 10.12.23.
-//
+// file   : tests/geometry/Test_Vec2D.cpp
+// author : sba <bohdan.sadovyak@gmail.com>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -169,4 +168,3 @@ TEST_CASE("Vec2D: operator equal", "[Vec2D]")
   CHECK_FALSE(Vec2D{10, 20} == Vec2D{10, 30});
   CHECK_FALSE(Vec2D{10, 20} == Vec2D{20, 20});
 }
-

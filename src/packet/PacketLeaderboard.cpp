@@ -4,21 +4,23 @@
 #include "PacketLeaderboard.hpp"
 
 #include "OutputPacketTypes.hpp"
-#include "src/MemoryStream.hpp"
 #include "src/Player.hpp"
 
-void PacketLeaderboard::format(MemoryStream& ms, const std::vector<Player*>& items, uint32_t max)
+PacketLeaderboard::PacketLeaderboard(const std::vector<Player*>& items, size_t limit)
+  : m_items(items)
+  , m_limit(limit)
 {
-  prepareHeader(ms);
-  uint32_t count = std::min(static_cast<uint32_t>(items.size()), max);
-  ms.writeUInt8(count);
-  for (const Player* player : items) {
-    if (count == 0) {
-      break;
-    }
-    ms.writeUInt32(player->getId());
-    ms.writeUInt32(player->getMass());
-    --count;
+}
+
+void PacketLeaderboard::format(std::vector<char>& buffer)
+{
+  serialize(buffer, static_cast<uint8_t>(OutputPacketTypes::Leaderboard));
+  auto count = static_cast<uint8_t>(std::min(m_items.size(), m_limit));
+  serialize(buffer, count);
+  auto endIt = m_items.begin() + count;
+  for (auto it = m_items.begin(); it != endIt; ++it) {
+    const auto* player = *it;
+    serialize(buffer, player->getId());
+    serialize(buffer, player->getMass());
   }
-  writeHeader(ms, OutputPacketTypes::Leaderboard);
 }

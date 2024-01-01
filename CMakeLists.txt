@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.25)
 project(thegame)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 
 add_compile_definitions(
     MYSQLPP_MYSQL_HEADERS_BURIED
 )
+
+find_package(spdlog REQUIRED)
 
 add_executable(${PROJECT_NAME}
     src/entity/Avatar.cpp
@@ -50,16 +52,11 @@ add_executable(${PROJECT_NAME}
     src/FileIOError.hpp
     src/Gridmap.cpp
     src/Gridmap.hpp
-    src/Logger.cpp
-    src/Logger.hpp
-    src/MemoryStream.cpp
-    src/MemoryStream.hpp
     src/MySQLConfig.hpp
     src/MySQLConnectionPool.cpp
     src/MySQLConnectionPool.hpp
     src/NextId.cpp
     src/NextId.hpp
-    src/ObjectPool.hpp
     src/Player.cpp
     src/Player.hpp
     src/Room.cpp
@@ -78,12 +75,17 @@ add_executable(${PROJECT_NAME}
     src/UserFwd.hpp
     src/UsersCache.cpp
     src/UsersCache.hpp
-    src/WebsocketServer.hpp
     src/main.cpp
     src/types.hpp
     src/util.cpp
     src/util.hpp
     src/version.hpp
+    src/Listener.cpp
+    src/Listener.hpp
+    src/ListenerFwd.hpp
+    src/Session.cpp
+    src/Session.hpp
+    src/AsioFormatter.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -91,6 +93,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     libs/date
 )
 
-target_link_libraries(${PROJECT_NAME} log4cpp config++ mysqlpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog config++ mysqlpp)
 
 add_subdirectory(tests)

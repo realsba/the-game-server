@@ -1,45 +1,44 @@
 // file      : main.cpp
 // author    : sba <bohdan.sadovyak@gmail.com>
 
+#include "Application.hpp"
+
+#include "version.hpp"
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio.hpp>
 
-#include <log4cpp/PropertyConfigurator.hh>
+#include <spdlog/spdlog.h>
 
-#include "Application.hpp"
-#include "Logger.hpp"
-
-#include "version.hpp"
-#include "util.hpp"
-#include "MemoryStream.hpp"
-
-boost::asio::io_context                 iosMain;
-boost::asio::signal_set                 sigHup(iosMain, SIGHUP);
-boost::asio::signal_set                 sigUsr1(iosMain, SIGUSR1);
-boost::asio::signal_set                 sigUsr2(iosMain, SIGUSR2);
+asio::io_context                        iocMain;
+asio::signal_set                        sigHup{iocMain, SIGHUP};
+asio::signal_set                        sigUsr1{iocMain, SIGUSR1};
+asio::signal_set                        sigUsr2{iocMain, SIGUSR2};
 boost::posix_time::ptime                startTime;
 pid_t                                   pid;
-Application*                            application;
+std::unique_ptr<Application>            application;
 
 void showStatistic()
 {
   application->info();
-  LOG_INFO << "Uptime: " << (boost::posix_time::microsec_clock::universal_time() - startTime);
+  // TODO: implement
+  // spdlog::info("Uptime: {}", boost::posix_time::microsec_clock::universal_time() - startTime);
 }
 
+// TODO: schedule operation instead of explicit run
 void sigTermHandler(const boost::system::error_code& ec, int signal)
 {
   if (!ec) {
-    LOG_INFO << "Terminate";
+    spdlog::info("Terminate");
     application->stop();
-    iosMain.stop();
+    iocMain.stop();
   }
 }
 
 void sigHupHandler(const boost::system::error_code& ec, int signal)
 {
   if (!ec) {
-    LOG_INFO << "Reload";
+    spdlog::info("Reload");
     application->stop();
     application->start();
     sigHup.async_wait(&sigHupHandler);
@@ -49,7 +48,7 @@ void sigHupHandler(const boost::system::error_code& ec, int signal)
 void sigUsr1Handler(const boost::system::error_code& ec, int signal)
 {
   if (!ec) {
-    LOG_INFO << "Save caches";
+    spdlog::info("Save caches");
     application->save();
     sigUsr1.async_wait(&sigUsr1Handler);
   }
@@ -63,6 +62,8 @@ void sigUsr2Handler(const boost::system::error_code& ec, int signal)
   }
 }
 
+#include <boost/asio/buffer.hpp>
+
 int main(int argc, char** argv)
 {
   startTime = boost::posix_time::microsec_clock::universal_time();
@@ -70,30 +71,30 @@ int main(int argc, char** argv)
 
   std::setlocale(LC_ALL, "");
 
-  log4cpp::PropertyConfigurator::configure("log4cpp.conf");
-
-  LOG_INFO << APP_NAME << " (" << APP_VERSION << ") started. pid=" << pid;
+  spdlog::info("{} ({}) started. pid={}", APP_NAME, APP_VERSION, pid);
 
   try {
-    application = new Application("thegame.conf");
+    application = std::make_unique<Application>("thegame.conf");
 
-    boost::asio::signal_set sig(iosMain, SIGINT, SIGTERM);
+    asio::signal_set sig(iocMain, SIGINT, SIGTERM);
     sig.async_wait(&sigTermHandler);
     sigHup.async_wait(&sigHupHandler);
     sigUsr1.async_wait(&sigUsr1Handler);
     sigUsr2.async_wait(&sigUsr2Handler);
 
     application->start();
-    iosMain.run();
+    iocMain.run();
+    application->stop();
     showStatistic();
-    delete application;
   } catch (const std::exception& e) {
-    LOG_ERROR << e.what();
+    spdlog::error("Caught exception: {}", e.what());
   } catch (...) {
-    LOG_ERROR << "other exception";
+    spdlog::error("Caught an unknown exception");
   }
 
-  LOG_INFO << APP_NAME << " (" << APP_VERSION << ") stopped. pid=" << pid;
+  application.reset();
+
+  spdlog::info("{} ({}) stopped. pid={}", APP_NAME, APP_VERSION, pid);
 
   return EXIT_SUCCESS;
 }

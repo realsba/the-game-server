@@ -3,42 +3,42 @@
 
 #include "Application.hpp"
 
-#include "packet/InputPacketTypes.hpp"
 #include "packet/OutputPacketTypes.hpp"
 #include "packet/EmptyPacket.hpp"
 #include "packet/PacketGreeting.hpp"
 
-#include "MemoryStream.hpp"
+#include "AsioFormatter.hpp"
 #include "ScopeExit.hpp"
 #include "TSRoom.hpp"
-#include "Logger.hpp"
 #include "Player.hpp"
 #include "User.hpp"
 #include "util.hpp"
 
+#include <spdlog/spdlog.h>
 #include <sys/syscall.h>
+#include <fmt/chrono.h>
+
 #include <locale>
 #include <codecvt>
 #include <utility>
 
-namespace ph = std::placeholders;
-using namespace boost::asio;
+using namespace boost::asio; // TODO: ?
 
-Application::Application(std::string configFileName) :
-  m_configFileName(std::move(configFileName)),
-  m_timer(m_ioService, std::bind(&Application::update, this))
+Application::Application(std::string configFileName)
+  : m_configFileName(std::move(configFileName))
+  , m_timer(m_ioContext, std::bind_front(&Application::update, this))
 {
-  // контейнер m_handlers не захищений мютексом, після заповнення не модифікується
-  m_handlers.emplace(InputPacketTypes::Ping, std::bind(&Application::actionPing, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Greeting, std::bind(&Application::actionGreeting, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Play, std::bind(&Application::actionPlay, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Spectate, std::bind(&Application::actionSpectate, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Pointer, std::bind(&Application::actionPointer, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Eject, std::bind(&Application::actionEject, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Split, std::bind(&Application::actionSplit, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::ChatMessage, std::bind(&Application::actionChatMessage, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Watch, std::bind(&Application::actionWatch, this, ph::_1, ph::_2, ph::_3));
-  m_handlers.emplace(InputPacketTypes::Paint, std::bind(&Application::actionPaint, this, ph::_1, ph::_2, ph::_3));
+  m_listener = std::make_shared<Listener>(
+    m_ioContext,
+    tcp::endpoint{asio::ip::make_address("0.0.0.0"), 3333},
+    [this](const SessionPtr& sess)
+    {
+      sess->setMessageHandler(std::bind(&Application::sessionMessageHandler, this, _1, _2));
+      sess->setOpenHandler(std::bind(&Application::sessionOpenHandler, this, _1));
+      sess->setCloseHandler(std::bind(&Application::sessionCloseHandler, this, _1));
+      sess->run();
+    }
+  );
 }
 
 void Application::start()
@@ -59,38 +59,29 @@ void Application::start()
   m_influxdb.open(ip::udp::v4());
   m_influxdb.connect(ip::udp::endpoint(ip::address::from_string(m_config.influxdbServer), m_config.influxdbPort));
 
-  m_websocketServer.clear_error_channels(websocketpp::log::elevel::all);
-  m_websocketServer.clear_access_channels(websocketpp::log::alevel::all);
-  m_websocketServer.set_message_handler(std::bind(&Application::messageHandler, this, ph::_1, ph::_2));
-  m_websocketServer.set_open_handler(std::bind(&Application::openHandler, this, ph::_1));
-  m_websocketServer.set_close_handler(std::bind(&Application::closeHandler, this, ph::_1));
-  m_websocketServer.init_asio(&m_ioService);
-  m_websocketServer.set_reuse_addr(true);
-  m_websocketServer.set_listen_backlog(m_config.listenBacklog);
-  m_websocketServer.listen(m_config.address);
-  m_websocketServer.start_accept();
+  m_listener->run();
 
   m_timer.setInterval(m_config.updateInterval);
   m_timer.start();
 
-  LOG_INFO << "Server started. address=" << m_config.address;
+  spdlog::info("Server started. address={}", m_config.address);
 
   m_roomManager.start(m_config.roomThreads, m_config.room);
-  for (uint i = 0; i < m_config.ioServiceThreads; ++i) {
+  for (uint i = 0; i < m_config.ioContextThreads; ++i) {
     m_threads.emplace_back(
       [this]()
       {
         long int pid = syscall(SYS_gettid);
-        LOG_INFO << "Start \"IO worker\" (" << pid << ")";
+        spdlog::info("Start \"IO worker\" ({})", pid);
         while (true) {
           try {
-            m_ioService.run();
+            m_ioContext.run();
             break;
           } catch (const std::exception& e) {
-            LOG_ERROR << e.what();
+            spdlog::error("Application error: {}", e.what());
           }
         }
-        LOG_INFO << "Stop \"IO worker\" (" << pid << ")";
+        spdlog::info("Stop \"IO worker\" ({})", pid);
       }
     );
   }
@@ -107,18 +98,18 @@ void Application::stop()
   m_started = false;
 
   m_influxdb.close();
-  m_websocketServer.stop();
+  m_listener->stop();
   m_timer.stop();
 
-  m_ioService.stop();
-  for (std::thread& thread : m_threads) {
+  m_ioContext.stop();
+  for (auto& thread : m_threads) {
     thread.join();
   }
   m_threads.clear();
-  m_ioService.reset();
+  m_ioContext.reset();
   m_roomManager.stop();
 
-  LOG_INFO << "Server stopped.";
+  spdlog::info("Server stopped");
 }
 
 void Application::save()
@@ -127,143 +118,131 @@ void Application::save()
   try {
     m_users.save();
   } catch (const std::exception& e) {
-    LOG_WARN << e.what();
+    spdlog::warn("An exception occurred while saving data: {}", e.what());
   }
 }
 
 void Application::info()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  LOG_INFO << "Websocket connections: " << m_connections.size();
-  LOG_INFO << "MySQL connections: " << m_mysqlConnectionPool.size();
-  LOG_INFO << "Rooms: " << m_roomManager.size();
+  spdlog::info("Websocket sessions: {}", m_sessions.size());
+  spdlog::info("MySQL connections: {}", m_mysqlConnectionPool.size());
+  spdlog::info("Rooms: {}", m_roomManager.size());
 }
 
-void Application::openHandler(ConnectionHdl hdl)
+void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer)
 {
-  LOG_INFO << "Application::openHandler";
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_connections.emplace(hdl);
-  const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-  conn->address = conn->get_socket().remote_endpoint().address();
-  auto count = m_connections.size();
-  if (count > m_maxConnections) {
-    m_maxConnections = count;
-  }
-}
+  UserSPtr user = sess->connectionData.user; // TODO: it is not required
+  Deserializer ds{buffer};
 
-void Application::closeHandler(ConnectionHdl hdl)
-{
-  LOG_INFO << "Application::closeHandler";
-  std::lock_guard<std::mutex> lock(m_mutex);
-  if (m_connections.erase(hdl)) {
-    try {
-//      mysqlpp::Connection::thread_start();
-//      ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
-//      mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
-      uint32_t userId = 0;
-      const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
-      auto& user = conn->user;
-      if (user) {
-        userId = user->getId();
-        TSRoom* room = user->getRoom();
-        if (room) {
-          room->leave(hdl);
-        }
-        user.reset();
-      }
-//      auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
-//      query.parse();
-//      query.execute(
-//        userId,
-//        toString(conn->create),
-//        toString(SystemTimePoint::clock::now()),
-//        conn->address.to_v4().to_ulong()
-//      );
-    } catch (const std::exception& e) {
-      LOG_WARN << e.what();
-    }
-  }
-}
-
-void Application::messageHandler(ConnectionHdl hdl, WebsocketServer::message_ptr msg)
-{
-  MemoryStream ms(msg->get_payload()); // TODO: оптимізувати використання MemoryStream
-
-  WebsocketServer::connection_ptr conn;
-  UserSPtr user;
-  {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    conn = m_websocketServer.get_con_from_hdl(hdl);
-    user = conn->user;
-  }
-
-  while (ms.availableForRead()) {
-    auto type = ms.readUInt8();
-    // m_handlers ніде не модифікується, тому читаємо дані без захисту мютексом
+  while (buffer.size()) {
+    uint8_t type;
+    ds.deserialize(type);
     const auto& it = m_handlers.find(type);
     if (it == m_handlers.end()) {
-      // дана версія протоколу не дозволяє ідентифікувати межі пакетів
-      // якщо отримано неіснуючий тип пакету припиняємо обробку всієї черги пакетів
+      spdlog::warn("Received unknown message type: {}", type);
       return;
     }
     try {
       if (type != InputPacketTypes::Ping) {
-        conn->lastActivity = TimePoint::clock::now();
+        // sess->lastActivity = TimePoint::clock::now(); // TODO: implement
       }
-      it->second(user, hdl, ms);
+      it->second(user, sess, ds);
     } catch (const std::exception& e) {
-      LOG_WARN << e.what();
+      spdlog::error("Exception caught while handling message: {}", e.what());
     }
   }
 }
 
-void Application::actionPing(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::sessionOpenHandler(const SessionPtr& sess)
 {
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  EmptyPacket packet(OutputPacketTypes::Pong);
-  packet.format(ms);
-  m_websocketServer.send(hdl, ms);
+  std::lock_guard<std::mutex> lock(m_mutex);
+  m_sessions.emplace(sess);
+  //TODO: implement
+  //sess->connectionData.address = conn->get_socket().remote_endpoint().address();
+  m_maxSessions = std::max(m_maxSessions, m_sessions.size());
 }
 
-void Application::actionGreeting(const UserSPtr& current, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::sessionCloseHandler(const SessionPtr& sess)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (m_sessions.erase(sess)) {
+    try {
+// TODO: implement
+//      mysqlpp::Connection::thread_start();
+//      ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
+//      mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
+      uint32_t userId = 0;
+      auto& user = sess->connectionData.user;
+      if (user) {
+        userId = user->getId();
+        auto* room = user->getRoom();
+        if (room) {
+          room->leave(sess);
+        }
+        user.reset();
+      }
+// TODO: implement
+//      auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
+//      query.parse();
+//      query.execute(
+//        userId,
+//        fmt::to_string(conn->create),
+//        fmt::to_string(SystemTimePoint::clock::now()),
+//        conn->address.to_v4().to_ulong()
+//      );
+    } catch (const std::exception& e) {
+      spdlog::warn("An exception occurred while saving data: {}", e.what());
+    }
+  }
+}
+
+void Application::actionPing(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+{
+  const auto& buffer = std::make_shared<Buffer>(); // TODO: optimize
+  EmptyPacket packet(OutputPacketTypes::Pong);
+  packet.format(*buffer);
+  sess->send(buffer);
+}
+
+void Application::actionGreeting(const UserSPtr& current, const SessionPtr& sess, Deserializer& request)
 {
   if (current) {
     return; // user already logged in
   }
-  const auto& conn = m_websocketServer.get_con_from_hdl(hdl);
   PacketGreeting packetGreeting;
   auto sid = request.readString();
   auto user = m_users.getUserBySessId(sid);
   if (user) {
-    const auto& prevHdl = user->getConnection();
-    if (!prevHdl.expired()) {
-      TSRoom* room = user->getRoom();
-      if (room) {
-        room->leave(prevHdl);
-      }
-      websocketpp::lib::error_code ec;
-      m_websocketServer.close(prevHdl, websocketpp::close::status::normal, "New session detected", ec);
-    }
+// TODO: implement
+//    const auto& prevHdl = user->getSession();
+//    if (!prevHdl.expired()) {
+//      TSRoom* room = user->getRoom();
+//      if (room) {
+//        room->leave(prevHdl);
+//      }
+//      websocketpp::lib::error_code ec;
+//      m_websocketServer.close(prevHdl, websocketpp::close::status::normal, "New m_session detected", ec);
+//    }
   } else {
-    user = m_users.create(conn->address.to_v4().to_ulong());
+    user = m_users.create(0/*conn->address.to_v4().to_ulong()*/); // TODO: implement
     packetGreeting.sid = user->getSessId();
     ++m_registrations;
   }
-  user->setConnection(hdl);
-  conn->user = user;
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  packetGreeting.format(ms);
+  user->setSession(sess);
+  sess->connectionData.user = user;
+  auto buffer = std::make_shared<Buffer>(); // TODO: оптимізувати використання
+  packetGreeting.format(*buffer);
   TSRoom* room = user->getRoom();
   if (!room) {
     room = m_roomManager.obtain();
     user->setRoom(room);
   }
-  m_websocketServer.send(hdl, ms);
-  room->join(hdl);
+  sess->send(buffer);
+  room->join(sess);
 }
 
-void Application::actionPlay(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionPlay(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
   auto name = request.readString();
   const auto& color = request.readUInt8();
@@ -277,23 +256,23 @@ void Application::actionPlay(const UserSPtr& user, const ConnectionHdl& hdl, Mem
     }
     TSRoom* room = user->getRoom();
     if (room) {
-      room->play(hdl, name, color);
+      room->play(sess, name, color);
     }
   }
 }
 
-void Application::actionSpectate(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionSpectate(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
   auto targetId = request.readUInt32();
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
-      room->spectate(hdl, targetId);
+      room->spectate(sess, targetId);
     }
   }
 }
 
-void Application::actionPointer(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionPointer(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
   Vec2D point;
   point.x = request.readInt16();
@@ -301,12 +280,12 @@ void Application::actionPointer(const UserSPtr& user, const ConnectionHdl& hdl, 
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
-      room->pointer(hdl, point);
+      room->pointer(sess, point);
     }
   }
 }
 
-void Application::actionEject(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionEject(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
   Vec2D point;
   point.x = request.readInt16();
@@ -314,12 +293,12 @@ void Application::actionEject(const UserSPtr& user, const ConnectionHdl& hdl, Me
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
-      room->eject(hdl, point);
+      room->eject(sess, point);
     }
   }
 }
 
-void Application::actionSplit(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionSplit(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
   Vec2D point;
   point.x = request.readInt16();
@@ -327,23 +306,23 @@ void Application::actionSplit(const UserSPtr& user, const ConnectionHdl& hdl, Me
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
-      room->split(hdl, point);
+      room->split(sess, point);
     }
   }
 }
 
-void Application::actionWatch(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionWatch(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
-  uint32_t playerId = request.readInt32();
+  auto playerId = request.readUInt32();
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
-      room->watch(hdl, playerId);
+      room->watch(sess, playerId);
     }
   }
 }
 
-void Application::actionPaint(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionPaint(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
   Vec2D point;
   point.x = request.readInt16();
@@ -351,12 +330,12 @@ void Application::actionPaint(const UserSPtr& user, const ConnectionHdl& hdl, Me
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
-      room->paint(hdl, point);
+      room->paint(sess, point);
     }
   }
 }
 
-void Application::actionChatMessage(const UserSPtr& user, const ConnectionHdl& hdl, MemoryStream& request)
+void Application::actionChatMessage(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
 {
   auto text = request.readString();
   if (user) {
@@ -370,7 +349,7 @@ void Application::actionChatMessage(const UserSPtr& user, const ConnectionHdl& h
       if (wstr.length() > 128) {
         text = cv.to_bytes(wstr.substr(0, 128));
       }
-      room->chatMessage(hdl, text);
+      room->chatMessage(sess, text);
     }
   }
 }
@@ -378,25 +357,27 @@ void Application::actionChatMessage(const UserSPtr& user, const ConnectionHdl& h
 void Application::update()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  statistic();
-  checkConnections();
+  // TODO: implement
+  //statistic();
+  //checkConnections();
 }
 
-void Application::checkConnections()
-{
-  // TODO: при великій кількості з'єднань перебирати весь контейнер m_connections неефективно
-  auto endTime = TimePoint::clock::now() - m_config.connectionTTL;
-  for (const auto& it : m_connections) {
-    try {
-      const auto& conn = m_websocketServer.get_con_from_hdl(it);
-      if (conn->lastActivity <= endTime) {
-        m_websocketServer.close(it, websocketpp::close::status::normal, "Connection timed out");
-      }
-    } catch (const std::exception& e) {
-      LOG_WARN << e.what();
-    }
-  }
-}
+// TODO: implement
+//void Application::checkConnections()
+//{
+//  // TODO: при великій кількості з'єднань перебирати весь контейнер m_sessions неефективно
+//  auto endTime = TimePoint::clock::now() - m_config.connectionTTL;
+//  for (const auto& it : m_sessions) {
+//    try {
+//      const auto& conn = m_websocketServer.get_con_from_hdl(it);
+//      if (conn->lastActivity <= endTime) {
+//        m_websocketServer.close(it, websocketpp::close::status::normal, "Connection timed out");
+//      }
+//    } catch (const std::exception& e) {
+//      LOG_WARN << e.what();
+//    }
+//  }
+//}
 
 void Application::statistic()
 {
@@ -406,8 +387,8 @@ void Application::statistic()
     return;
   }
   std::stringstream ss;
-  if (m_maxConnections > 0) {
-    ss << "connections value=" << m_maxConnections << "\n";
+  if (m_maxSessions > 0) {
+    ss << "connections value=" << m_maxSessions << "\n";
   }
   if (m_registrations > 0) {
     ss << "registrations value=" << m_registrations << "\n";
@@ -424,6 +405,6 @@ void Application::statistic()
 //      LOG_WARN << e.what();
 //    }
   }
-  m_maxConnections = m_connections.size();
+  m_maxSessions = m_sessions.size();
   m_registrations = 0;
 }

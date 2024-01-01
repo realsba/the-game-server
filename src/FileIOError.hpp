@@ -1,8 +1,8 @@
 // file   : FileIOError.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef FILE_IO_ERROR_HPP
-#define FILE_IO_ERROR_HPP
+#ifndef THEGAME_FILE_IO_ERROR_HPP
+#define THEGAME_FILE_IO_ERROR_HPP
 
 #include <exception>
 #include <sstream>
@@ -28,4 +28,4 @@ private:
   std::string m_msg;
 };
 
-#endif /* FILE_IO_ERROR_HPP */
+#endif /* THEGAME_FILE_IO_ERROR_HPP */

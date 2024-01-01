@@ -5,8 +5,8 @@
 
 #include "src/Room.hpp"
 
-Virus::Virus(Room& room) :
-  Cell(room)
+Virus::Virus(Room& room)
+  : Cell(room)
 {
   type = typeVirus;
 }

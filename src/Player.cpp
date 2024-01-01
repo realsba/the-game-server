@@ -3,9 +3,9 @@
 
 #include "Player.hpp"
 
-#include "WebsocketServer.hpp"
-#include "MemoryStream.hpp"
+#include "Session.hpp"
 #include "Room.hpp"
+
 #include "entity/Cell.hpp"
 #include "entity/Avatar.hpp"
 #include "packet/Packet.hpp"
@@ -14,12 +14,12 @@
 #include <algorithm>
 #include <tuple>
 
-Player::Player(uint32_t id, WebsocketServer& wss, Room& room, Gridmap& gridmap) :
-  m_websocketServer(wss),
+Player::Player(uint32_t id, Room& room, Gridmap& gridmap) :
   m_room(room),
   m_gridmap(gridmap),
   m_id(id)
-{ }
+{
+}
 
 uint32_t Player::getId() const
 {
@@ -81,9 +81,9 @@ void Player::setPointer(const Vec2D& value)
   m_pointer = value;
 }
 
-void Player::addConnection(const ConnectionHdl& hdl)
+void Player::addConnection(const SessionPtr& sess)
 {
-  if (m_connections.emplace(hdl).second) {
+  if (m_sessions.emplace(sess).second) {
     // TODO: дані відправляться ще раз попереднім з'єднанням, бажано переробити механізм
     m_leftTopSector = nullptr;
     m_rightBottomSector = nullptr;
@@ -91,23 +91,22 @@ void Player::addConnection(const ConnectionHdl& hdl)
   }
 }
 
-void Player::removeConnection(const ConnectionHdl& hdl)
+void Player::removeConnection(const SessionPtr& sess)
 {
-  m_connections.erase(hdl);
-  // TODO: неявно визначаємо що гравцем не управляє власник
-  if (m_connections.empty()) {
+  m_sessions.erase(sess);
+  if (m_sessions.empty()) {
     m_pointer.zero();
   }
 }
 
 void Player::clearConnections()
 {
-  m_connections.clear();
+  m_sessions.clear();
 }
 
-const Connections& Player::getConnections() const
+const Sessions& Player::getSessions() const
 {
-  return m_connections;
+  return m_sessions;
 }
 
 void Player::addAvatar(Avatar* avatar)
@@ -141,7 +140,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     sectorsChanged = true;
   }
 
-  if (m_connections.empty()) {
+  if (m_sessions.empty()) {
     return;
   }
 
@@ -178,37 +177,35 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     }
   }
 
-  MemoryStream ms; // TODO: оптимізувати використання MemoryStream
-  Packet packet;
-  packet.prepareHeader(ms);
-  ms.writeUInt32(tick);
-  ms.writeFloat(m_scale);
-  ms.writeUInt16(m_syncCells.size());
+  const auto& buffer = std::make_shared<Buffer>();
+  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::Frame));
+  serialize(*buffer, tick); // TODO: remove
+  serialize(*buffer, m_scale);
+  serialize(*buffer, static_cast<uint16_t>(m_syncCells.size()));
   for (Cell* cell : m_syncCells) {
-    cell->format(ms);
+    cell->format(*buffer);
     m_visibleIds.insert(cell->id);
   }
-  ms.writeUInt16(m_removedIds.size());
+  serialize(*buffer, static_cast<uint16_t>(m_removedIds.size()));
   for (auto id : m_removedIds) {
-    ms.writeUInt32(id);
+    serialize(*buffer, id);
   }
-  ms.writeInt8(m_avatars.size());
+  serialize(*buffer, static_cast<uint8_t>(m_avatars.size()));
   for (const Avatar* avatar : m_avatars) {
-    ms.writeUInt32(avatar->id);
-    ms.writeFloat(avatar->maxSpeed);
-    ms.writeUInt32(avatar->protection);
+    serialize(*buffer, avatar->id);
+    serialize(*buffer, avatar->maxSpeed);
+    serialize(*buffer, avatar->protection);
   }
   if (arrowPlayer) {
-    ms.writeInt32(arrowPlayer->getId());
+    serialize(*buffer, arrowPlayer->getId());
     const auto& position = arrowPlayer->getPosition();
-    ms.writeFloat(position.x);
-    ms.writeFloat(position.y);
+    serialize(*buffer, position.x);
+    serialize(*buffer, position.y);
   } else {
-    ms.writeInt32(0);
+    serialize(*buffer, static_cast<std::uint32_t>(0));
   }
-  packet.writeHeader(ms, OutputPacketTypes::Frame);
-  for (auto&& hdl : m_connections) {
-    m_websocketServer.send(hdl, ms);
+  for (const auto& session : m_sessions) {
+    session->send(buffer);
   }
 
   m_syncCells.clear();
@@ -229,16 +226,18 @@ void Player::calcParams()
   const auto& config = m_room.getConfig();
   Vec2D position;
   float radius = 0;
+  float mass = 0;
   for (const Avatar* avatar : m_avatars) {
     position += avatar->position * avatar->mass;
-    m_mass += avatar->mass;
+    mass += avatar->mass;
     if (avatar->radius > radius) {
       radius = avatar->radius;
     }
   }
-  if (m_mass != 0) {
-    position /= m_mass;
+  if (mass != 0) {
+    position /= mass;
   }
+  m_mass = static_cast<uint32_t>(mass);
   if (m_mass > m_maxMass) {
     m_maxMass = m_mass;
   }

@@ -1,8 +1,8 @@
 // file   : ScopeExit.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef SCOPE_EXIT_HPP
-#define SCOPE_EXIT_HPP
+#ifndef THEGAME_SCOPE_EXIT_HPP
+#define THEGAME_SCOPE_EXIT_HPP
 
 #include <functional>
 #include <utility>
@@ -23,11 +23,11 @@ public:
 
   void cancel()
   {
-    m_handler = Handler();
+    m_handler = {};
   }
 
 private:
   Handler m_handler;
 };
 
-#endif /* SCOPE_EXIT_HPP */
+#endif /* THEGAME_SCOPE_EXIT_HPP */

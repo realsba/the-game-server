@@ -1,8 +1,8 @@
 // file   : geometry/Circle.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef GEOMETRY_CIRCLE_HPP
-#define GEOMETRY_CIRCLE_HPP
+#ifndef THEGAME_GEOMETRY_CIRCLE_HPP
+#define THEGAME_GEOMETRY_CIRCLE_HPP
 
 #include "Vec2D.hpp"
 
@@ -16,4 +16,4 @@ public:
   float radius {0};
 };
 
-#endif /* GEOMETRY_CIRCLE_HPP */
+#endif /* THEGAME_GEOMETRY_CIRCLE_HPP */

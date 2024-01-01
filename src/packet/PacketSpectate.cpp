@@ -4,18 +4,19 @@
 #include "PacketSpectate.hpp"
 
 #include "OutputPacketTypes.hpp"
-#include "src/MemoryStream.hpp"
 #include "src/Player.hpp"
 
-PacketSpectate::PacketSpectate(const Player& player) : m_player(player) { }
-
-void PacketSpectate::format(MemoryStream& ms)
+PacketSpectate::PacketSpectate(const Player& player)
+  : m_player(player)
 {
-  prepareHeader(ms);
-  ms.writeUInt32(m_player.getId());
+}
+
+void PacketSpectate::format(std::vector<char>& buffer)
+{
+  serialize(buffer, static_cast<uint8_t>(OutputPacketTypes::Spectate));
+  serialize(buffer, m_player.getId());
   const auto& position = m_player.getPosition();
-  ms.writeUInt16(static_cast<uint16_t>(position.x));
-  ms.writeUInt16(static_cast<uint16_t>(position.y));
-  ms.writeUInt32(m_player.getMaxMass());
-  writeHeader(ms, OutputPacketTypes::Spectate);
+  serialize(buffer, static_cast<uint16_t>(position.x));
+  serialize(buffer, static_cast<uint16_t>(position.y));
+  serialize(buffer, m_player.getMaxMass());
 }

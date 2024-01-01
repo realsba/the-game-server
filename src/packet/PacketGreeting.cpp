@@ -3,16 +3,12 @@
 
 #include "PacketGreeting.hpp"
 
-#include <utility>
-
 #include "OutputPacketTypes.hpp"
-#include "src/MemoryStream.hpp"
 
 PacketGreeting::PacketGreeting(std::string sid) : sid(std::move(sid)) { }
 
-void PacketGreeting::format(MemoryStream& ms)
+void PacketGreeting::format(std::vector<char>& buffer)
 {
-  prepareHeader(ms);
-  ms.writeString(sid);
-  writeHeader(ms, OutputPacketTypes::Greeting);
+  serialize(buffer, static_cast<uint8_t>(OutputPacketTypes::Greeting));
+  serialize(buffer, sid);
 }

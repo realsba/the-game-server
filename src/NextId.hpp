@@ -1,8 +1,8 @@
 // file   : NextId.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef NEXTID_HPP
-#define NEXTID_HPP
+#ifndef THEGAME_NEXT_ID_HPP
+#define THEGAME_NEXT_ID_HPP
 
 #include <cstdint>
 #include <vector>
@@ -14,10 +14,10 @@ public:
   uint32_t pop();
 
 private:
-  typedef std::stack<uint32_t, std::vector<uint32_t>> UnusedIds;
+  using UnusedIds = std::stack<uint32_t, std::vector<uint32_t>>;
 
   UnusedIds m_unusedIds;
   uint32_t  m_nextId {1};
 };
 
-#endif /* NEXTID_HPP */
+#endif /* THEGAME_NEXT_ID_HPP */

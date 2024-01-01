@@ -3,12 +3,9 @@
 
 #include "EmptyPacket.hpp"
 
-#include "src/MemoryStream.hpp"
-
 EmptyPacket::EmptyPacket(uint8_t type) : type(type) { }
 
-void EmptyPacket::format(MemoryStream& ms)
+void EmptyPacket::format(std::vector<char>& buffer)
 {
-  prepareHeader(ms);
-  writeHeader(ms, type);
+  serialize(buffer, type);
 }

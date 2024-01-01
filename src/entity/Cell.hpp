@@ -1,8 +1,8 @@
 // file   : entity/Cell.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ENTITY_CELL_HPP
-#define ENTITY_CELL_HPP
+#ifndef THEGAME_ENTITY_CELL_HPP
+#define THEGAME_ENTITY_CELL_HPP
 
 #include "src/geometry/Circle.hpp"
 
@@ -10,7 +10,10 @@
 #include <string>
 #include <set>
 
-class MemoryStream;
+// TODO: remove
+#include <memory>
+#include <vector>
+
 class Sector;
 class Player;
 class Room;
@@ -22,6 +25,10 @@ class Mass;
 class Virus;
 class Phage;
 class Mother;
+
+// TODO: remove
+using Buffer = std::vector<char>;
+using BufferPtr = std::shared_ptr<Buffer>;
 
 class Cell : public Circle {
 public:
@@ -35,7 +42,7 @@ public:
 
   virtual bool intersects(const AABB& box);
   virtual void simulate(float dt);
-  virtual void format(MemoryStream& ms);
+  virtual void format(Buffer& buffer);
 
   virtual void interact(Cell&);
   virtual void interact(Avatar&);
@@ -56,27 +63,27 @@ public:
     typePhage = 5,
     typeMother = 6,
 
-    typeNew = 64,
-    typeMoving = 128
+    isNew = 64,
+    isMoving = 128
   };
 
   std::set<Sector*> sectors;
   Sector* leftTopSector {nullptr};
   Sector* rightBottomSector {nullptr};
 
-  Vec2D     velocity;
-  Vec2D     force;
-  Room&     room;
-  Cell*     creator {nullptr};
-  Player*   player {nullptr};
-  float     mass {0};
-  float     resistanceRatio {0};
-  uint32_t  id {0};
-  uint32_t  type {0};
-  uint8_t   color {0};
-  bool      newly {true};
-  bool      zombie {false};
-  bool      materialPoint {false};
+  Vec2D             velocity;
+  Vec2D             force;
+  Room&             room;
+  Cell*             creator {nullptr};
+  Player*           player {nullptr};
+  float             mass {0};
+  float             resistanceRatio {0};
+  uint32_t          id {0};
+  uint32_t          type {0};
+  uint8_t           color {0};
+  bool              newly {true};
+  bool              zombie {false};
+  bool              materialPoint {false};
 };
 
-#endif /* ENTITY_CELL_HPP */
+#endif /* THEGAME_ENTITY_CELL_HPP */

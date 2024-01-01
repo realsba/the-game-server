@@ -2,10 +2,9 @@
 // author    : sba <bohdan.sadovyak@gmail.com>
 
 #include "Config.hpp"
-#include "Logger.hpp"
 
+#include <spdlog/spdlog.h>
 #include <libconfig.h++>
-#include <chrono>
 
 using namespace boost;
 using namespace std::chrono;
@@ -15,9 +14,10 @@ void lookupValue(const libconfig::Config& cfg, const std::string& path, std::chr
   std::string from;
   if (cfg.lookupValue(path, from)) {
     std::stringstream ss(from);
+    // TODO: implement
     //ss >> to;
   } else {
-    LOG_WARN << "Bad " << path;
+    spdlog::warn("Bad {}", path);
   }
 }
 
@@ -28,7 +28,7 @@ void lookupValue(const libconfig::Config& cfg, const std::string& path, std::chr
     std::stringstream ss(from);
     //ss >> to;
   } else {
-    LOG_WARN << "Bad " << path;
+    spdlog::warn("Bad {}", path);
   }
 }
 
@@ -36,7 +36,7 @@ template<class T>
 void lookupValue(const libconfig::Config& cfg, const std::string& path, T& value)
 {
   if (!cfg.lookupValue(path, value)) {
-    LOG_WARN << "Bad " << path << ", will be used " << value;
+    spdlog::warn("Bad {}, will be used {}", path, value);
   }
 }
 
@@ -120,30 +120,27 @@ bool Config::loadFromFile(const std::string& filename)
     lookupValue(cfg, "port", port);
     address = asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port);
     lookupValue(cfg, "listenBacklog", listenBacklog);
-    lookupValue(cfg, "ioServiceThreads", ioServiceThreads);
-    if (ioServiceThreads < 1) {
-      LOG_ERROR << "ioServiceThreads must be not less than 1";
+    lookupValue(cfg, "ioContextThreads", ioContextThreads);
+    if (ioContextThreads < 1) {
+      spdlog::error("ioContextThreads must be not less than 1");
       return false;
     }
     lookupValue(cfg, "roomThreads", roomThreads);
-    if (ioServiceThreads < 1) {
-      LOG_ERROR << "roomThreads must be not less than 1";
+    if (ioContextThreads < 1) {
+      spdlog::error("roomThreads must be not less than 1");
       return false;
     }
     lookupValue(cfg, "updateInterval", updateInterval);
     if (updateInterval == std::chrono::system_clock::duration::zero()) {
-      // TODO: implement
-      //LOG_WARN << "Bad updateInterval: " << updateInterval;
+      spdlog::warn("updateInterval should be > 0");
     }
     lookupValue(cfg, "statisticInterval", statisticInterval);
     if (statisticInterval == std::chrono::system_clock::duration::zero()) {
-      // TODO: implement
-      //LOG_WARN << "Bad statisticInterval: " << statisticInterval;
+      spdlog::warn("statisticInterval should be > 0");
     }
     lookupValue(cfg, "connectionTTL", connectionTTL);
     if (connectionTTL == std::chrono::system_clock::duration::zero()) {
-      // TODO: implement
-      //LOG_WARN << "Bad connectionTTL: " << connectionTTL;
+      spdlog::warn("connectionTTL should be > 0");
     }
 
     lookupValue(cfg, "influxdb.server", influxdbServer);
@@ -159,13 +156,11 @@ bool Config::loadFromFile(const std::string& filename)
 
     lookupValue(cfg, "room.updateInterval", room.updateInterval);
     if (room.updateInterval == std::chrono::system_clock::duration::zero()) {
-      // TODO: implement
-      //LOG_WARN << "Bad room.updateInterval: " << room.updateInterval;
+      spdlog::warn("room.updateInterval should be > 0");
     }
     lookupValue(cfg, "room.tickInterval", room.tickInterval);
     if (room.tickInterval == std::chrono::system_clock::duration::zero()) {
-      // TODO: implement
-      //LOG_WARN << "Bad room.tickInterval: " << room.tickInterval;
+      spdlog::warn("room.tickInterval should be > 0");
     }
     lookupValue(cfg, "room.simulationIterations", room.simulationIterations);
     lookupValue(cfg, "room.spawnPosTryCount", room.spawnPosTryCount);
@@ -229,7 +224,7 @@ bool Config::loadFromFile(const std::string& filename)
     lookupValue(cfg, "room.foodMaxImpulse", room.foodMaxImpulse);
     lookupValue(cfg, "room.foodResistanceRatio", room.foodResistanceRatio);
     if (room.foodMinImpulse > room.foodMaxImpulse) {
-      LOG_WARN << "room.foodMinImpulse > room.foodMaxImpulse";
+      spdlog::warn("room.foodMinImpulse > room.foodMaxImpulse");
     }
 
     lookupValue(cfg, "room.massImpulseRatio", room.massImpulseRatio);
@@ -259,16 +254,16 @@ bool Config::loadFromFile(const std::string& filename)
     lookupValue(cfg, "room.spawnPhageMass", room.spawnPhageMass);
     lookupValue(cfg, "room.spawnMotherMass", room.spawnMotherMass);
   } catch (const libconfig::FileIOException& e) {
-    LOG_ERROR << "Can't read config file \"" << filename << "\"";
+    spdlog::error("Can't read config file \"{}\"", filename);
     return false;
   } catch (const libconfig::ParseException& e) {
-    LOG_ERROR << "\"" << e.getError() << "\" in [" << filename << ":" << e.getLine() << "]";
+    spdlog::error("\"{}\" in [{}:{}]", e.getError(), filename, e.getLine());
     return false;
   } catch (const libconfig::SettingNotFoundException& e) {
-    LOG_ERROR << "Setting \"" << e.getPath() << "\" not found in file \"" << filename << "\"";
+    spdlog::error(R"(Setting "{}" not found in file "{}")", e.getPath(), filename);
     return false;
   } catch (...) {
-    LOG_ERROR << "Unexpected error in processing config file \"" << filename << "\"";
+    spdlog::error("Unexpected error in processing config file \"{}\"", filename);
     return false;
   }
 

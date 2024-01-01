@@ -1,8 +1,8 @@
 // file   : entity/Food.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ENTITY_FOOD_HPP
-#define ENTITY_FOOD_HPP
+#ifndef THEGAME_ENTITY_FOOD_HPP
+#define THEGAME_ENTITY_FOOD_HPP
 
 #include "Cell.hpp"
 
@@ -21,4 +21,4 @@ public:
   void magnetism(Avatar& avatar) override;
 };
 
-#endif /* ENTITY_FOOD_HPP */
+#endif /* THEGAME_ENTITY_FOOD_HPP */

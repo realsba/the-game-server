@@ -4,7 +4,7 @@
 #ifndef VERSION_HPP
 #define VERSION_HPP
 
-#define APP_NAME "The Game Daemon"
-#define APP_VERSION "0.3.9.371"
+#define APP_NAME "TheGame daemon"
+#define APP_VERSION "0.8.0.1"
 
 #endif /* VERSION_HPP */

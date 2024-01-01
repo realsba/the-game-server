@@ -5,20 +5,23 @@
 
 #include <utility>
 
-Timer::Timer(boost::asio::io_context& ioc) :
-  m_timer(ioc)
-{ }
+Timer::Timer(boost::asio::io_context& ioc)
+  : m_timer(ioc)
+{
+}
 
-Timer::Timer(boost::asio::io_context& ioc, Handler handler) :
-  m_timer(ioc),
-  m_handler(std::move(handler))
-{ }
+Timer::Timer(boost::asio::io_context& ioc, Handler handler)
+  : m_timer(ioc)
+  , m_handler(std::move(handler))
+{
+}
 
-Timer::Timer(boost::asio::io_context& ioc, Handler handler, const std::chrono::steady_clock::duration& interval) :
-  m_timer(ioc),
-  m_interval(interval),
-  m_handler(std::move(handler))
-{ }
+Timer::Timer(boost::asio::io_context& ioc, Handler handler, const std::chrono::steady_clock::duration& interval)
+  : m_timer(ioc)
+  , m_interval(interval)
+  , m_handler(std::move(handler))
+{
+}
 
 Timer::~Timer()
 {

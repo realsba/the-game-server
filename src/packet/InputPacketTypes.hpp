@@ -1,8 +1,8 @@
 // file   : packet/InputPacketTypes.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef PACKET_INPUT_PACKET_TYPES_HPP
-#define PACKET_INPUT_PACKET_TYPES_HPP
+#ifndef THEGAME_PACKET_INPUT_PACKET_TYPES_HPP
+#define THEGAME_PACKET_INPUT_PACKET_TYPES_HPP
 
 struct InputPacketTypes {
   enum {
@@ -19,4 +19,4 @@ struct InputPacketTypes {
   };
 };
 
-#endif /* PACKET_INPUT_PACKET_TYPES_HPP */
+#endif /* THEGAME_PACKET_INPUT_PACKET_TYPES_HPP */

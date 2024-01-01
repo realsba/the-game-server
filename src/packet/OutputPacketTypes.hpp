@@ -1,8 +1,8 @@
 // file   : packet/OutputPacketTypes.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef PACKET_OUTPUT_PACKET_TYPES_HPP
-#define PACKET_OUTPUT_PACKET_TYPES_HPP
+#ifndef THEGAME_PACKET_OUTPUT_PACKET_TYPES_HPP
+#define THEGAME_PACKET_OUTPUT_PACKET_TYPES_HPP
 
 struct OutputPacketTypes {
   enum {
@@ -24,4 +24,4 @@ struct OutputPacketTypes {
   };
 };
 
-#endif /* PACKET_OUTPUT_PACKET_TYPES_HPP */
+#endif /* THEGAME_PACKET_OUTPUT_PACKET_TYPES_HPP */

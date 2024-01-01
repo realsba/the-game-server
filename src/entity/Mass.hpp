@@ -1,8 +1,8 @@
 // file   : entity/Mass.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ENTITY_MASS_HPP
-#define ENTITY_MASS_HPP
+#ifndef THEGAME_ENTITY_MASS_HPP
+#define THEGAME_ENTITY_MASS_HPP
 
 #include "Cell.hpp"
 
@@ -20,4 +20,4 @@ public:
   bool isAttractive(const Avatar& avatar) override;
 };
 
-#endif /* ENTITY_MASS_HPP */
+#endif /* THEGAME_ENTITY_MASS_HPP */

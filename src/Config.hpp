@@ -1,8 +1,8 @@
 // file      : Config.hpp
 // author    : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef CONFIG_HPP
-#define CONFIG_HPP
+#ifndef THEGAME_CONFIG_HPP
+#define THEGAME_CONFIG_HPP
 
 #include "MySQLConfig.hpp"
 #include "RoomConfig.hpp"
@@ -22,7 +22,7 @@ public:
   std::chrono::seconds statisticInterval {std::chrono::minutes(1)};
   std::chrono::seconds connectionTTL {std::chrono::minutes(1)};
   uint listenBacklog {1024};
-  uint ioServiceThreads {1};
+  uint ioContextThreads {1};
   uint roomThreads {2};
 
   std::string influxdbServer;
@@ -32,4 +32,4 @@ public:
   RoomConfig room;
 };
 
-#endif /* CONFIG_HPP */
+#endif /* THEGAME_CONFIG_HPP */

@@ -3,9 +3,10 @@
 
 #include "TSRoom.hpp"
 
-TSRoom::TSRoom(uint32_t id, WebsocketServer& wss) :
-  m_impl(id, wss)
-{ }
+TSRoom::TSRoom(uint32_t id)
+  : m_impl(id)
+{
+}
 
 uint32_t TSRoom::getId() const
 {
@@ -25,64 +26,64 @@ bool TSRoom::hasFreeSpace() const
   return m_impl.hasFreeSpace();
 }
 
-void TSRoom::join(const ConnectionHdl& hdl)
+void TSRoom::join(const SessionPtr& sess)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.join(hdl);
+  m_impl.join(sess);
 }
 
-void TSRoom::leave(const ConnectionHdl& hdl)
+void TSRoom::leave(const SessionPtr& sess)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.leave(hdl);
+  m_impl.leave(sess);
 }
 
-void TSRoom::play(const ConnectionHdl& hdl, const std::string& name, uint8_t color)
+void TSRoom::play(const SessionPtr& sess, const std::string& name, uint8_t color)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.play(hdl, name, color);
+  m_impl.play(sess, name, color);
 }
 
-void TSRoom::spectate(const ConnectionHdl& hdl, uint32_t targetId)
+void TSRoom::spectate(const SessionPtr& sess, uint32_t targetId)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.spectate(hdl, targetId);
+  m_impl.spectate(sess, targetId);
 }
 
-void TSRoom::pointer(const ConnectionHdl& hdl, const Vec2D& point)
+void TSRoom::pointer(const SessionPtr& sess, const Vec2D& point)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.pointer(hdl, point);
+  m_impl.pointer(sess, point);
 }
 
-void TSRoom::eject(const ConnectionHdl& hdl, const Vec2D& point)
+void TSRoom::eject(const SessionPtr& sess, const Vec2D& point)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.eject(hdl, point);
+  m_impl.eject(sess, point);
 }
 
-void TSRoom::split(const ConnectionHdl& hdl, const Vec2D& point)
+void TSRoom::split(const SessionPtr& sess, const Vec2D& point)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.split(hdl, point);
+  m_impl.split(sess, point);
 }
 
-void TSRoom::chatMessage(const ConnectionHdl& hdl, const std::string& text)
+void TSRoom::chatMessage(const SessionPtr& sess, const std::string& text)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.chatMessage(hdl, text);
+  m_impl.chatMessage(sess, text);
 }
 
-void TSRoom::watch(const ConnectionHdl& hdl, uint32_t playerId)
+void TSRoom::watch(const SessionPtr& sess, uint32_t playerId)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.watch(hdl, playerId);
+  m_impl.watch(sess, playerId);
 }
 
-void TSRoom::paint(const ConnectionHdl& hdl, const Vec2D& point)
+void TSRoom::paint(const SessionPtr& sess, const Vec2D& point)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.paint(hdl, point);
+  m_impl.paint(sess, point);
 }
 
 void TSRoom::update()

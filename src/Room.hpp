@@ -1,9 +1,10 @@
 // file   : Room.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef ROOM_HPP
-#define ROOM_HPP
+#ifndef THEGAME_ROOM_HPP
+#define THEGAME_ROOM_HPP
 
+#include "SessionFwd.hpp"
 #include "RoomConfig.hpp"
 #include "TimePoint.hpp"
 #include "Gridmap.hpp"
@@ -11,13 +12,13 @@
 #include "types.hpp"
 #include "entity/Avatar.hpp"
 
+#include <utility>
 #include <random>
 #include <vector>
 #include <list>
 #include <map>
 #include <set>
 
-class WebsocketServer;
 class Player;
 class Avatar;
 class Food;
@@ -27,7 +28,13 @@ class Phage;
 class Mother;
 
 struct ChatMessage {
-  ChatMessage(uint32_t authorId, const std::string& author, const std::string& text) : text(text), author(author), authorId(authorId) { }
+  ChatMessage(uint32_t authorId, std::string author, std::string text)
+    : text(std::move(text))
+    , author(std::move(author))
+    , authorId(authorId)
+  {
+  }
+
   std::string text;
   std::string author;
   uint32_t authorId;
@@ -35,7 +42,7 @@ struct ChatMessage {
 
 class Room {
 public:
-  Room(uint32_t id, WebsocketServer& wss);
+  explicit Room(uint32_t id);
   ~Room();
 
   uint32_t getId() const;
@@ -44,16 +51,16 @@ public:
 
   const RoomConfig& getConfig() const;
 
-  void join(const ConnectionHdl& hdl);
-  void leave(const ConnectionHdl& hdl);
-  void play(const ConnectionHdl& hdl, const std::string& name, uint8_t color);
-  void spectate(const ConnectionHdl& hdl, uint32_t targetId);
-  void pointer(const ConnectionHdl& hdl, const Vec2D& point);
-  void eject(const ConnectionHdl& hdl, const Vec2D& point);
-  void split(const ConnectionHdl& hdl, const Vec2D& point);
-  void chatMessage(const ConnectionHdl& hdl, const std::string& text);
-  void watch(const ConnectionHdl& hdl, uint32_t playerId);
-  void paint(const ConnectionHdl& hdl, const Vec2D& point);
+  void join(const SessionPtr& sess);
+  void leave(const SessionPtr& sess);
+  void play(const SessionPtr& sess, const std::string& name, uint8_t color);
+  void spectate(const SessionPtr& sess, uint32_t targetId);
+  void pointer(const SessionPtr& sess, const Vec2D& point);
+  void eject(const SessionPtr& sess, const Vec2D& point);
+  void split(const SessionPtr& sess, const Vec2D& point);
+  void chatMessage(const SessionPtr& sess, const std::string& text);
+  void watch(const SessionPtr& sess, uint32_t playerId);
+  void paint(const SessionPtr& sess, const Vec2D& point);
 
   void interact(Avatar& avatar1, Avatar& avatar2);
   void interact(Avatar& avatar, Food& food);
@@ -117,6 +124,7 @@ private:
   void spawnPhages(uint32_t count);
   void spawnMothers(uint32_t count);
 
+  void send(const BufferPtr& buffer);
   void sendPacketPlayer(const Player& player);
   void sendPacketPlayerRemove(uint32_t playerId);
   void sendPacketPlayerJoin(uint32_t playerId);
@@ -125,15 +133,14 @@ private:
   void sendPacketPlayerDead(uint32_t playerId);
 
 private:
-  typedef std::map<ConnectionHdl, Vec2D, std::owner_less<ConnectionHdl>> RequestsMap;
+  using RequestsMap = std::map<SessionPtr, Vec2D>;
 
   mutable std::random_device m_generator;
 
   uint32_t                    m_id {0};
-  WebsocketServer&            m_websocketServer;
   RoomConfig                  m_config;
   Gridmap                     m_gridmap;
-  Connections                 m_connections;
+  Sessions                    m_sessions;
   std::map<uint32_t, Player*> m_players;
   std::set<Player*>           m_fighters;
   std::set<Player*>           m_zombiePlayers;
@@ -165,8 +172,6 @@ private:
   std::set<Cell*>             m_forCheckRandomPos;
   std::list<ChatMessage>      m_chatHistory;
 
-  std::map<uint32_t, uint32_t> m_tiles; // TODO: not used
-
   TimePoint m_lastUpdate {TimePoint::clock::now()};
 
   uint32_t  m_tick {0};
@@ -176,7 +181,6 @@ private:
   uint32_t  m_lastCheckMothers {0};
   uint32_t  m_lastMothersProduce {0};
   float     m_mass {0};
-  float     m_time {0};
   float     m_tickInterval {0.05};
   float     m_simulationInterval {0.01};
   float     m_accumulatedFoodMass {0};
@@ -186,4 +190,4 @@ private:
   bool      m_updateLeaderboard {false};
 };
 
-#endif /* ROOM_HPP */
+#endif /* THEGAME_ROOM_HPP */

@@ -1,6 +1,5 @@
-//
-// Created by sba <bohdan.sadovyak@gmail.com> on 10.12.23.
-//
+// file   : tests/geometry/Test_AABB.cpp
+// author : sba <bohdan.sadovyak@gmail.com>
 
 #include <catch2/catch_test_macros.hpp>
 

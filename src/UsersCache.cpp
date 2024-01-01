@@ -6,6 +6,7 @@
 #include "ScopeExit.hpp"
 #include "util.hpp"
 
+#include <fmt/chrono.h>
 #include <mysql++/ssqls.h>
 
 sql_create_3(DboUserCreate, 1, 0,
@@ -56,7 +57,6 @@ void UsersCache::save()
     orig.id = item->getId();
     dbo.id = orig.id;
     dbo.sessId = item->getSessId();
-    // TODO: наразі нічого зберігати, згодом зберігати потрібні поля юзера
     query.update(orig, dbo);
     query.execute();
   }
@@ -67,7 +67,7 @@ UserSPtr UsersCache::create(uint32_t ip)
   std::lock_guard<std::mutex> lock(m_mutex);
   auto& ind = m_items.get<BySessId>();
   DboUserCreate dbo;
-  dbo.created = mysqlpp::String(toString(std::chrono::system_clock::now()));
+  dbo.created = mysqlpp::String(fmt::to_string(std::chrono::system_clock::now()));
   uint32_t id = 0;
   mysqlpp::Connection::thread_start();
   ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
@@ -115,7 +115,7 @@ UserSPtr UsersCache::getUserById(uint32_t id)
     }
     return user;
   }
-  return UserSPtr();
+  return {};
 }
 
 UserSPtr UsersCache::getUserBySessId(const std::string& sid)
@@ -142,5 +142,5 @@ UserSPtr UsersCache::getUserBySessId(const std::string& sid)
     }
     return user;
   }
-  return UserSPtr();
+  return {};
 }

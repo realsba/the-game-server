@@ -1,8 +1,8 @@
 // file   : UsersCache.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef USERS_CACHE_HPP
-#define USERS_CACHE_HPP
+#ifndef THEGAME_USERS_CACHE_HPP
+#define THEGAME_USERS_CACHE_HPP
 
 #include "MySQLConnectionPool.hpp"
 #include "TimePoint.hpp"
@@ -21,13 +21,11 @@
 
 class UsersCache {
 public:
-  UsersCache(MySQLConnectionPool& pool);
+  explicit UsersCache(MySQLConnectionPool& pool);
 
   void setTtl(const Duration& v);
   Duration getTtl() const;
   void save();
-  void flush();
-  void clear();
 
   UserSPtr create(uint32_t ip);
   UserSPtr getUserById(uint32_t id);
@@ -38,7 +36,7 @@ protected:
   struct BySessId { };
   struct ByLastAccess { };
 
-  typedef boost::multi_index::multi_index_container<
+  using Items = boost::multi_index::multi_index_container<
     UserSPtr,
     boost::multi_index::indexed_by<
       boost::multi_index::ordered_unique<
@@ -54,13 +52,13 @@ protected:
         boost::multi_index::const_mem_fun<User, TimePoint, &User::getLastAccess>
       >
     >
-  > Items;
+  >;
 
 protected:
-  MySQLConnectionPool& m_mysqlConnectionPool;
-  mutable std::mutex m_mutex;
-  Items m_items;
-  Duration m_ttl;
+  MySQLConnectionPool&          m_mysqlConnectionPool;
+  mutable std::mutex            m_mutex;
+  Items                         m_items;
+  Duration                      m_ttl;
 };
 
-#endif /* USERS_CACHE_HPP */
+#endif /* THEGAME_USERS_CACHE_HPP */

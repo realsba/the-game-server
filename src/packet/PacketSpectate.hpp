@@ -1,8 +1,8 @@
 // file   : packet/PacketSpectate.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef PACKET_PACKET_SPECTATE_HPP
-#define PACKET_PACKET_SPECTATE_HPP
+#ifndef THEGAME_PACKET_PACKET_SPECTATE_HPP
+#define THEGAME_PACKET_PACKET_SPECTATE_HPP
 
 #include "Packet.hpp"
 
@@ -10,14 +10,14 @@
 
 class Player;
 
-class PacketSpectate : public Packet {
+class PacketSpectate {
 public:
   explicit PacketSpectate(const Player& player);
 
-  void format(MemoryStream& ms);
+  void format(std::vector<char>& buffer);
 
 private:
   const Player& m_player;
 };
 
-#endif /* PACKET_PACKET_SPECTATE_HPP */
+#endif /* THEGAME_PACKET_PACKET_SPECTATE_HPP */

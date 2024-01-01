@@ -1,10 +1,11 @@
 // file   : User.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef USER_HPP
-#define USER_HPP
+#ifndef THEGAME_USER_HPP
+#define THEGAME_USER_HPP
 
 #include "UserFwd.hpp"
+#include "SessionFwd.hpp"
 #include "TimePoint.hpp"
 #include "types.hpp"
 
@@ -22,8 +23,8 @@ public:
   TimePoint getLastAccess() const;
   bool isModified() const;
 
-  ConnectionHdl getConnection() const;
-  void setConnection(const ConnectionHdl& hdl);
+  SessionPtr getSession() const;
+  void setSession(const SessionPtr& sess);
 
   TSRoom* getRoom() const;
   void setRoom(TSRoom* room);
@@ -41,7 +42,7 @@ private:
 private:
   mutable std::mutex m_mutex;
 
-  ConnectionHdl m_connection;
+  SessionPtr    m_session;
   std::string   m_sessId;
   std::string   m_name;
   TimePoint     m_lastAccess {TimePoint::clock::now()};
@@ -53,4 +54,4 @@ private:
   friend class UsersCache;
 };
 
-#endif /* USER_HPP */
+#endif /* THEGAME_USER_HPP */

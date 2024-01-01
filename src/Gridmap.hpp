@@ -1,15 +1,15 @@
 // file   : Gridmap.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef GRIDMAP_HPP
-#define GRIDMAP_HPP
+#ifndef THEGAME_GRIDMAP_HPP
+#define THEGAME_GRIDMAP_HPP
+
+#include "geometry/AABB.hpp"
 
 #include <cstdint>
 #include <functional>
 #include <vector>
 #include <set>
-
-#include "geometry/AABB.hpp"
 
 class Cell;
 
@@ -21,7 +21,7 @@ struct Sector {
 
 class Gridmap {
 public:
-  typedef std::function<bool(Cell&)> Handler;
+  using Handler = std::function<bool(Cell&)>;
 
   void resize(uint32_t width, uint32_t height, uint8_t power);
   AABB clip(const AABB& box) const;
@@ -41,8 +41,7 @@ private:
   uint32_t  m_height {0};
   uint32_t  m_rowCount {0};
   uint32_t  m_colCount {0};
-  uint32_t  m_queryStamp {0};
   uint8_t   m_power {0};
 };
 
-#endif /* GRIDMAP_HPP */
+#endif /* THEGAME_GRIDMAP_HPP */

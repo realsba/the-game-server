@@ -1,13 +1,12 @@
 // file   : UserFwd.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef USERFWD_HPP
-#define USERFWD_HPP
+#ifndef THEGAME_USER_FWD_HPP
+#define THEGAME_USER_FWD_HPP
 
 #include <memory>
 
 class User;
-typedef std::shared_ptr<User> UserSPtr;
-typedef std::weak_ptr<User> UserWPtr;
+using UserSPtr = std::shared_ptr<User>;
 
-#endif /* USERFWD_HPP */
+#endif /* THEGAME_USER_FWD_HPP */

@@ -1,8 +1,8 @@
 // file   : geometry/AABB.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef GEOMETRY_AABB_HPP
-#define GEOMETRY_AABB_HPP
+#ifndef THEGAME_GEOMETRY_AABB_HPP
+#define THEGAME_GEOMETRY_AABB_HPP
 
 #include "Vec2D.hpp"
 
@@ -25,4 +25,4 @@ private:
   friend std::ostream& operator<<(std::ostream& os, const AABB& obj);
 };
 
-#endif /* GEOMETRY_AABB_HPP */
+#endif /* THEGAME_GEOMETRY_AABB_HPP */

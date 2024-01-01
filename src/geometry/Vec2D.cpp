@@ -10,7 +10,7 @@ Vec2D::Vec2D(float x, float y) : x(x), y(y) { }
 
 Vec2D Vec2D::direction() const
 {
-  Vec2D temp(*this);
+  auto temp(*this);
   temp.normalize();
   return temp;
 }

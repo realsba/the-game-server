@@ -1,14 +1,14 @@
 // file   : TimePoint.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef TIME_POINT_HPP
-#define TIME_POINT_HPP
+#ifndef THEGAME_TIME_POINT_HPP
+#define THEGAME_TIME_POINT_HPP
 
 #include <chrono>
 
-typedef std::chrono::steady_clock::time_point TimePoint;
-typedef std::chrono::steady_clock::duration Duration;
+using TimePoint = std::chrono::steady_clock::time_point;
+using Duration = std::chrono::steady_clock::duration;
 
-typedef std::chrono::system_clock::time_point SystemTimePoint;
+using SystemTimePoint = std::chrono::system_clock::time_point;
 
-#endif /* TIME_POINT_HPP */
+#endif /* THEGAME_TIME_POINT_HPP */

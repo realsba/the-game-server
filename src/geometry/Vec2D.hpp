@@ -1,8 +1,8 @@
 // file   : geometry/Vec2D.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef GEOMETRY_VEC2D_HPP
-#define GEOMETRY_VEC2D_HPP
+#ifndef THEGAME_GEOMETRY_VEC2D_HPP
+#define THEGAME_GEOMETRY_VEC2D_HPP
 
 #include <iosfwd>
 
@@ -44,4 +44,4 @@ private:
 bool operator<(const Vec2D& a, const Vec2D& b);
 bool operator>(const Vec2D& a, const Vec2D& b);
 
-#endif /* GEOMETRY_VEC2D_HPP */
+#endif /* THEGAME_GEOMETRY_VEC2D_HPP */

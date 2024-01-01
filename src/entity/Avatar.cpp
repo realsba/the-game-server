@@ -3,9 +3,10 @@
 
 #include "Avatar.hpp"
 
-#include "src/MemoryStream.hpp"
 #include "src/Player.hpp"
 #include "src/Room.hpp"
+
+#include "src/packet/Packet.hpp" // TODO: use correct import
 
 Avatar::Avatar(Room& room) :
   Cell(room)
@@ -25,21 +26,21 @@ void Avatar::simulate(float dt)
   }
 }
 
-void Avatar::format(MemoryStream& ms)
+void Avatar::format(Buffer& buffer)
 {
-  bool moving = static_cast<bool>(velocity);
-  ms.writeUInt8(type | typeNew * newly | typeMoving * moving);
-  ms.writeUInt32(id);
-  ms.writeFloat(position.x);
-  ms.writeFloat(position.y);
-  ms.writeUInt32(static_cast<uint32_t>(mass));
-  ms.writeUInt16(static_cast<uint16_t>(radius));
-  ms.writeUInt8(color);
-  ms.writeUInt32(player->getId());
-  // ms.writeUInt32(protection);
+  auto moving = static_cast<bool>(velocity);
+  serialize(buffer, static_cast<uint8_t>(type | isNew * newly | isMoving * moving));
+  serialize(buffer, id);
+  serialize(buffer, position.x);
+  serialize(buffer, position.y);
+  serialize(buffer, static_cast<uint32_t>(mass));
+  serialize(buffer, static_cast<uint16_t>(radius));
+  serialize(buffer, color);
+  serialize(buffer, player->getId());
+  // serialize(buffer, protection);  // TODO: have a look
   if (moving) {
-    ms.writeFloat(velocity.x);
-    ms.writeFloat(velocity.y);
+    serialize(buffer, velocity.x);
+    serialize(buffer, velocity.y);
   }
 }
 
