@@ -25,11 +25,11 @@ class Player;
 
 // TODO: забезпечити потокобезпечне використання user, player, observable
 struct ConnectionData {
-  SystemTimePoint   created {SystemTimePoint::clock::now()};
-  TimePoint         lastActivity {TimePoint::clock::now()};
-  UserPtr           user {nullptr};
-  Player*           player {nullptr};
-  Player*           observable {nullptr};
+  const SystemTimePoint created {SystemTimePoint::clock::now()};
+  TimePoint             lastActivity {TimePoint::clock::now()};
+  UserPtr               user {nullptr};
+  Player*               player {nullptr};
+  Player*               observable {nullptr};
 };
 
 class Session : public std::enable_shared_from_this<Session>

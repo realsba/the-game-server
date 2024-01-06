@@ -60,8 +60,8 @@ public:
   };
 
   std::set<Sector*> sectors;
-  Sector* leftTopSector {nullptr};
-  Sector* rightBottomSector {nullptr};
+  Sector*           leftTopSector {nullptr};
+  Sector*           rightBottomSector {nullptr};
 
   Vec2D             velocity;
   Vec2D             force;

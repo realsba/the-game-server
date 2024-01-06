@@ -132,7 +132,7 @@ void Application::info()
 
 void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer)
 {
-  UserPtr user = sess->connectionData.user;
+  auto user = sess->connectionData.user;
 
   while (buffer.size()) {
     auto type = deserialize<uint8_t>(buffer);

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
-project(thegame)
+
+project(thegame LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -7,9 +8,14 @@ add_compile_definitions(
     MYSQLPP_MYSQL_HEADERS_BURIED
 )
 
+find_package(Boost REQUIRED COMPONENTS headers)
+find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(spdlog REQUIRED)
 
 add_executable(${PROJECT_NAME}
+    src/boost_asio.cpp
+    src/boost_mysql.cpp
     src/entity/Avatar.cpp
     src/entity/Avatar.hpp
     src/entity/Cell.cpp
@@ -85,11 +91,16 @@ add_executable(${PROJECT_NAME}
     src/Session.hpp
     src/AsioFormatter.hpp
 )
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Boost::headers Threads::Threads OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog config++ mysqlpp
+)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    BOOST_ASIO_SEPARATE_COMPILATION
+    BOOST_MYSQL_SEPARATE_COMPILATION
+)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}"
 )
-
-target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog config++ mysqlpp)
 
 add_subdirectory(tests)
