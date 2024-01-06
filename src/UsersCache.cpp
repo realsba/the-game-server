@@ -53,7 +53,7 @@ void UsersCache::save()
   mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
   auto query = db->query();
   DboUser orig, dbo;
-  for (const UserSPtr& item : m_items) {
+  for (const UserPtr& item : m_items) {
     orig.id = item->getId();
     dbo.id = orig.id;
     dbo.sessId = item->getSessId();
@@ -62,7 +62,7 @@ void UsersCache::save()
   }
 }
 
-UserSPtr UsersCache::create(uint32_t ip)
+UserPtr UsersCache::create(uint32_t ip)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   auto& ind = m_items.get<BySessId>();
@@ -92,7 +92,7 @@ UserSPtr UsersCache::create(uint32_t ip)
   return user;
 }
 
-UserSPtr UsersCache::getUserById(uint32_t id)
+UserPtr UsersCache::getUserById(uint32_t id)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   const auto& it = m_items.find(id);
@@ -118,7 +118,7 @@ UserSPtr UsersCache::getUserById(uint32_t id)
   return {};
 }
 
-UserSPtr UsersCache::getUserBySessId(const std::string& sid)
+UserPtr UsersCache::getUserBySessId(const std::string& sid)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   auto& ind = m_items.get<BySessId>();

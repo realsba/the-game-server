@@ -4,6 +4,8 @@
 #include "PacketSpectate.hpp"
 
 #include "OutputPacketTypes.hpp"
+#include "serialization.hpp"
+
 #include "src/Player.hpp"
 
 PacketSpectate::PacketSpectate(const Player& player)
@@ -11,7 +13,7 @@ PacketSpectate::PacketSpectate(const Player& player)
 {
 }
 
-void PacketSpectate::format(std::vector<char>& buffer)
+void PacketSpectate::format(Buffer& buffer)
 {
   serialize(buffer, static_cast<uint8_t>(OutputPacketTypes::Spectate));
   serialize(buffer, m_player.getId());

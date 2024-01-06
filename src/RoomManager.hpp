@@ -4,7 +4,7 @@
 #ifndef THEGAME_ROOM_MANAGER_HPP
 #define THEGAME_ROOM_MANAGER_HPP
 
-#include "RoomConfig.hpp"
+#include "Config.hpp"
 
 #include <boost/asio.hpp>
 

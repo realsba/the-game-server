@@ -4,13 +4,13 @@
 #include "Cell.hpp"
 
 #include "src/geometry/geometry.hpp"
+#include "src/packet/serialization.hpp"
+
 #include "src/Player.hpp"
 #include "src/Room.hpp"
 
-#include "src/packet/Packet.hpp" // TODO: use correct import
-
 Cell::Cell(Room& room)
- : room(room)
+  : room(room)
 {
   const auto& config = room.getConfig();
   resistanceRatio = config.resistanceRatio;

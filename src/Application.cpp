@@ -22,8 +22,6 @@
 #include <codecvt>
 #include <utility>
 
-using namespace boost::asio; // TODO: ?
-
 Application::Application(std::string configFileName)
   : m_configFileName(std::move(configFileName))
   , m_timer(m_ioContext, std::bind_front(&Application::update, this))
@@ -56,8 +54,10 @@ void Application::start()
   }
 
   m_mysqlConnectionPool.init(m_config.mysql);
-  m_influxdb.open(ip::udp::v4());
-  m_influxdb.connect(ip::udp::endpoint(ip::address::from_string(m_config.influxdbServer), m_config.influxdbPort));
+  m_influxdb.open(asio::ip::udp::v4());
+  m_influxdb.connect(
+    asio::ip::udp::endpoint(asio::ip::address::from_string(m_config.influxdbServer), m_config.influxdbPort)
+  );
 
   m_listener->run();
 
@@ -132,12 +132,10 @@ void Application::info()
 
 void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer)
 {
-  UserSPtr user = sess->connectionData.user; // TODO: it is not required
-  Deserializer ds{buffer};
+  UserPtr user = sess->connectionData.user;
 
   while (buffer.size()) {
-    uint8_t type;
-    ds.deserialize(type);
+    auto type = deserialize<uint8_t>(buffer);
     const auto& it = m_handlers.find(type);
     if (it == m_handlers.end()) {
       spdlog::warn("Received unknown message type: {}", type);
@@ -145,9 +143,9 @@ void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buff
     }
     try {
       if (type != InputPacketTypes::Ping) {
-        // sess->lastActivity = TimePoint::clock::now(); // TODO: implement
+        sess->connectionData.lastActivity = TimePoint::clock::now();
       }
-      it->second(user, sess, ds);
+      it->second(user, sess, buffer);
     } catch (const std::exception& e) {
       spdlog::error("Exception caught while handling message: {}", e.what());
     }
@@ -158,8 +156,6 @@ void Application::sessionOpenHandler(const SessionPtr& sess)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   m_sessions.emplace(sess);
-  //TODO: implement
-  //sess->connectionData.address = conn->get_socket().remote_endpoint().address();
   m_maxSessions = std::max(m_maxSessions, m_sessions.size());
 }
 
@@ -168,10 +164,9 @@ void Application::sessionCloseHandler(const SessionPtr& sess)
   std::lock_guard<std::mutex> lock(m_mutex);
   if (m_sessions.erase(sess)) {
     try {
-// TODO: implement
-//      mysqlpp::Connection::thread_start();
-//      ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
-//      mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
+      mysqlpp::Connection::thread_start();
+      ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
+      mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
       uint32_t userId = 0;
       auto& user = sess->connectionData.user;
       if (user) {
@@ -182,56 +177,51 @@ void Application::sessionCloseHandler(const SessionPtr& sess)
         }
         user.reset();
       }
-// TODO: implement
-//      auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
-//      query.parse();
-//      query.execute(
-//        userId,
-//        fmt::to_string(conn->create),
-//        fmt::to_string(SystemTimePoint::clock::now()),
-//        conn->address.to_v4().to_ulong()
-//      );
+      auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
+      query.parse();
+      query.execute(
+        userId,
+        fmt::to_string(sess->connectionData.created),
+        fmt::to_string(SystemTimePoint::clock::now()),
+        sess->getRemoteEndpoint().address().to_v4().to_ulong()
+      );
     } catch (const std::exception& e) {
       spdlog::warn("An exception occurred while saving data: {}", e.what());
     }
   }
 }
 
-void Application::actionPing(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionPing(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
-  const auto& buffer = std::make_shared<Buffer>(); // TODO: optimize
+  const auto& buffer = std::make_shared<Buffer>();
   EmptyPacket packet(OutputPacketTypes::Pong);
   packet.format(*buffer);
   sess->send(buffer);
 }
 
-void Application::actionGreeting(const UserSPtr& current, const SessionPtr& sess, Deserializer& request)
+void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess, beast::flat_buffer& request)
 {
   if (current) {
     return; // user already logged in
   }
   PacketGreeting packetGreeting;
-  auto sid = request.readString();
+  auto sid = deserialize<std::string>(request);
   auto user = m_users.getUserBySessId(sid);
   if (user) {
-// TODO: implement
-//    const auto& prevHdl = user->getSession();
-//    if (!prevHdl.expired()) {
-//      TSRoom* room = user->getRoom();
-//      if (room) {
-//        room->leave(prevHdl);
-//      }
-//      websocketpp::lib::error_code ec;
-//      m_websocketServer.close(prevHdl, websocketpp::close::status::normal, "New m_session detected", ec);
-//    }
+    const auto& prevSession = user->getSession();
+    TSRoom* room = user->getRoom();
+    if (room) {
+      room->leave(prevSession);
+    }
+    // prevSession->close(); // TODO: implement
   } else {
-    user = m_users.create(0/*conn->address.to_v4().to_ulong()*/); // TODO: implement
+    user = m_users.create(sess->getRemoteEndpoint().address().to_v4().to_ulong());
     packetGreeting.sid = user->getSessId();
     ++m_registrations;
   }
   user->setSession(sess);
   sess->connectionData.user = user;
-  auto buffer = std::make_shared<Buffer>(); // TODO: оптимізувати використання
+  const auto& buffer = std::make_shared<Buffer>();
   packetGreeting.format(*buffer);
   TSRoom* room = user->getRoom();
   if (!room) {
@@ -242,10 +232,10 @@ void Application::actionGreeting(const UserSPtr& current, const SessionPtr& sess
   room->join(sess);
 }
 
-void Application::actionPlay(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionPlay(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
-  auto name = request.readString();
-  const auto& color = request.readUInt8();
+  auto name = deserialize<std::string>(request);
+  auto color = deserialize<uint8_t>(request);
   if (user) {
     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cv;
     const auto& wstr = cv.from_bytes(name);
@@ -261,9 +251,9 @@ void Application::actionPlay(const UserSPtr& user, const SessionPtr& sess, Deser
   }
 }
 
-void Application::actionSpectate(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionSpectate(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
-  auto targetId = request.readUInt32();
+  auto targetId = deserialize<uint32_t>(request);
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
@@ -272,11 +262,11 @@ void Application::actionSpectate(const UserSPtr& user, const SessionPtr& sess, D
   }
 }
 
-void Application::actionPointer(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionPointer(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
   Vec2D point;
-  point.x = request.readInt16();
-  point.y = request.readInt16();
+  point.x = deserialize<int16_t>(request);
+  point.y = deserialize<int16_t>(request);
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
@@ -285,11 +275,11 @@ void Application::actionPointer(const UserSPtr& user, const SessionPtr& sess, De
   }
 }
 
-void Application::actionEject(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionEject(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
   Vec2D point;
-  point.x = request.readInt16();
-  point.y = request.readInt16();
+  point.x = deserialize<int16_t>(request);
+  point.y = deserialize<int16_t>(request);
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
@@ -298,11 +288,11 @@ void Application::actionEject(const UserSPtr& user, const SessionPtr& sess, Dese
   }
 }
 
-void Application::actionSplit(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionSplit(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
   Vec2D point;
-  point.x = request.readInt16();
-  point.y = request.readInt16();
+  point.x = deserialize<int16_t>(request);
+  point.y = deserialize<int16_t>(request);
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
@@ -311,9 +301,9 @@ void Application::actionSplit(const UserSPtr& user, const SessionPtr& sess, Dese
   }
 }
 
-void Application::actionWatch(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionWatch(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
-  auto playerId = request.readUInt32();
+  auto playerId = deserialize<uint32_t>(request);
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
@@ -322,22 +312,9 @@ void Application::actionWatch(const UserSPtr& user, const SessionPtr& sess, Dese
   }
 }
 
-void Application::actionPaint(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
+void Application::actionChatMessage(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
-  Vec2D point;
-  point.x = request.readInt16();
-  point.y = request.readInt16();
-  if (user) {
-    TSRoom* room = user->getRoom();
-    if (room) {
-      room->paint(sess, point);
-    }
-  }
-}
-
-void Application::actionChatMessage(const UserSPtr& user, const SessionPtr& sess, Deserializer& request)
-{
-  auto text = request.readString();
+  auto text = deserialize<std::string>(request);
   if (user) {
     TSRoom* room = user->getRoom();
     if (room) {
@@ -357,27 +334,8 @@ void Application::actionChatMessage(const UserSPtr& user, const SessionPtr& sess
 void Application::update()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  // TODO: implement
-  //statistic();
-  //checkConnections();
+  statistic();
 }
-
-// TODO: implement
-//void Application::checkConnections()
-//{
-//  // TODO: при великій кількості з'єднань перебирати весь контейнер m_sessions неефективно
-//  auto endTime = TimePoint::clock::now() - m_config.connectionTTL;
-//  for (const auto& it : m_sessions) {
-//    try {
-//      const auto& conn = m_websocketServer.get_con_from_hdl(it);
-//      if (conn->lastActivity <= endTime) {
-//        m_websocketServer.close(it, websocketpp::close::status::normal, "Connection timed out");
-//      }
-//    } catch (const std::exception& e) {
-//      LOG_WARN << e.what();
-//    }
-//  }
-//}
 
 void Application::statistic()
 {
@@ -399,11 +357,11 @@ void Application::statistic()
   }
   const auto& data = ss.str();
   if (!data.empty()) {
-//    try {
-//      m_influxdb.send(boost::asio::buffer(data));
-//    } catch (const std::exception& e) {
-//      LOG_WARN << e.what();
-//    }
+    try {
+      m_influxdb.send(asio::buffer(data));
+    } catch (const std::exception& e) {
+      spdlog::warn("Exception caught while sending data to InfluxDB: {}", e.what());
+    }
   }
   m_maxSessions = m_sessions.size();
   m_registrations = 0;

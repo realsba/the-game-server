@@ -9,7 +9,7 @@
 
 RoomManager::~RoomManager()
 {
-  for (TSRoom* room: m_items) {
+  for (TSRoom* room : m_items) {
     delete room;
   }
 }
@@ -59,7 +59,7 @@ void RoomManager::stop()
 TSRoom* RoomManager::obtain()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  for (TSRoom* room: m_items) {
+  for (TSRoom* room : m_items) {
     if (room->hasFreeSpace()) {
       return room;
     }

@@ -26,7 +26,6 @@ public:
   void split(const SessionPtr& sess, const Vec2D& point);
   void chatMessage(const SessionPtr& sess, const std::string& text);
   void watch(const SessionPtr& sess, uint32_t playerId);
-  void paint(const SessionPtr& sess, const Vec2D& point);
 
   void update();
 

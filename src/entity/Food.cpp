@@ -7,8 +7,8 @@
 #include "src/Room.hpp"
 
 
-Food::Food(Room& room) :
-  Cell(room)
+Food::Food(Room& room)
+  : Cell(room)
 {
   type = typeFood;
   const auto& config = room.getConfig();

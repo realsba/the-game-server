@@ -4,6 +4,8 @@
 #include "PacketPlay.hpp"
 
 #include "OutputPacketTypes.hpp"
+#include "serialization.hpp"
+
 #include "src/Player.hpp"
 
 PacketPlay::PacketPlay(const Player& player)
@@ -11,7 +13,7 @@ PacketPlay::PacketPlay(const Player& player)
 {
 }
 
-void PacketPlay::format(std::vector<char>& buffer)
+void PacketPlay::format(Buffer& buffer)
 {
   serialize(buffer, static_cast<uint8_t>(OutputPacketTypes::Play));
   serialize(buffer, m_player.getId());

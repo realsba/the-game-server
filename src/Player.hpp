@@ -17,7 +17,7 @@
 class Avatar;
 class Room;
 
-using Avatars = std::vector<Avatar*>;
+using Avatars = std::set<Avatar*>;
 
 class Player {
 public:
@@ -57,11 +57,9 @@ private:
   Room&                 m_room;
   Gridmap&              m_gridmap;
   Sessions              m_sessions;
-  Avatars               m_avatars; // TODO: можна замінти на std::set
+  Avatars               m_avatars;
   std::set<uint32_t>    m_visibleIds;
   std::set<Sector*>     m_sectors;
-  std::set<Cell*>       m_syncCells;
-  std::set<uint32_t>    m_removedIds;
   AABB                  m_viewport;
   AABB                  m_viewbox;
   Vec2D                 m_position;

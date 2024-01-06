@@ -14,7 +14,19 @@ namespace http = beast::http;
 
 Session::Session(tcp::socket&& socket)
   : m_socket(std::move(socket))
+  , m_remoteEndpoint([&]() -> tcp::endpoint{
+      try {
+        return tcp::endpoint(m_socket.next_layer().socket().remote_endpoint());
+      } catch (...) {
+        return {};
+      }
+    }())
 {
+}
+
+tcp::endpoint Session::getRemoteEndpoint() const
+{
+  return m_remoteEndpoint;
 }
 
 void Session::setMessageHandler(MessageHandler&& handler)
@@ -111,6 +123,7 @@ void Session::onRead(beast::error_code ec, std::size_t bytesTransferred)
   if (m_messageHandler) {
     m_messageHandler(shared_from_this(), m_buffer);
   }
+
   m_buffer.consume(bytesTransferred);
   doRead();
 }

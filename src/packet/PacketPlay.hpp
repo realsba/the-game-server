@@ -4,7 +4,7 @@
 #ifndef THEGAME_PACKET_PACKET_PLAY_HPP
 #define THEGAME_PACKET_PACKET_PLAY_HPP
 
-#include "Packet.hpp"
+#include "src/types.hpp"
 
 class Player;
 
@@ -12,7 +12,7 @@ class PacketPlay {
 public:
   explicit PacketPlay(const Player& player);
 
-  void format(std::vector<char>& buffer);
+  void format(Buffer& buffer);
 
 private:
   const Player& m_player;

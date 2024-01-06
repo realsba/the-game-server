@@ -4,7 +4,7 @@
 #ifndef THEGAME_PACKET_PACKET_SPECTATE_HPP
 #define THEGAME_PACKET_PACKET_SPECTATE_HPP
 
-#include "Packet.hpp"
+#include "src/types.hpp"
 
 #include "src/geometry/Vec2D.hpp"
 
@@ -14,7 +14,7 @@ class PacketSpectate {
 public:
   explicit PacketSpectate(const Player& player);
 
-  void format(std::vector<char>& buffer);
+  void format(Buffer& buffer);
 
 private:
   const Player& m_player;

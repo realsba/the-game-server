@@ -4,7 +4,7 @@
 #ifndef THEGAME_MYSQL_CONNECTION_POOL_HPP
 #define THEGAME_MYSQL_CONNECTION_POOL_HPP
 
-#include "MySQLConfig.hpp"
+#include "Config.hpp"
 
 #include <mysql++/mysql++.h>
 

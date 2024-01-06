@@ -3,13 +3,13 @@
 
 #include "Avatar.hpp"
 
+#include "src/packet/serialization.hpp"
+
 #include "src/Player.hpp"
 #include "src/Room.hpp"
 
-#include "src/packet/Packet.hpp" // TODO: use correct import
-
-Avatar::Avatar(Room& room) :
-  Cell(room)
+Avatar::Avatar(Room& room)
+  : Cell(room)
 {
   type = typeAvatar;
 }
@@ -37,7 +37,6 @@ void Avatar::format(Buffer& buffer)
   serialize(buffer, static_cast<uint16_t>(radius));
   serialize(buffer, color);
   serialize(buffer, player->getId());
-  // serialize(buffer, protection);  // TODO: have a look
   if (moving) {
     serialize(buffer, velocity.x);
     serialize(buffer, velocity.y);

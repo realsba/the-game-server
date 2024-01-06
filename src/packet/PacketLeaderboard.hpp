@@ -4,9 +4,7 @@
 #ifndef THEGAME_PACKET_PACKET_LEADERBOARD_HPP
 #define THEGAME_PACKET_PACKET_LEADERBOARD_HPP
 
-#include <vector>
-
-#include "Packet.hpp"
+#include "src/types.hpp"
 
 class Player;
 
@@ -14,7 +12,7 @@ class PacketLeaderboard {
 public:
   PacketLeaderboard(const std::vector<Player*>& items, size_t limit);
 
-  void format(std::vector<char>& buffer);
+  void format(Buffer& buffer);
 
 private:
   const std::vector<Player*>& m_items;

@@ -5,33 +5,32 @@
 
 #include "version.hpp"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio.hpp>
 
+#include <fmt/chrono.h>
 #include <spdlog/spdlog.h>
 
-asio::io_context                        iocMain;
-asio::signal_set                        sigHup{iocMain, SIGHUP};
-asio::signal_set                        sigUsr1{iocMain, SIGUSR1};
-asio::signal_set                        sigUsr2{iocMain, SIGUSR2};
-boost::posix_time::ptime                startTime;
+asio::io_context                        ioContext;
+asio::signal_set                        sigHup {ioContext, SIGHUP};
+asio::signal_set                        sigUsr1 {ioContext, SIGUSR1};
+asio::signal_set                        sigUsr2 {ioContext, SIGUSR2};
+auto                                    startTime {std::chrono::high_resolution_clock::now()};
 pid_t                                   pid;
 std::unique_ptr<Application>            application;
 
 void showStatistic()
 {
   application->info();
-  // TODO: implement
-  // spdlog::info("Uptime: {}", boost::posix_time::microsec_clock::universal_time() - startTime);
+  auto endTime = std::chrono::high_resolution_clock::now();
+  spdlog::info("Uptime: {:%H:%M:%S}", endTime - startTime);
 }
 
-// TODO: schedule operation instead of explicit run
 void sigTermHandler(const boost::system::error_code& ec, int signal)
 {
   if (!ec) {
     spdlog::info("Terminate");
     application->stop();
-    iocMain.stop();
+    ioContext.stop();
   }
 }
 
@@ -62,11 +61,8 @@ void sigUsr2Handler(const boost::system::error_code& ec, int signal)
   }
 }
 
-#include <boost/asio/buffer.hpp>
-
 int main(int argc, char** argv)
 {
-  startTime = boost::posix_time::microsec_clock::universal_time();
   pid = getpid();
 
   std::setlocale(LC_ALL, "");
@@ -76,14 +72,14 @@ int main(int argc, char** argv)
   try {
     application = std::make_unique<Application>("thegame.conf");
 
-    asio::signal_set sig(iocMain, SIGINT, SIGTERM);
+    asio::signal_set sig(ioContext, SIGINT, SIGTERM);
     sig.async_wait(&sigTermHandler);
     sigHup.async_wait(&sigHupHandler);
     sigUsr1.async_wait(&sigUsr1Handler);
     sigUsr2.async_wait(&sigUsr2Handler);
 
     application->start();
-    iocMain.run();
+    ioContext.run();
     application->stop();
     showStatistic();
   } catch (const std::exception& e) {

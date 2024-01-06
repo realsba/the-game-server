@@ -4,10 +4,11 @@
 #include "PacketGreeting.hpp"
 
 #include "OutputPacketTypes.hpp"
+#include "serialization.hpp"
 
 PacketGreeting::PacketGreeting(std::string sid) : sid(std::move(sid)) { }
 
-void PacketGreeting::format(std::vector<char>& buffer)
+void PacketGreeting::format(Buffer& buffer)
 {
   serialize(buffer, static_cast<uint8_t>(OutputPacketTypes::Greeting));
   serialize(buffer, sid);

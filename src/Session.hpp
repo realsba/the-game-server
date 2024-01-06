@@ -7,6 +7,9 @@
 #include "SessionFwd.hpp"
 #include "UserFwd.hpp"
 
+#include "TimePoint.hpp"
+#include "types.hpp"
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
@@ -20,18 +23,13 @@ using tcp = boost::asio::ip::tcp;
 
 class Player;
 
-// TODO: remove
-using Buffer = std::vector<char>;
-using BufferPtr = std::shared_ptr<Buffer>;
-
 // TODO: забезпечити потокобезпечне використання user, player, observable
 struct ConnectionData {
-  asio::ip::address address;
-//  SystemTimePoint create {SystemTimePoint::clock::now()};
-//  TimePoint lastActivity {TimePoint::clock::now()};
-  UserSPtr user;
-  Player* player {nullptr};
-  Player* observable {nullptr};
+  SystemTimePoint   created {SystemTimePoint::clock::now()};
+  TimePoint         lastActivity {TimePoint::clock::now()};
+  UserPtr           user {nullptr};
+  Player*           player {nullptr};
+  Player*           observable {nullptr};
 };
 
 class Session : public std::enable_shared_from_this<Session>
@@ -44,6 +42,8 @@ public:
   using CloseHandler = std::function<void(const SessionPtr& sess)>;
 
   explicit Session(tcp::socket&& socket);
+
+  tcp::endpoint getRemoteEndpoint() const;
 
   void setMessageHandler(MessageHandler&& handler);
   void setOpenHandler(OpenHandler&& handler);
@@ -65,11 +65,12 @@ private:
   using SendQueue = std::queue<BufferPtr>;
 
   websocket::stream<beast::tcp_stream>  m_socket;
-  beast::flat_buffer                    m_buffer;
+  const tcp::endpoint                   m_remoteEndpoint;
   MessageHandler                        m_messageHandler;
   OpenHandler                           m_openHandler;
   CloseHandler                          m_closeHandler;
-  SendQueue                             m_sendQueue;
+  beast::flat_buffer                    m_buffer {};
+  SendQueue                             m_sendQueue {};
 };
 
 #endif /* THEGAME_SESSION_HPP */

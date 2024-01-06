@@ -16,7 +16,7 @@
 #include "Timer.hpp"
 
 #include "packet/InputPacketTypes.hpp"
-#include "packet/Packet.hpp"
+#include "src/packet/serialization.hpp"
 
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
@@ -43,26 +43,24 @@ private:
   void sessionOpenHandler(const SessionPtr& sess);
   void sessionCloseHandler(const SessionPtr& sess);
 
-  void actionPing(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionGreeting(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionPlay(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionSpectate(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionPointer(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionEject(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionSplit(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionChatMessage(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionWatch(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
-  void actionPaint(const UserSPtr& user, const SessionPtr& sess, Deserializer& request);
+  void actionPing(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionGreeting(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionPlay(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionSpectate(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionPointer(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionEject(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionSplit(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionChatMessage(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionWatch(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
 
   void update();
-  void checkConnections();
   void statistic();
 
 private:
-  using Handler = std::function<void(const UserSPtr&, const SessionPtr& sess, Deserializer& ms)>;
-  using Handlers = std::map<int, Handler>;
+  using MessageHandler = std::function<void(const UserPtr&, const SessionPtr& sess, beast::flat_buffer& ms)>;
+  using MessageHandlers = std::map<int, MessageHandler>;
 
-  const Handlers m_handlers {
+  const MessageHandlers m_handlers {
     { InputPacketTypes::Ping,         std::bind(&Application::actionPing,         this, _1, _2, _3) },
     { InputPacketTypes::Greeting,     std::bind(&Application::actionGreeting,     this, _1, _2, _3) },
     { InputPacketTypes::Play,         std::bind(&Application::actionPlay,         this, _1, _2, _3) },
@@ -72,7 +70,6 @@ private:
     { InputPacketTypes::Split,        std::bind(&Application::actionSplit,        this, _1, _2, _3) },
     { InputPacketTypes::ChatMessage,  std::bind(&Application::actionChatMessage,  this, _1, _2, _3) },
     { InputPacketTypes::Watch,        std::bind(&Application::actionWatch,        this, _1, _2, _3) },
-    { InputPacketTypes::Paint,        std::bind(&Application::actionPaint,        this, _1, _2, _3) },
   };
 
   mutable std::mutex            m_mutex;

@@ -4,13 +4,13 @@
 #ifndef THEGAME_PACKET_EMPTY_PACKET_HPP
 #define THEGAME_PACKET_EMPTY_PACKET_HPP
 
-#include "Packet.hpp"
+#include "src/types.hpp"
 
 class EmptyPacket {
 public:
   explicit EmptyPacket(uint8_t type);
 
-  void format(std::vector<char>& buffer);
+  void format(Buffer& buffer);
 
   uint8_t type;
 };

@@ -14,7 +14,6 @@ struct InputPacketTypes {
     Eject = 6,
     Split = 7,
     Spectate = 8,
-    Paint = 9,
     Watch = 10,
   };
 };

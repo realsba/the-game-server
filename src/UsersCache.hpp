@@ -27,9 +27,9 @@ public:
   Duration getTtl() const;
   void save();
 
-  UserSPtr create(uint32_t ip);
-  UserSPtr getUserById(uint32_t id);
-  UserSPtr getUserBySessId(const std::string& sid);
+  UserPtr create(uint32_t ip);
+  UserPtr getUserById(uint32_t id);
+  UserPtr getUserBySessId(const std::string& sid);
 
 protected:
   struct ById { };
@@ -37,7 +37,7 @@ protected:
   struct ByLastAccess { };
 
   using Items = boost::multi_index::multi_index_container<
-    UserSPtr,
+    UserPtr,
     boost::multi_index::indexed_by<
       boost::multi_index::ordered_unique<
         boost::multi_index::tag<ById>,

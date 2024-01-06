@@ -8,7 +8,7 @@
 
 #include "entity/Cell.hpp"
 #include "entity/Avatar.hpp"
-#include "packet/Packet.hpp"
+#include "src/packet/serialization.hpp"
 #include "packet/OutputPacketTypes.hpp"
 
 #include <algorithm>
@@ -84,10 +84,10 @@ void Player::setPointer(const Vec2D& value)
 void Player::addConnection(const SessionPtr& sess)
 {
   if (m_sessions.emplace(sess).second) {
-    // TODO: дані відправляться ще раз попереднім з'єднанням, бажано переробити механізм
     m_leftTopSector = nullptr;
     m_rightBottomSector = nullptr;
     m_sectors.clear();
+    m_visibleIds.clear();
   }
 }
 
@@ -112,15 +112,12 @@ const Sessions& Player::getSessions() const
 void Player::addAvatar(Avatar* avatar)
 {
   avatar->player = this;
-  m_avatars.emplace_back(avatar);
+  m_avatars.emplace(avatar);
 }
 
 void Player::removeAvatar(Avatar* avatar)
 {
-  const auto& it = std::find(m_avatars.begin(), m_avatars.end(), avatar);
-  if (it != m_avatars.end()) {
-    m_avatars.erase(it);
-  }
+  m_avatars.erase(avatar);
 }
 
 void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed)
@@ -131,6 +128,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
   if (!leftTop || !rightBottom) {
     throw std::runtime_error("Invalid sector");
   }
+
   bool sectorsChanged = false;
   if (m_leftTopSector != leftTop || m_rightBottomSector != rightBottom) {
     m_leftTopSector = leftTop;
@@ -144,6 +142,9 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     return;
   }
 
+  std::set<Cell*> syncCells;
+  std::set<uint32_t> removedIds;
+
   if (sectorsChanged) {
     const auto& sectors = m_gridmap.getSectors(viewport);
     for (auto it = m_sectors.begin(); it != m_sectors.end();) {
@@ -151,7 +152,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
         const Sector* sector = *it;
         for (Cell* cell : sector->cells) {
           if (!cell->intersects(m_viewbox)) {
-            m_removedIds.insert(cell->id);
+            removedIds.insert(cell->id);
           }
         }
         it = m_sectors.erase(it);
@@ -162,32 +163,32 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     for (Sector* sector : sectors) {
       const auto& res = m_sectors.insert(sector);
       if (res.second) {
-        m_syncCells.insert(sector->cells.begin(), sector->cells.end());
+        syncCells.insert(sector->cells.begin(), sector->cells.end());
       }
     }
   }
   for (Cell* cell : modified) {
     if (cell->player == this || cell->intersects(m_viewbox)) {
-      m_syncCells.insert(cell);
+      syncCells.insert(cell);
     }
   }
   for (auto id : removed) {
     if (m_visibleIds.erase(id)) {
-      m_removedIds.insert(id);
+      removedIds.insert(id);
     }
   }
 
   const auto& buffer = std::make_shared<Buffer>();
   serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::Frame));
-  serialize(*buffer, tick); // TODO: remove
+  serialize(*buffer, tick);
   serialize(*buffer, m_scale);
-  serialize(*buffer, static_cast<uint16_t>(m_syncCells.size()));
-  for (Cell* cell : m_syncCells) {
+  serialize(*buffer, static_cast<uint16_t>(syncCells.size()));
+  for (Cell* cell : syncCells) {
     cell->format(*buffer);
     m_visibleIds.insert(cell->id);
   }
-  serialize(*buffer, static_cast<uint16_t>(m_removedIds.size()));
-  for (auto id : m_removedIds) {
+  serialize(*buffer, static_cast<uint16_t>(removedIds.size()));
+  for (auto id : removedIds) {
     serialize(*buffer, id);
   }
   serialize(*buffer, static_cast<uint8_t>(m_avatars.size()));
@@ -208,8 +209,8 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     session->send(buffer);
   }
 
-  m_syncCells.clear();
-  m_removedIds.clear();
+  syncCells.clear();
+  removedIds.clear();
 }
 
 void Player::wakeUp()

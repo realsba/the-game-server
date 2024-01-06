@@ -23,6 +23,7 @@
 #include "packet/PacketLeaderboard.hpp"
 #include "packet/PacketPlay.hpp"
 #include "packet/PacketSpectate.hpp"
+#include "packet/serialization.hpp"
 
 #include <spdlog/spdlog.h>
 #include <chrono>
@@ -60,7 +61,7 @@ void Room::init(const RoomConfig& config)
 
   static std::array<std::string, 7> names = {"To", "start", "the game", "run", "help()", "in", "the console"};
   auto it = m_bots.begin();
-  for (const auto& name: names) {
+  for (const auto& name : names) {
     if (it == m_bots.end()) {
       break;
     }
@@ -177,7 +178,7 @@ void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
   }
 
   uint32_t playerId = user->getId();
-  Player* player = sess->connectionData.player;
+  auto* player = sess->connectionData.player;
   if (!player) {
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
@@ -236,7 +237,7 @@ void Room::spectate(const SessionPtr& sess, uint32_t targetId)
   }
 
   uint32_t playerId = user->getId();
-  Player* player = sess->connectionData.player;
+  auto* player = sess->connectionData.player;
   if (!player) {
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
@@ -300,7 +301,7 @@ void Room::split(const SessionPtr& sess, const Vec2D& point)
 
 void Room::chatMessage(const SessionPtr& sess, const std::string& text)
 {
-  Player* player = sess->connectionData.player;
+  auto* player = sess->connectionData.player;
   if (!player){
     return;
   }
@@ -355,22 +356,17 @@ void Room::chatMessage(const SessionPtr& sess, const std::string& text)
 
 void Room::watch(const SessionPtr& sess, uint32_t playerId)
 {
-  Player* player = sess->connectionData.player;
+  auto* player = sess->connectionData.player;
   if (!player) {
     return;
   }
   const auto& it = m_players.find(playerId);
   if (it != m_players.end()) {
-    Player* target = it->second;
+    auto* target = it->second;
     if (target != player) {
       player->arrowPlayer = target;
     }
   }
-}
-
-void Room::paint(const SessionPtr& sess, const Vec2D& point)
-{
-  // TODO: add code here
 }
 
 void Room::interact(Avatar& avatar1, Avatar& avatar2)
@@ -812,7 +808,7 @@ void Room::update()
   // вибух гамнозірки
   std::vector<Mother*> mothers;
   mothers.reserve(m_motherContainer.size());
-  for (auto&& it: m_motherContainer) {
+  for (auto&& it : m_motherContainer) {
     Mother& mother = it.second;
     if (mother.mass >= m_config.motherExplodeMass) {
       mothers.emplace_back(&mother);
@@ -857,7 +853,6 @@ Vec2D Room::getRandomPosition(uint32_t radius) const
   return c.position;
 }
 
-// TODO: при видаленні клітки не використовується m_cellNextId.push
 Avatar& Room::createAvatar()
 {
   uint32_t id = m_cellNextId.pop();
@@ -941,6 +936,7 @@ void Room::removeCell(Cell& cell)
   m_activatedCells.erase(&cell);
   m_gridmap.erase(&cell);
   m_removedCellIds.push_back(cell.id);
+  m_cellNextId.push(cell.id);
 }
 
 void Room::spawnBot(uint32_t id)
@@ -1267,7 +1263,7 @@ void Room::simulate(float dt)
       if (first.zombie || first.protection > m_tick) {
         continue;
       }
-      for (auto jt = it + 1; jt != avatars.end(); ++jt) {
+      for (auto jt = std::next(it); jt != avatars.end(); ++jt) {
         Avatar& second = **jt;
         if (second.zombie || second.protection > m_tick) {
           continue;
@@ -1377,7 +1373,7 @@ void Room::synchronize()
   }
 
   auto last = m_leaderboard.end();
-  for (Player* player: m_fighters) {
+  for (Player* player : m_fighters) {
     player->calcParams();
     player->synchronize(m_tick, m_modifiedCells, m_removedCellIds);
     if (player->isDead()) {

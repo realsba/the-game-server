@@ -80,12 +80,6 @@ void TSRoom::watch(const SessionPtr& sess, uint32_t playerId)
   m_impl.watch(sess, playerId);
 }
 
-void TSRoom::paint(const SessionPtr& sess, const Vec2D& point)
-{
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.paint(sess, point);
-}
-
 void TSRoom::update()
 {
   std::lock_guard<std::mutex> lock(m_mutex);

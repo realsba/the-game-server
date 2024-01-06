@@ -35,8 +35,7 @@ add_executable(${PROJECT_NAME}
     src/packet/EmptyPacket.hpp
     src/packet/InputPacketTypes.hpp
     src/packet/OutputPacketTypes.hpp
-    src/packet/Packet.cpp
-    src/packet/Packet.hpp
+    src/packet/serialization.hpp
     src/packet/PacketGreeting.cpp
     src/packet/PacketGreeting.hpp
     src/packet/PacketLeaderboard.cpp
@@ -61,7 +60,6 @@ add_executable(${PROJECT_NAME}
     src/Player.hpp
     src/Room.cpp
     src/Room.hpp
-    src/RoomConfig.hpp
     src/RoomManager.cpp
     src/RoomManager.hpp
     src/ScopeExit.hpp
@@ -90,7 +88,6 @@ add_executable(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}"
-    libs/date
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog config++ mysqlpp)

@@ -4,6 +4,8 @@
 #include "PacketLeaderboard.hpp"
 
 #include "OutputPacketTypes.hpp"
+#include "serialization.hpp"
+
 #include "src/Player.hpp"
 
 PacketLeaderboard::PacketLeaderboard(const std::vector<Player*>& items, size_t limit)
@@ -12,7 +14,7 @@ PacketLeaderboard::PacketLeaderboard(const std::vector<Player*>& items, size_t l
 {
 }
 
-void PacketLeaderboard::format(std::vector<char>& buffer)
+void PacketLeaderboard::format(Buffer& buffer)
 {
   serialize(buffer, static_cast<uint8_t>(OutputPacketTypes::Leaderboard));
   auto count = static_cast<uint8_t>(std::min(m_items.size(), m_limit));

@@ -5,14 +5,10 @@
 #define THEGAME_ENTITY_CELL_HPP
 
 #include "src/geometry/Circle.hpp"
+#include "src/types.hpp"
 
 #include <cstdint>
 #include <string>
-#include <set>
-
-// TODO: remove
-#include <memory>
-#include <vector>
 
 class Sector;
 class Player;
@@ -25,10 +21,6 @@ class Mass;
 class Virus;
 class Phage;
 class Mother;
-
-// TODO: remove
-using Buffer = std::vector<char>;
-using BufferPtr = std::shared_ptr<Buffer>;
 
 class Cell : public Circle {
 public:

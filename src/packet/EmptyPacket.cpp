@@ -3,9 +3,11 @@
 
 #include "EmptyPacket.hpp"
 
+#include "serialization.hpp"
+
 EmptyPacket::EmptyPacket(uint8_t type) : type(type) { }
 
-void EmptyPacket::format(std::vector<char>& buffer)
+void EmptyPacket::format(Buffer& buffer)
 {
   serialize(buffer, type);
 }

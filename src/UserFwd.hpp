@@ -7,6 +7,6 @@
 #include <memory>
 
 class User;
-using UserSPtr = std::shared_ptr<User>;
+using UserPtr = std::shared_ptr<User>;
 
 #endif /* THEGAME_USER_FWD_HPP */

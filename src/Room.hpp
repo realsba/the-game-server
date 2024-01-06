@@ -5,11 +5,13 @@
 #define THEGAME_ROOM_HPP
 
 #include "SessionFwd.hpp"
-#include "RoomConfig.hpp"
 #include "TimePoint.hpp"
 #include "Gridmap.hpp"
 #include "NextId.hpp"
+#include "Config.hpp"
+
 #include "types.hpp"
+
 #include "entity/Avatar.hpp"
 
 #include <utility>
@@ -60,7 +62,6 @@ public:
   void split(const SessionPtr& sess, const Vec2D& point);
   void chatMessage(const SessionPtr& sess, const std::string& text);
   void watch(const SessionPtr& sess, uint32_t playerId);
-  void paint(const SessionPtr& sess, const Vec2D& point);
 
   void interact(Avatar& avatar1, Avatar& avatar2);
   void interact(Avatar& avatar, Food& food);

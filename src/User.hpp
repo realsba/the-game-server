@@ -30,7 +30,7 @@ public:
   void setRoom(TSRoom* room);
 
   struct Touch {
-    void operator ()(const UserSPtr& obj) {
+    void operator ()(const UserPtr& obj) {
       obj->setLastAccess(TimePoint::clock::now());
     }
   };
