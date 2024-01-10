@@ -14,14 +14,14 @@ asio::io_context                        ioContext;
 asio::signal_set                        sigHup {ioContext, SIGHUP};
 asio::signal_set                        sigUsr1 {ioContext, SIGUSR1};
 asio::signal_set                        sigUsr2 {ioContext, SIGUSR2};
-auto                                    startTime {std::chrono::high_resolution_clock::now()};
+auto                                    startTime {std::chrono::steady_clock::now()};
 pid_t                                   pid;
 std::unique_ptr<Application>            application;
 
 void showStatistic()
 {
   application->info();
-  auto endTime = std::chrono::high_resolution_clock::now();
+  auto endTime = std::chrono::steady_clock::now();
   spdlog::info("Uptime: {:%H:%M:%S}", endTime - startTime);
 }
 
@@ -64,6 +64,8 @@ void sigUsr2Handler(const boost::system::error_code& ec, int signal)
 int main(int argc, char** argv)
 {
   pid = getpid();
+
+  spdlog::set_pattern("%Y-%m-%d %T|%^%l%$|%t|%v");
 
   std::setlocale(LC_ALL, "");
 

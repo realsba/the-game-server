@@ -94,6 +94,8 @@ public:
   void update();
 
 private:
+  void calculateHasFreeSpace();
+
   Vec2D getRandomPosition(uint32_t radius) const;
   Avatar& createAvatar();
   Food& createFood();
@@ -138,7 +140,7 @@ private:
 
   mutable std::random_device m_generator;
 
-  uint32_t                    m_id {0};
+  const uint32_t              m_id {0};
   RoomConfig                  m_config;
   Gridmap                     m_gridmap;
   Sessions                    m_sessions;
@@ -189,6 +191,7 @@ private:
   float     m_accumulatedPhageMass {0};
   float     m_accumulatedMotherMass {0};
   bool      m_updateLeaderboard {false};
+  bool      m_hasFreeSpace {true};
 };
 
 #endif /* THEGAME_ROOM_HPP */

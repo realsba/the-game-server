@@ -57,7 +57,6 @@ add_executable(${PROJECT_NAME}
     src/FileIOError.hpp
     src/Gridmap.cpp
     src/Gridmap.hpp
-    src/MySQLConfig.hpp
     src/MySQLConnectionPool.cpp
     src/MySQLConnectionPool.hpp
     src/NextId.cpp

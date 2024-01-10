@@ -3,85 +3,96 @@
 
 #include "TSRoom.hpp"
 
-TSRoom::TSRoom(uint32_t id)
-  : m_impl(id)
+#include <boost/asio/bind_executor.hpp>
+
+using namespace std::chrono_literals;
+
+TSRoom::TSRoom(asio::io_context& ioc, uint32_t id)
+  : m_strand(ioc)
+  , m_impl(id)
+  , m_timer(ioc)
 {
 }
 
 uint32_t TSRoom::getId() const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
   return m_impl.getId();
 }
 
 void TSRoom::init(const RoomConfig& config)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  m_config = config;
   m_impl.init(config);
 }
 
 bool TSRoom::hasFreeSpace() const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
   return m_impl.hasFreeSpace();
 }
 
 void TSRoom::join(const SessionPtr& sess)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.join(sess);
+  m_strand.post(std::bind_front(&Room::join, &m_impl, sess));
 }
 
 void TSRoom::leave(const SessionPtr& sess)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.leave(sess);
+  m_strand.post(std::bind_front(&Room::leave, &m_impl, sess));
 }
 
 void TSRoom::play(const SessionPtr& sess, const std::string& name, uint8_t color)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.play(sess, name, color);
+  m_strand.post(std::bind_front(&Room::play, &m_impl, sess, name, color));
 }
 
 void TSRoom::spectate(const SessionPtr& sess, uint32_t targetId)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.spectate(sess, targetId);
+  m_strand.post(std::bind_front(&Room::spectate, &m_impl, sess, targetId));
 }
 
 void TSRoom::pointer(const SessionPtr& sess, const Vec2D& point)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.pointer(sess, point);
+  m_strand.post(std::bind_front(&Room::pointer, &m_impl, sess, point));
 }
 
 void TSRoom::eject(const SessionPtr& sess, const Vec2D& point)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.eject(sess, point);
+  m_strand.post([this, sess, point] { m_impl.eject(sess, point); });
 }
 
 void TSRoom::split(const SessionPtr& sess, const Vec2D& point)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.split(sess, point);
+  m_strand.post([this, sess, point] { m_impl.split(sess, point); });
 }
 
 void TSRoom::chatMessage(const SessionPtr& sess, const std::string& text)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.chatMessage(sess, text);
+  m_strand.post(std::bind_front(&Room::chatMessage, &m_impl, sess, text));
 }
 
 void TSRoom::watch(const SessionPtr& sess, uint32_t playerId)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.watch(sess, playerId);
+  m_strand.post(std::bind_front(&Room::watch, &m_impl, sess, playerId));
+}
+
+void TSRoom::start()
+{
+  update();
+}
+
+void TSRoom::stop()
+{
+  m_strand.post([this] { m_timer.cancel(); });
 }
 
 void TSRoom::update()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_impl.update();
+  m_expirationTime += m_config.tickInterval;
+  m_timer.expires_at(m_expirationTime);
+  m_timer.async_wait(asio::bind_executor(m_strand, [&](const boost::system::error_code& error) {
+    if (!error) {
+      m_impl.update();
+      update();
+    }
+  }));
 }

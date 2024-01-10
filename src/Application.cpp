@@ -15,7 +15,6 @@
 #include "util.hpp"
 
 #include <spdlog/spdlog.h>
-#include <sys/syscall.h>
 #include <fmt/chrono.h>
 
 #include <locale>
@@ -69,10 +68,9 @@ void Application::start()
   m_roomManager.start(m_config.roomThreads, m_config.room);
   for (uint i = 0; i < m_config.ioContextThreads; ++i) {
     m_threads.emplace_back(
-      [this]()
+      [this]
       {
-        long int pid = syscall(SYS_gettid);
-        spdlog::info("Start \"IO worker\" ({})", pid);
+        spdlog::info("Start \"IO worker\"");
         while (true) {
           try {
             m_ioContext.run();
@@ -81,7 +79,7 @@ void Application::start()
             spdlog::error("Application error: {}", e.what());
           }
         }
-        spdlog::info("Stop \"IO worker\" ({})", pid);
+        spdlog::info("Stop \"IO worker\"");
       }
     );
   }

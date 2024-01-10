@@ -2,45 +2,36 @@
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "RoomManager.hpp"
-#include "TSRoom.hpp"
 
 #include <spdlog/spdlog.h>
-#include <sys/syscall.h>
-
-RoomManager::~RoomManager()
-{
-  for (TSRoom* room : m_items) {
-    delete room;
-  }
-}
 
 void RoomManager::start(uint32_t numThreads, const RoomConfig& config)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_numThreads = numThreads;
+
+  // TODO: remove
+  auto* room = new TSRoom(m_ioContext, m_nextId++);
+  room->init(config);
+  room->start();
+  m_items.emplace_back(room);
+  // TODO: remove
+
   m_config = config;
-  m_groups.resize(numThreads);
+  m_threads.reserve(numThreads);
   for (uint i = 0; i < numThreads; ++i) {
-    m_groups[i].thread = std::thread(
-      [&stopped=m_groups[i].stopped, &rooms=m_groups[i].rooms]()
+    m_threads.emplace_back(
+      [this]
       {
-        long int pid = syscall(SYS_gettid);
-        spdlog::info("Start \"Room worker\" ({})", pid);
-        while (!stopped) {
+        spdlog::info("Start \"Room worker\"");
+        while (true) {
           try {
-            TimePoint start = TimePoint::clock::now();
-            for (TSRoom* room : rooms) {
-              room->update();
-            }
-            auto dt = TimePoint::clock::now() - start;
-            if (dt < std::chrono::milliseconds(5)) {
-              std::this_thread::sleep_for(std::chrono::milliseconds(5) - dt);
-            }
+            m_ioContext.run();
+            break;
           } catch (const std::exception& e) {
             spdlog::error("Exception caught in RoomManager: {}", e.what());
           }
         }
-        spdlog::info("Stop \"Room worker\" ({})", pid);
+        spdlog::info("Stop \"Room worker\"");
       }
     );
   }
@@ -49,26 +40,31 @@ void RoomManager::start(uint32_t numThreads, const RoomConfig& config)
 void RoomManager::stop()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  for (Group& group : m_groups) {
-    group.stopped = true;
-    group.thread.join();
+
+  for (const auto& room : m_items) {
+    room->stop();
   }
-  m_groups.clear();
+  m_ioContext.stop();
+  for (auto& thread : m_threads) {
+    thread.join();
+  }
+  m_threads.clear();
+  m_ioContext.reset();
 }
 
 TSRoom* RoomManager::obtain()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  for (TSRoom* room : m_items) {
+  for (const auto& room : m_items) {
     if (room->hasFreeSpace()) {
-      return room;
+      return room.get();
     }
   }
-  auto* room = new TSRoom(m_nextId++);
+  auto room = std::make_unique<TSRoom>(m_ioContext, m_nextId++);
   room->init(m_config);
-  m_items.emplace_back(room);
-  m_groups.at(room->getId() % m_numThreads).rooms.push_back(room);
-  return room;
+  room->start();
+  m_items.emplace_back(std::move(room));
+  return m_items.back().get();
 }
 
 size_t RoomManager::size() const

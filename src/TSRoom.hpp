@@ -4,14 +4,16 @@
 #ifndef THEGAME_TS_ROOM_HPP
 #define THEGAME_TS_ROOM_HPP
 
-#include "SessionFwd.hpp"
 #include "Room.hpp"
 
-#include <mutex>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
+
+namespace asio = boost::asio;
 
 class TSRoom {
 public:
-  explicit TSRoom(uint32_t id);
+  TSRoom(asio::io_context& ioc, uint32_t id);
 
   uint32_t getId() const;
   void init(const RoomConfig& config);
@@ -27,11 +29,18 @@ public:
   void chatMessage(const SessionPtr& sess, const std::string& text);
   void watch(const SessionPtr& sess, uint32_t playerId);
 
+  void start();
+  void stop();
+
+private:
   void update();
 
 private:
-  mutable std::mutex m_mutex;
-  Room m_impl;
+  asio::io_context::strand    m_strand;
+  asio::steady_timer          m_timer;
+  RoomConfig                  m_config;
+  Room                        m_impl;
+  TimePoint                   m_expirationTime {TimePoint::clock::now()};
 };
 
 #endif /* THEGAME_TS_ROOM_HPP */

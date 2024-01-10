@@ -35,7 +35,7 @@ struct ConnectionData {
 class Session : public std::enable_shared_from_this<Session>
 {
 public:
-  ConnectionData connectionData {}; // TODO: implement
+  ConnectionData connectionData {}; // TODO: implement thread safety
 
   using MessageHandler = std::function<void(const SessionPtr& sess, beast::flat_buffer& buffer)>;
   using OpenHandler = std::function<void(const SessionPtr& sess)>;

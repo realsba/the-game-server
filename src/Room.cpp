@@ -71,7 +71,7 @@ void Room::init(const RoomConfig& config)
 
 bool Room::hasFreeSpace() const
 {
-  return m_players.size() < m_config.maxPlayers;
+  return m_hasFreeSpace;
 }
 
 const RoomConfig& Room::getConfig() const
@@ -187,6 +187,7 @@ void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
       player = new Player(playerId, *this, m_gridmap);
       player->name = name;
       m_players.emplace(playerId, player);
+      calculateHasFreeSpace();
       sendPacketPlayer(*player);
     }
     player->online = true;
@@ -246,6 +247,7 @@ void Room::spectate(const SessionPtr& sess, uint32_t targetId)
       player = new Player(playerId, *this, m_gridmap);
       player->name = "Player " + std::to_string(user->getId());
       m_players.emplace(playerId, player);
+      calculateHasFreeSpace();
       sendPacketPlayer(*player);
     }
     player->online = true;
@@ -731,9 +733,6 @@ void Room::update()
 {
   auto now(TimePoint::clock::now());
   auto deltaTime(now - m_lastUpdate);
-  if (deltaTime < m_config.tickInterval) {
-    return;
-  }
   auto tickCount = (deltaTime / m_config.tickInterval);
   m_tick += tickCount;
   m_lastUpdate += m_config.tickInterval * tickCount;
@@ -830,6 +829,11 @@ void Room::update()
   checkPlayers();
   synchronize();
   updateLeaderboard();
+}
+
+void Room::calculateHasFreeSpace()
+{
+  m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
 }
 
 Vec2D Room::getRandomPosition(uint32_t radius) const
@@ -950,6 +954,7 @@ void Room::spawnBot(uint32_t id)
     bot->name = "Bot " + std::to_string(id);
     bot->online = true;
     m_players.emplace(bot->getId(), bot);
+    calculateHasFreeSpace();
     m_bots.emplace(bot);
     sendPacketPlayer(*bot);
   }
@@ -1513,6 +1518,7 @@ void Room::checkPlayers()
       ++it;
     }
   }
+  calculateHasFreeSpace();
 }
 
 void Room::spawnFood(uint32_t count)
