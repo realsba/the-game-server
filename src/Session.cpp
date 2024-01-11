@@ -49,6 +49,11 @@ void Session::run()
   asio::dispatch(m_socket.get_executor(), std::bind_front(&Session::doRun, shared_from_this()));
 }
 
+void Session::close()
+{
+  asio::dispatch(m_socket.get_executor(), std::bind_front(&Session::doClose, shared_from_this()));
+}
+
 void Session::send(const BufferPtr& buffer)
 {
   asio::dispatch(m_socket.get_executor(), std::bind_front(&Session::doSend, shared_from_this(), buffer));
@@ -68,8 +73,22 @@ void Session::doRun()
   );
 }
 
+void Session::doClose()
+{
+  if (m_closed) {
+    return;
+  }
+  m_closed = true;
+  m_socket.async_close({},
+    asio::bind_executor(m_socket.get_executor(), std::bind_front(&Session::onClose, shared_from_this()))
+  );
+}
+
 void Session::doSend(const BufferPtr& buffer)
 {
+  if (m_closed) {
+    return;
+  }
   m_sendQueue.push(buffer);
   if (m_sendQueue.size() == 1) {
     asio::dispatch(m_socket.get_executor(), std::bind_front(&Session::doWrite, shared_from_this()));
@@ -85,6 +104,9 @@ void Session::doRead()
 
 void Session::doWrite()
 {
+  if (m_closed) {
+    return;
+  }
   const auto& data = m_sendQueue.front();
   auto buffer = asio::buffer(data->data(), data->size());
   m_socket.async_write(
@@ -108,10 +130,19 @@ void Session::onAccept(beast::error_code ec)
   doRead();
 }
 
+void Session::onClose(beast::error_code ec)
+{
+  if (ec) {
+    spdlog::error("close: {}", ec.message());
+  }
+
+  while (!m_sendQueue.empty()) {
+    m_sendQueue.pop();
+  }
+}
+
 void Session::onRead(beast::error_code ec, std::size_t bytesTransferred)
 {
-  boost::ignore_unused(bytesTransferred);
-
   if (ec) {
     spdlog::error("Failed to read: {}", ec.message());
     if (m_closeHandler) {

@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 {
   pid = getpid();
 
-  spdlog::set_pattern("%Y-%m-%d %T|%^%l%$|%t|%v");
+  spdlog::set_pattern("%Y-%m-%d %T.%f|%^%l%$|%t|%v");
 
   std::setlocale(LC_ALL, "");
 

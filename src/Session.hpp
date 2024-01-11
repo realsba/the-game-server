@@ -48,16 +48,20 @@ public:
   void setMessageHandler(MessageHandler&& handler);
   void setOpenHandler(OpenHandler&& handler);
   void setCloseHandler(CloseHandler&& handler);
+
   void run();
+  void close();
   void send(const BufferPtr& buffer);
 
 private:
   void doRun();
+  void doClose();
   void doSend(const BufferPtr& buffer);
   void doRead();
   void doWrite();
 
   void onAccept(beast::error_code ec);
+  void onClose(beast::error_code ec);
   void onRead(beast::error_code ec, std::size_t bytesTransferred);
   void onWrite(beast::error_code ec, std::size_t bytesTransferred);
 
@@ -71,6 +75,7 @@ private:
   CloseHandler                          m_closeHandler;
   beast::flat_buffer                    m_buffer {};
   SendQueue                             m_sendQueue {};
+  bool                                  m_closed {false};
 };
 
 #endif /* THEGAME_SESSION_HPP */

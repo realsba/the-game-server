@@ -207,11 +207,13 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
   auto user = m_users.getUserBySessId(sid);
   if (user) {
     const auto& prevSession = user->getSession();
-    TSRoom* room = user->getRoom();
-    if (room) {
-      room->leave(prevSession);
+    if (prevSession) {
+      auto* room = user->getRoom();
+      if (room) {
+        room->leave(prevSession);
+      }
+      prevSession->close();
     }
-    // prevSession->close(); // TODO: implement
   } else {
     user = m_users.create(sess->getRemoteEndpoint().address().to_v4().to_ulong());
     packetGreeting.sid = user->getSessId();
