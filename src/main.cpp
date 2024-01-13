@@ -9,6 +9,8 @@
 
 #include <fmt/chrono.h>
 #include <spdlog/spdlog.h>
+#include "spdlog/cfg/env.h"
+#include "spdlog/cfg/argv.h"
 
 asio::io_context                        ioContext;
 asio::signal_set                        sigHup {ioContext, SIGHUP};
@@ -63,13 +65,13 @@ void sigUsr2Handler(const boost::system::error_code& ec, int signal)
 
 int main(int argc, char** argv)
 {
-  pid = getpid();
-
-  spdlog::set_pattern("%Y-%m-%d %T.%f|%^%l%$|%t|%v");
-
   std::setlocale(LC_ALL, "");
 
-  spdlog::info("{} ({}) started. pid={}", APP_NAME, APP_VERSION, pid);
+  spdlog::cfg::load_env_levels();
+  spdlog::cfg::load_argv_levels(argc, argv);
+  spdlog::set_pattern("%Y-%m-%d %T.%f|%^%l%$|%t|%v");
+
+  spdlog::info("{} ({}) started", APP_NAME, APP_VERSION);
 
   try {
     application = std::make_unique<Application>("thegame.conf");
@@ -92,7 +94,7 @@ int main(int argc, char** argv)
 
   application.reset();
 
-  spdlog::info("{} ({}) stopped. pid={}", APP_NAME, APP_VERSION, pid);
+  spdlog::info("{} ({}) stopped", APP_NAME, APP_VERSION);
 
   return EXIT_SUCCESS;
 }
