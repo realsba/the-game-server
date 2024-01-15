@@ -23,19 +23,19 @@ using tcp = boost::asio::ip::tcp;
 
 class Player;
 
-// TODO: забезпечити потокобезпечне використання user, player, observable
+// TODO: implement thread safety
 struct ConnectionData {
-  const SystemTimePoint created {SystemTimePoint::clock::now()};
+  const SystemTimePoint created {SystemTimePoint::clock::now()};  // thread-safe, const
   TimePoint             lastActivity {TimePoint::clock::now()};
   UserPtr               user {nullptr};
-  Player*               player {nullptr};
-  Player*               observable {nullptr};
+  Player*               player {nullptr};                         // thread-safe, accessed only from Room
+  Player*               observable {nullptr};                     // thread-safe, accessed only from Room
 };
 
 class Session : public std::enable_shared_from_this<Session>
 {
 public:
-  ConnectionData connectionData {}; // TODO: implement thread safety
+  ConnectionData connectionData {};
 
   using MessageHandler = std::function<void(const SessionPtr& sess, beast::flat_buffer& buffer)>;
   using OpenHandler = std::function<void(const SessionPtr& sess)>;

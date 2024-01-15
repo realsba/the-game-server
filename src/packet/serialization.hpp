@@ -14,7 +14,7 @@
 
 namespace beast = boost::beast;
 
-template<typename T>
+template <typename T>
 void serialize(Buffer& buffer, const T& data)
 {
   T value = boost::endian::native_to_big(data);
@@ -22,21 +22,21 @@ void serialize(Buffer& buffer, const T& data)
   buffer.insert(buffer.end(), ptr, ptr + sizeof(T));
 }
 
-template<>
+template <>
 inline void serialize<std::string>(Buffer& buffer, const std::string& data)
 {
   serialize(buffer, static_cast<uint16_t>(data.length()));
   buffer.insert(buffer.end(), data.begin(), data.end());
 }
 
-template<>
+template <>
 inline void serialize<float>(Buffer& buffer, const float& data)
 {
   union { float r; uint32_t i; } u{.r = data};
   serialize(buffer, u.i);
 }
 
-template<typename T>
+template <typename T>
 T deserialize(beast::flat_buffer& buffer)
 {
   T result;
@@ -51,7 +51,7 @@ T deserialize(beast::flat_buffer& buffer)
   return boost::endian::big_to_native(result);
 }
 
-template<>
+template <>
 inline std::string deserialize<>(beast::flat_buffer& buffer)
 {
   auto length = deserialize<uint16_t>(buffer);

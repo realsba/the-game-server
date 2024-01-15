@@ -32,7 +32,7 @@ void lookupValue(const libconfig::Config& cfg, const std::string& path, std::chr
   }
 }
 
-template<class T>
+template <typename T>
 void lookupValue(const libconfig::Config& cfg, const std::string& path, T& value)
 {
   if (!cfg.lookupValue(path, value)) {
@@ -89,8 +89,6 @@ Config::Config()
   room.foodMinImpulse = 190;
   room.foodMaxImpulse = 210;
   room.foodResistanceRatio = 30.0;
-
-  room.massImpulseRatio = 2.0;
 
   room.virusStartMass = 165;
   room.virusLifeTime = 300;
@@ -226,8 +224,6 @@ bool Config::loadFromFile(const std::string& filename)
     if (room.foodMinImpulse > room.foodMaxImpulse) {
       spdlog::warn("room.foodMinImpulse > room.foodMaxImpulse");
     }
-
-    lookupValue(cfg, "room.massImpulseRatio", room.massImpulseRatio);
 
     lookupValue(cfg, "room.virusStartMass", room.virusStartMass);
     lookupValue(cfg, "room.virusStartAmount", room.virusStartAmount);

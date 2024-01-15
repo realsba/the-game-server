@@ -89,7 +89,7 @@ public:
   void magnetism(Avatar& initiator, Phage& target);
   void magnetism(Avatar& initiator, Mother& target);
   void magnetism(Avatar& initiator, const Vec2D& point);
-  void integration(Avatar& initiator, const Vec2D& point);
+  void integration(Avatar& initiator, const Vec2D& point); // * TODO: it is never used
 
   void update();
 
@@ -129,7 +129,7 @@ private:
 
   void send(const BufferPtr& buffer);
   void sendPacketPlayer(const Player& player);
-  void sendPacketPlayerRemove(uint32_t playerId);
+  void sendPacketPlayerRemove(uint32_t playerId); // * TODO: it is never used
   void sendPacketPlayerJoin(uint32_t playerId);
   void sendPacketPlayerLeave(uint32_t playerId);
   void sendPacketPlayerBorn(uint32_t playerId);

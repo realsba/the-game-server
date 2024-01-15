@@ -11,13 +11,12 @@
 #include "src/packet/serialization.hpp"
 #include "packet/OutputPacketTypes.hpp"
 
-#include <algorithm>
 #include <tuple>
 
-Player::Player(uint32_t id, Room& room, Gridmap& gridmap) :
-  m_room(room),
-  m_gridmap(gridmap),
-  m_id(id)
+Player::Player(uint32_t id, Room& room, Gridmap& gridmap)
+  : m_id(id)
+  , m_room(room)
+  , m_gridmap(gridmap)
 {
 }
 
@@ -71,6 +70,11 @@ uint8_t Player::getStatus() const
   return (online ? 1 : 0) | (m_avatars.empty() ? 0 : 2);
 }
 
+const Sessions& Player::getSessions() const
+{
+  return m_sessions;
+}
+
 void Player::init()
 {
   m_maxMass = 0;
@@ -81,7 +85,7 @@ void Player::setPointer(const Vec2D& value)
   m_pointer = value;
 }
 
-void Player::addConnection(const SessionPtr& sess)
+void Player::addSession(const SessionPtr& sess)
 {
   if (m_sessions.emplace(sess).second) {
     m_leftTopSector = nullptr;
@@ -91,7 +95,7 @@ void Player::addConnection(const SessionPtr& sess)
   }
 }
 
-void Player::removeConnection(const SessionPtr& sess)
+void Player::removeSession(const SessionPtr& sess)
 {
   m_sessions.erase(sess);
   if (m_sessions.empty()) {
@@ -99,14 +103,9 @@ void Player::removeConnection(const SessionPtr& sess)
   }
 }
 
-void Player::clearConnections()
+void Player::clearSessions()
 {
   m_sessions.clear();
-}
-
-const Sessions& Player::getSessions() const
-{
-  return m_sessions;
 }
 
 void Player::addAvatar(Avatar* avatar)

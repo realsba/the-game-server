@@ -9,12 +9,12 @@ void RoomManager::start(uint32_t numThreads, const RoomConfig& config)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  // TODO: remove
+  // * TODO: remove
   auto* room = new TSRoom(m_ioContext, m_nextId++);
   room->init(config);
   room->start();
   m_items.emplace_back(room);
-  // TODO: remove
+  // * TODO: remove
 
   m_config = config;
   m_threads.reserve(numThreads);

@@ -88,8 +88,6 @@ struct RoomConfig {
   uint32_t  foodMaxImpulse {0};
   float     foodResistanceRatio {0};
 
-  float     massImpulseRatio {0};
-
   uint32_t  virusStartMass {0};
   uint32_t  virusStartAmount {0};
   uint32_t  virusMaxAmount {0};

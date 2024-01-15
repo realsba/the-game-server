@@ -131,7 +131,7 @@ void Room::join(const SessionPtr& sess)
       EmptyPacket packet(OutputPacketTypes::Finish);
       packet.format(*buffer);
     } else {
-      player->addConnection(sess);
+      player->addSession(sess);
       sess->connectionData.player = player;
       PacketPlay packetPlay(*player);
       packetPlay.format(*buffer);
@@ -154,7 +154,6 @@ void Room::leave(const SessionPtr& sess)
     m_pointerRequests.erase(sess);
     m_ejectRequests.erase(sess);
     m_splitRequests.erase(sess);
-    // TODO: замінити код. (непотокобезпечний доступ до властивойстей sess)
     auto player = sess->connectionData.player;
     if (player) {
       sendPacketPlayerLeave(player->getId());
@@ -165,7 +164,7 @@ void Room::leave(const SessionPtr& sess)
     // TODO: так як m_players не мають містити жодних з'єднань, то можна перебирати лише колекцію m_fighters
     for (const auto& it : m_players) {
       Player* player = it.second;
-      player->removeConnection(sess);
+      player->removeSession(sess);
     }
   }
 }
@@ -200,7 +199,7 @@ void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
   }
 
   if (sess->connectionData.observable) {
-    sess->connectionData.observable->removeConnection(sess);
+    sess->connectionData.observable->removeSession(sess);
     sess->connectionData.observable = nullptr;
   }
 
@@ -227,7 +226,7 @@ void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
   PacketPlay packetPlay(*player);
   packetPlay.format(*buffer);
   sess->send(buffer);
-  player->addConnection(sess); // TODO: розібратись з додаваннями і забираннями sess
+  player->addSession(sess); // TODO: розібратись з додаваннями і забираннями sess
 }
 
 void Room::spectate(const SessionPtr& sess, uint32_t targetId)
@@ -273,16 +272,16 @@ void Room::spectate(const SessionPtr& sess, uint32_t targetId)
     return;
   }
   if (player) {
-    player->removeConnection(sess);
+    player->removeSession(sess);
   }
   if (sess->connectionData.observable) {
-    sess->connectionData.observable->removeConnection(sess);
+    sess->connectionData.observable->removeSession(sess);
   }
   const auto& buffer = std::make_shared<Buffer>();
   PacketSpectate packet(*target);
   packet.format(*buffer);
   sess->send(buffer);
-  target->addConnection(sess);
+  target->addSession(sess);
   sess->connectionData.observable = target;
 }
 
@@ -408,8 +407,8 @@ void Room::interact(Avatar& avatar1, Avatar& avatar2)
 
 void Room::interact(Avatar& avatar, Food& food)
 {
-  auto d = avatar.radius + food.radius;
-  if (geometry::squareDistance(avatar.position, food.position) < d * d) {
+  auto distance = avatar.radius + food.radius;
+  if (geometry::squareDistance(avatar.position, food.position) < distance * distance) {
     avatar.player->wakeUp();
     modifyMass(avatar, food.mass);
     m_zombieFoods.push_back(&food);
@@ -443,8 +442,8 @@ void Room::interact(Avatar& avatar, Virus& virus)
   if (avatar.mass < 1.25 * virus.mass) {
     return;
   }
-  auto d = avatar.radius - 0.6 * virus.radius;
-  if (geometry::squareDistance(avatar.position, virus.position) < d * d) {
+  auto distance = avatar.radius - 0.6 * virus.radius;
+  if (geometry::squareDistance(avatar.position, virus.position) < distance * distance) {
     explode(avatar);
     m_zombieViruses.push_back(&virus);
     virus.zombie = true;
@@ -495,8 +494,8 @@ void Room::interact(Mother& mother, Food& food)
 
 void Room::interact(Mother& mother, Mass& mass)
 {
-  auto d = mother.radius - 0.25 * mass.radius;
-  if (geometry::squareDistance(mother.position, mass.position) < d * d) {
+  auto distance = mother.radius - 0.25 * mass.radius;
+  if (geometry::squareDistance(mother.position, mass.position) < distance * distance) {
     modifyMass(mother, mass.mass);
     m_activatedCells.insert(&mother);
     m_zombieMasses.push_back(&mass);
@@ -506,8 +505,8 @@ void Room::interact(Mother& mother, Mass& mass)
 
 void Room::interact(Mother& mother, Virus& virus)
 {
-  auto d = mother.radius + virus.radius;
-  if (geometry::squareDistance(mother.position, virus.position) < d * d) {
+  auto distance = mother.radius + virus.radius;
+  if (geometry::squareDistance(mother.position, virus.position) < distance * distance) {
     modifyMass(mother, virus.mass);
     m_activatedCells.insert(&mother);
     m_zombieViruses.push_back(&virus);
@@ -517,8 +516,8 @@ void Room::interact(Mother& mother, Virus& virus)
 
 void Room::interact(Mother& mother, Phage& phage)
 {
-  auto d = mother.radius + phage.radius;
-  if (geometry::squareDistance(mother.position, phage.position) < d * d) {
+  auto distance = mother.radius + phage.radius;
+  if (geometry::squareDistance(mother.position, phage.position) < distance * distance) {
     modifyMass(mother, phage.mass);
     m_activatedCells.insert(&mother);
     m_zombiePhages.push_back(&phage);
@@ -528,8 +527,8 @@ void Room::interact(Mother& mother, Phage& phage)
 
 void Room::interact(Virus& virus, Food& food)
 {
-  auto d = virus.radius + food.radius;
-  if (geometry::squareDistance(virus.position, food.position) < d * d) {
+  auto distance = virus.radius + food.radius;
+  if (geometry::squareDistance(virus.position, food.position) < distance * distance) {
     m_zombieFoods.push_back(&food);
     food.zombie = true;
   }
@@ -537,11 +536,12 @@ void Room::interact(Virus& virus, Food& food)
 
 void Room::interact(Virus& virus, Mass& mass)
 {
-  // TODO: реалізувати формулу пружнього зіткнення
-  auto d = virus.radius + mass.radius;
-  if (geometry::squareDistance(virus.position, mass.position) < d * d) {
-    Vec2D direction((virus.position - mass.position).direction());
-    virus.applyImpulse(direction * (mass.velocity.length() * mass.mass * m_config.massImpulseRatio));
+  auto distance = virus.radius + mass.radius;
+  if (geometry::squareDistance(virus.position, mass.position) < distance * distance) {
+    auto relativeVelocity = virus.velocity - mass.velocity;
+    auto normal = (virus.position - mass.position).direction();
+    auto impulse = relativeVelocity * normal * (2.0f * virus.mass * mass.mass / (virus.mass + mass.mass));
+    virus.velocity -= normal * impulse / virus.mass;
     m_modifiedCells.insert(&virus);
     m_activatedCells.insert(&virus);
     m_zombieMasses.push_back(&mass);
@@ -551,8 +551,8 @@ void Room::interact(Virus& virus, Mass& mass)
 
 void Room::interact(Virus& virus1, Virus& virus2)
 {
-  auto d = virus1.radius + virus2.radius;
-  if (geometry::squareDistance(virus1.position, virus2.position) < d * d) {
+  auto distance = virus1.radius + virus2.radius;
+  if (geometry::squareDistance(virus1.position, virus2.position) < distance * distance) {
     auto& obj = createVirus();
     modifyMass(obj, virus1.mass + virus2.mass);
     obj.position = (virus1.position + virus2.position) * 0.5;
@@ -565,8 +565,8 @@ void Room::interact(Virus& virus1, Virus& virus2)
 
 void Room::interact(Virus& virus, Phage& phage)
 {
-  auto d = virus.radius + phage.radius;
-  if (geometry::squareDistance(virus.position, phage.position) < d * d) {
+  auto distance = virus.radius + phage.radius;
+  if (geometry::squareDistance(virus.position, phage.position) < distance * distance) {
     auto& obj = createMother();
     modifyMass(obj, virus.mass + phage.mass);
     obj.position = (virus.position + phage.position) * 0.5;
@@ -579,8 +579,8 @@ void Room::interact(Virus& virus, Phage& phage)
 
 void Room::interact(Phage& phage, Food& food)
 {
-  auto d = phage.radius + food.radius;
-  if (geometry::squareDistance(phage.position, food.position) < d * d) {
+  auto distance = phage.radius + food.radius;
+  if (geometry::squareDistance(phage.position, food.position) < distance * distance) {
     m_zombieFoods.push_back(&food);
     food.zombie = true;
   }
@@ -588,11 +588,12 @@ void Room::interact(Phage& phage, Food& food)
 
 void Room::interact(Phage& phage, Mass& mass)
 {
-  // TODO: реалізувати формулу пружнього зіткнення
-  auto d = phage.radius + mass.radius;
-  if (geometry::squareDistance(phage.position, mass.position) < d * d) {
-    Vec2D direction((phage.position - mass.position).direction());
-    phage.applyImpulse(direction * (mass.velocity.length() * mass.mass * m_config.massImpulseRatio));
+  auto distance = phage.radius + mass.radius;
+  if (geometry::squareDistance(phage.position, mass.position) < distance * distance) {
+    auto relativeVelocity = phage.velocity - mass.velocity;
+    auto normal = (phage.position - mass.position).direction();
+    auto impulse = relativeVelocity * normal * (2.0f * phage.mass * mass.mass / (phage.mass + mass.mass));
+    phage.velocity -= normal * impulse / phage.mass;
     m_modifiedCells.insert(&phage);
     m_activatedCells.insert(&phage);
     m_zombieMasses.push_back(&mass);
@@ -602,8 +603,8 @@ void Room::interact(Phage& phage, Mass& mass)
 
 void Room::interact(Phage& phage1, Phage& phage2)
 {
-  auto d = phage1.radius + phage2.radius;
-  if (geometry::squareDistance(phage1.position, phage2.position) < d * d) {
+  auto distance = phage1.radius + phage2.radius;
+  if (geometry::squareDistance(phage1.position, phage2.position) < distance * distance) {
     auto& obj = createPhage();
     modifyMass(obj, phage1.mass + phage2.mass);
     obj.position = (phage1.position + phage2.position) * 0.5;
@@ -1395,7 +1396,7 @@ void Room::synchronize()
         packet.format(*buffer);
         for (const auto& sess : player->getSessions()) {
           sess->send(buffer);
-          observable->addConnection(sess);
+          observable->addSession(sess);
           sess->connectionData.observable = observable;
         }
       } else {
@@ -1405,7 +1406,7 @@ void Room::synchronize()
           sess->send(buffer);
         }
       }
-      player->clearConnections();
+      player->clearSessions();
     }
   }
   m_leaderboard.erase(last, m_leaderboard.end());
@@ -1615,4 +1616,3 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
   serialize(*buffer, playerId);
   send(buffer);
 }
-
