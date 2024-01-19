@@ -54,7 +54,6 @@ add_executable(${PROJECT_NAME}
     src/Application.hpp
     src/Config.cpp
     src/Config.hpp
-    src/FileIOError.hpp
     src/Gridmap.cpp
     src/Gridmap.hpp
     src/MySQLConnectionPool.cpp
@@ -91,7 +90,7 @@ add_executable(${PROJECT_NAME}
     src/AsioFormatter.hpp
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    Boost::headers Threads::Threads OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog config++ mysqlpp
+    Boost::headers Threads::Threads OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog mysqlpp
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     BOOST_ASIO_SEPARATE_COMPILATION

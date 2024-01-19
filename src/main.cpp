@@ -74,7 +74,7 @@ int main(int argc, char** argv)
   spdlog::info("{} ({}) started", APP_NAME, APP_VERSION);
 
   try {
-    application = std::make_unique<Application>("thegame.conf");
+    application = std::make_unique<Application>("thegame.toml");
 
     asio::signal_set sig(ioContext, SIGINT, SIGTERM);
     sig.async_wait(&sigTermHandler);

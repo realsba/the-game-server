@@ -48,9 +48,7 @@ void Application::start()
 
   m_started = true;
 
-  if (!m_config.loadFromFile(m_configFileName)) {
-    throw std::runtime_error("Can't load config: \"" + m_configFileName + "\"");
-  }
+  m_config.load(m_configFileName);
 
   m_mysqlConnectionPool.init(m_config.mysql);
   m_influxdb.open(asio::ip::udp::v4());

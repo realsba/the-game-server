@@ -80,7 +80,7 @@ private:
   UsersCache                    m_users {m_mysqlConnectionPool};
   RoomManager                   m_roomManager;
   std::vector<std::thread>      m_threads;
-  std::string                   m_configFileName {"application.conf"};
+  std::string                   m_configFileName;
   Config                        m_config;
   Timer                         m_timer;
   std::size_t                   m_maxSessions {0};

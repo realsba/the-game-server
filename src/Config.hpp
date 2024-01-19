@@ -4,6 +4,8 @@
 #ifndef THEGAME_CONFIG_HPP
 #define THEGAME_CONFIG_HPP
 
+#include "TimePoint.hpp"
+
 #include <boost/asio/ip/tcp.hpp>
 #include <string>
 #include <chrono>
@@ -23,8 +25,8 @@ struct MySQLConfig {
 struct RoomConfig {
   float eps {0.01};
 
-  std::chrono::milliseconds updateInterval;
-  std::chrono::milliseconds tickInterval;
+  std::chrono::milliseconds updateInterval;  // TODO: fix type
+  std::chrono::milliseconds tickInterval;    // TODO: fix type
 
   uint32_t  simulationIterations {0};
   uint32_t  spawnPosTryCount {0};
@@ -116,9 +118,7 @@ struct RoomConfig {
 
 class Config {
 public:
-  Config();
-
-  bool loadFromFile(const std::string& filename);
+  void load(const std::string& filename);
 
   asio::ip::tcp::endpoint     address;
   std::chrono::milliseconds   updateInterval {std::chrono::seconds(1)};
