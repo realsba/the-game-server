@@ -1504,19 +1504,22 @@ void Room::mothersProduce()
 
 void Room::checkPlayers()
 {
-  if (!m_config.checkPlayers || (m_tick - m_lastCheckPlayers < m_config.checkPlayers)) {
+  auto currentTime = TimePoint::clock::now();
+  if (currentTime - m_lastCheckPlayers < m_config.checkPlayersInterval) {
     return;
   }
-  m_lastCheckPlayers += m_config.checkPlayers;
+  m_lastCheckPlayers = currentTime;
+
   for (Player* bot : m_bots) {
     if (bot->isDead()) {
       spawnBot(bot->getId());
     }
   }
-  auto time = TimePoint::clock::now() - m_config.playerAnnihilationInterval;
+
+  auto expirationTime = currentTime - m_config.playerAnnihilationInterval;
   for (auto it = m_zombiePlayers.begin(); it != m_zombiePlayers.end();) {
     Player* player = *it;
-    if (player->isDead() && player->getLastActivity() < time) {
+    if (player->isDead() && player->getLastActivity() < expirationTime) {
       it = m_zombiePlayers.erase(it);
       m_players.erase(player->getId());
       for (auto& jt : m_players) {
@@ -1527,6 +1530,7 @@ void Room::checkPlayers()
       ++it;
     }
   }
+
   recalculateFreeSpace();
 }
 

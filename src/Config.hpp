@@ -30,10 +30,10 @@ struct RoomConfig {
   uint32_t  simulationsPerUpdate {0};
   uint32_t  spawnPosTryCount {0};
 
-  uint32_t  checkPlayers {0}; // TODO: use Duration
+  Duration  checkPlayersInterval {};
   Duration  updateLeaderboardInterval {};
   Duration  destroyOutdatedCellsInterval {};
-  uint32_t  checkMothersInterval {}; // TODO: use Duration
+  uint32_t  checkMothersInterval {0}; // TODO: use Duration
   Duration  mothersProduceInterval {};
 
   uint32_t  viewportBase {0};           // коротша сторона (висота)
@@ -123,8 +123,6 @@ public:
   asio::ip::tcp::endpoint     address;
   std::chrono::milliseconds   updateInterval {std::chrono::seconds(1)};
   std::chrono::seconds        statisticInterval {std::chrono::minutes(1)};
-  std::chrono::seconds        connectionTTL {std::chrono::minutes(1)};
-  uint                        listenBacklog {1024};
   uint                        ioContextThreads {1};
   uint                        roomThreads {2};
 

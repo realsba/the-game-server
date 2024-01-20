@@ -178,7 +178,7 @@ private:
   TimePoint m_lastUpdate {TimePoint::clock::now()};
 
   uint32_t  m_tick {0};                        // TODO: stop using and remove
-  uint32_t  m_lastCheckPlayers {0};            // TODO: use TimePoint
+  TimePoint m_lastCheckPlayers {TimePoint::clock::now()};
   TimePoint m_lastUpdateLeaderboard {TimePoint::clock::now()};
   TimePoint m_lastDestroyOutdatedCells {TimePoint::clock::now()};
   uint32_t  m_lastCheckMothers {0};            // TODO: use TimePoint
