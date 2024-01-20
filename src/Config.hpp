@@ -25,8 +25,8 @@ struct MySQLConfig {
 struct RoomConfig {
   float eps {0.01};
 
-  std::chrono::milliseconds updateInterval;  // TODO: fix type
-  std::chrono::milliseconds tickInterval;    // TODO: fix type
+  Duration  updateInterval;
+  std::chrono::milliseconds tickInterval;    // TODO: remove
 
   uint32_t  simulationIterations {0};
   uint32_t  spawnPosTryCount {0};

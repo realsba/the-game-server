@@ -87,7 +87,7 @@ void TSRoom::stop()
 
 void TSRoom::update()
 {
-  m_expirationTime += m_config.tickInterval;
+  m_expirationTime += m_config.updateInterval;
   m_timer.expires_at(m_expirationTime);
   m_timer.async_wait(asio::bind_executor(m_strand, [&](const boost::system::error_code& error) {
     if (!error) {
