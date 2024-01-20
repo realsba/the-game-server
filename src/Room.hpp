@@ -179,12 +179,12 @@ private:
 
   uint32_t  m_tick {0};                        // TODO: stop using and remove
   uint32_t  m_lastCheckPlayers {0};            // TODO: use TimePoint
-  uint32_t  m_lastUpdateLeaderboard {0};
+  TimePoint m_lastUpdateLeaderboard {TimePoint::clock::now()};
   uint32_t  m_lastDestroyOutdatedCells {0};
   uint32_t  m_lastCheckMothers {0};
   uint32_t  m_lastMothersProduce {0};
 
-  float     m_mass {0};
+  double    m_mass {0};
   double    m_simulationInterval {0};
   float     m_accumulatedFoodMass {0};
   float     m_accumulatedVirusMass {0};

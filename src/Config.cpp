@@ -78,7 +78,7 @@ namespace toml
       result.simulationsPerUpdate = find<uint32_t>(v, "simulationsPerUpdate");
       result.spawnPosTryCount     = find<uint32_t>(v, "spawnPosTryCount");
       result.checkPlayers         = find<uint32_t>(v, "checkPlayers");
-      result.updateLeaderboard    = find<uint32_t>(v, "updateLeaderboard");
+      result.updateLeaderboardInterval = find<Duration>(v, "updateLeaderboardInterval");
       result.destroyOutdatedCells = find<uint32_t>(v, "destroyOutdatedCells");
       result.checkMothers         = find<uint32_t>(v, "checkMothers");
       result.mothersProduce       = find<uint32_t>(v, "mothersProduce");

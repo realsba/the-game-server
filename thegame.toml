@@ -34,7 +34,7 @@ spawnPosTryCount = 10
 
 # інтервал запуску в тіках
 checkPlayers = 100
-updateLeaderboard = 20
+updateLeaderboardInterval = '1s'
 destroyOutdatedCells = 60
 checkMothers = 200
 mothersProduce = 20
@@ -87,7 +87,7 @@ avatarRecombineTime = 8
 
 foodStartAmount = 2000
 foodMaxAmount = 5000
-foodMass = 50
+foodMass = 5
 foodRadius = 8
 foodMinImpulse = 190
 foodMaxImpulse = 210

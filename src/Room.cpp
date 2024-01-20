@@ -1436,16 +1436,19 @@ void Room::synchronize()
 
 void Room::updateLeaderboard()
 {
-  if (!m_config.updateLeaderboard || (m_tick - m_lastUpdateLeaderboard >= m_config.updateLeaderboard)) {
-    return;
-  }
-  m_lastUpdateLeaderboard += m_config.updateLeaderboard;
   if (m_updateLeaderboard) {
+    auto now = TimePoint::clock::now();
+    if (now - m_lastUpdateLeaderboard < m_config.updateLeaderboardInterval) {
+      return;
+    }
+    m_lastUpdateLeaderboard = now;
+
     std::sort(m_leaderboard.begin(), m_leaderboard.end(), [] (Player* a, Player* b) { return *b < *a; });
     const auto& buffer = std::make_shared<Buffer>();
     PacketLeaderboard packetLeaderboard {m_leaderboard, m_config.leaderboardVisibleItems};
     packetLeaderboard.format(*buffer);
     send(buffer);
+
     m_updateLeaderboard = false;
   }
 }

@@ -32,7 +32,7 @@ struct RoomConfig {
 
   // TODO: use Duration
   uint32_t  checkPlayers {0};
-  uint32_t  updateLeaderboard {0};
+  Duration  updateLeaderboardInterval {};
   uint32_t  destroyOutdatedCells {0};
   uint32_t  checkMothers {0};
   uint32_t  mothersProduce {0};
