@@ -26,10 +26,11 @@ struct RoomConfig {
   float eps {0.01};
 
   Duration  updateInterval;
-  std::chrono::milliseconds tickInterval;    // TODO: remove
 
-  uint32_t  simulationIterations {0};
+  uint32_t  simulationsPerUpdate {0};
   uint32_t  spawnPosTryCount {0};
+
+  // TODO: use Duration
   uint32_t  checkPlayers {0};
   uint32_t  updateLeaderboard {0};
   uint32_t  destroyOutdatedCells {0};
@@ -78,7 +79,7 @@ struct RoomConfig {
   uint32_t  avatarSplitImpulse {0};
   uint32_t  avatarEjectMinMass {0};
   uint32_t  avatarEjectImpulse {0};
-  uint32_t  avatarRecombineTime {0};
+  uint32_t  avatarRecombineTime {0}; // TODO: use Duration
   uint32_t  avatarEjectMass {0};
   uint32_t  avatarEjectMassLoss {0};
 

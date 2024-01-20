@@ -94,7 +94,7 @@ public:
   void update();
 
 private:
-  void calculateHasFreeSpace();
+  void recalculateFreeSpace();
 
   Vec2D getRandomPosition(uint32_t radius) const;
   Avatar& createAvatar();
@@ -177,15 +177,15 @@ private:
 
   TimePoint m_lastUpdate {TimePoint::clock::now()};
 
-  uint32_t  m_tick {0};
-  uint32_t  m_lastCheckPlayers {0};
+  uint32_t  m_tick {0};                        // TODO: stop using and remove
+  uint32_t  m_lastCheckPlayers {0};            // TODO: use TimePoint
   uint32_t  m_lastUpdateLeaderboard {0};
   uint32_t  m_lastDestroyOutdatedCells {0};
   uint32_t  m_lastCheckMothers {0};
   uint32_t  m_lastMothersProduce {0};
+
   float     m_mass {0};
-  float     m_tickInterval {0.05};
-  float     m_simulationInterval {0.01};
+  double    m_simulationInterval {0};
   float     m_accumulatedFoodMass {0};
   float     m_accumulatedVirusMass {0};
   float     m_accumulatedPhageMass {0};

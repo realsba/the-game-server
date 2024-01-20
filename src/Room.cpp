@@ -1,8 +1,6 @@
 // file   : Room.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#include <fstream>
-
 #include "Room.hpp"
 
 #include "Session.hpp"
@@ -28,6 +26,8 @@
 #include <spdlog/spdlog.h>
 #include <chrono>
 
+using namespace std::chrono;
+
 Room::Room(uint32_t id)
   : m_id(id)
 {
@@ -48,8 +48,8 @@ uint32_t Room::getId() const
 void Room::init(const RoomConfig& config)
 {
   m_config = config;
-  m_tickInterval = 0.001 * m_config.tickInterval.count();
-  m_simulationInterval = m_tickInterval / m_config.simulationIterations;
+  m_simulationInterval = duration_cast<duration<double>>(m_config.updateInterval).count();
+  m_simulationInterval /= m_config.simulationsPerUpdate;
   m_gridmap.resize(m_config.width, m_config.height, 9);
   spawnFood(m_config.foodStartAmount);
   spawnViruses(m_config.virusStartAmount);
@@ -186,7 +186,7 @@ void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
       player = new Player(playerId, *this, m_gridmap);
       player->name = name;
       m_players.emplace(playerId, player);
-      calculateHasFreeSpace();
+      recalculateFreeSpace();
       sendPacketPlayer(*player);
     }
     player->online = true;
@@ -246,7 +246,7 @@ void Room::spectate(const SessionPtr& sess, uint32_t targetId)
       player = new Player(playerId, *this, m_gridmap);
       player->name = "Player " + std::to_string(user->getId());
       m_players.emplace(playerId, player);
-      calculateHasFreeSpace();
+      recalculateFreeSpace();
       sendPacketPlayer(*player);
     }
     player->online = true;
@@ -452,12 +452,12 @@ void Room::interact(Avatar& avatar, Virus& virus)
 
 void Room::interact(Avatar& avatar, Phage& phage)
 {
-  if (avatar.mass <= m_config.cellMinMass || avatar.mass < 1.25 * phage.mass) {
+  if (avatar.mass <= m_config.cellMinMass || avatar.mass < 1.25 * phage.mass) { // TODO: move the constant to the config
     return;
   }
-  auto d = avatar.radius + phage.radius;
-  if (geometry::squareDistance(avatar.position, phage.position) < d * d) {
-    float m = std::min(m_simulationInterval * phage.mass, avatar.mass - m_config.cellMinMass);
+  auto distance = avatar.radius + phage.radius;
+  if (geometry::squareDistance(avatar.position, phage.position) < distance * distance) {
+    auto m = std::min(static_cast<float>(m_simulationInterval * phage.mass), avatar.mass - m_config.cellMinMass);
     modifyMass(avatar, -m);
     m_modifiedCells.insert(&avatar);
   }
@@ -732,19 +732,18 @@ void Room::integration(Avatar& initiator, const Vec2D& point)
 
 void Room::update()
 {
-  auto now(TimePoint::clock::now());
-  auto deltaTime(now - m_lastUpdate);
-  auto tickCount = (deltaTime / m_config.tickInterval);
-  m_tick += tickCount;
-  m_lastUpdate += m_config.tickInterval * tickCount;
-  auto dt = m_tickInterval * tickCount;
+  auto now{TimePoint::clock::now()};
+  auto deltaTime{now - m_lastUpdate};
+  m_lastUpdate = now;
+  ++m_tick;
+  auto dt = duration_cast<duration<double>>(deltaTime).count(); // TODO: replace to deltaTime
 
   destroyOutdatedCells();
   generate(dt);
   handlePlayerRequests();
 
-  for (auto i = m_config.simulationIterations * tickCount; i > 0; --i) {
-    simulate(m_simulationInterval);
+  for (auto i = m_config.simulationsPerUpdate; i > 0; --i) {
+    simulate(dt / m_config.simulationsPerUpdate);
   }
 
   auto deflationTime = now - m_config.playerDeflationInterval;
@@ -832,7 +831,7 @@ void Room::update()
   updateLeaderboard();
 }
 
-void Room::calculateHasFreeSpace()
+void Room::recalculateFreeSpace()
 {
   m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
 }
@@ -955,7 +954,7 @@ void Room::spawnBot(uint32_t id)
     bot->name = "Bot " + std::to_string(id);
     bot->online = true;
     m_players.emplace(bot->getId(), bot);
-    calculateHasFreeSpace();
+    recalculateFreeSpace();
     m_bots.emplace(bot);
     sendPacketPlayer(*bot);
   }
@@ -1075,9 +1074,9 @@ void Room::modifyMass(Cell& cell, float value)
 void Room::modifyMass(Avatar& avatar, float value)
 {
   modifyMass(static_cast<Cell&>(avatar), value);
-  auto minRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI);
-  auto maxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);
-  auto speedDiff = m_config.avatarMaxSpeed - m_config.avatarMinSpeed;
+  auto minRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI); // TODO: it is the const for the Room, calculate only once
+  auto maxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);     // TODO: it is the const for the Room, calculate only once
+  auto speedDiff = m_config.avatarMaxSpeed - m_config.avatarMinSpeed;            // TODO: it is the const for the Room, calculate only once
   avatar.maxSpeed = m_config.avatarMaxSpeed - speedDiff * (avatar.radius - minRadius) / (maxRadius - minRadius);
 }
 
@@ -1259,6 +1258,7 @@ void Room::handlePlayerRequests()
 
 void Room::simulate(float dt)
 {
+  // TODO: move to up level, the most of code does not use dt
   for (Player* player : m_fighters) {
     auto& avatars = player->getAvatars();
     if (avatars.size() < 2) {
@@ -1519,7 +1519,7 @@ void Room::checkPlayers()
       ++it;
     }
   }
-  calculateHasFreeSpace();
+  recalculateFreeSpace();
 }
 
 void Room::spawnFood(uint32_t count)

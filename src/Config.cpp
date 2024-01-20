@@ -75,14 +75,7 @@ namespace toml
         throw std::runtime_error("room.updateInterval should be > 0");
       }
 
-      // result.tickInterval = find<Duration>(v, "tickInterval");
-      auto d = find<Duration>(v, "tickInterval");
-      result.tickInterval = duration_cast<milliseconds>(d);
-      if (result.tickInterval == Duration::zero()) {
-        throw std::runtime_error("room.tickInterval should be > 0");
-      }
-
-      result.simulationIterations = find<uint32_t>(v, "simulationIterations");
+      result.simulationsPerUpdate = find<uint32_t>(v, "simulationsPerUpdate");
       result.spawnPosTryCount     = find<uint32_t>(v, "spawnPosTryCount");
       result.checkPlayers         = find<uint32_t>(v, "checkPlayers");
       result.updateLeaderboard    = find<uint32_t>(v, "updateLeaderboard");

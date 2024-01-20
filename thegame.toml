@@ -29,8 +29,7 @@ maxIdleTime = 600
 
 [room]
 updateInterval = '50ms'
-tickInterval = '50ms'
-simulationIterations = 5
+simulationsPerUpdate = 5
 spawnPosTryCount = 10
 
 # інтервал запуску в тіках
