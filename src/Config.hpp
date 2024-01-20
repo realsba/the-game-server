@@ -50,9 +50,9 @@ struct RoomConfig {
   uint32_t  explodeImpulse {0};
 
   uint32_t  playerMaxCells {0};
-  uint32_t  playerDeflationTime {0};
+  Duration  playerDeflationInterval {};
   float     playerDeflationRatio {0};
-  uint32_t  playerAnnihilationTime {0};
+  Duration  playerAnnihilationInterval {};
   float     playerForceRatio {0};
 
   uint32_t  botAmount {0};
@@ -93,19 +93,19 @@ struct RoomConfig {
   uint32_t  virusStartMass {0};
   uint32_t  virusStartAmount {0};
   uint32_t  virusMaxAmount {0};
-  uint32_t  virusLifeTime {0};
+  Duration  virusLifeTime {};
   uint32_t  virusColor {0};
 
   uint32_t  phageStartMass {0};
   uint32_t  phageStartAmount {0};
   uint32_t  phageMaxAmount {0};
-  uint32_t  phageLifeTime {0};
+  Duration  phageLifeTime {};
   uint32_t  phageColor {0};
 
   uint32_t  motherStartMass {0};
   uint32_t  motherStartAmount {0};
   uint32_t  motherMaxAmount {0};
-  uint32_t  motherLifeTime {0};
+  Duration  motherLifeTime {};
   uint32_t  motherExplodeMass {0};
   uint32_t  motherColor {0};
   uint32_t  motherCheckRadius {0};

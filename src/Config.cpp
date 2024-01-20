@@ -105,11 +105,11 @@ namespace toml
       result.scaleRatio           = find<float>(v, "scaleRatio");
       result.explodeImpulse       = find<uint32_t>(v, "explodeImpulse");
 
-      result.playerMaxCells       = find<uint32_t>(v, "playerMaxCells");
-      result.playerDeflationTime  = find<uint32_t>(v, "playerDeflationTime");
-      result.playerDeflationRatio = find<float>(v, "playerDeflationRatio");
-      result.playerAnnihilationTime = find<uint32_t>(v, "playerAnnihilationTime");
-      result.playerForceRatio     = find<float>(v, "playerForceRatio");
+      result.playerMaxCells             = find<uint32_t>(v, "playerMaxCells");
+      result.playerDeflationInterval    = find<Duration>(v, "playerDeflationInterval");
+      result.playerDeflationRatio       = find<float>(v, "playerDeflationRatio");
+      result.playerAnnihilationInterval = find<Duration>(v, "playerAnnihilationInterval");
+      result.playerForceRatio           = find<float>(v, "playerForceRatio");
 
       result.botAmount            = find<uint32_t>(v, "botAmount");
       result.botStartMass         = find<uint32_t>(v, "botStartMass");
@@ -139,7 +139,7 @@ namespace toml
       result.avatarRecombineTime  = find<uint32_t>(v, "avatarRecombineTime");
 
       result.foodStartAmount      = find<uint32_t>(v, "foodStartAmount");
-      result. foodMaxAmount       = find<uint32_t>(v, "foodMaxAmount");
+      result.foodMaxAmount        = find<uint32_t>(v, "foodMaxAmount");
       result.foodMass             = find<uint32_t>(v, "foodMass");
       result.foodRadius           = find<uint32_t>(v, "foodRadius");
       result.foodMinImpulse       = find<uint32_t>(v, "foodMinImpulse");
@@ -152,19 +152,19 @@ namespace toml
       result.virusStartMass       = find<uint32_t>(v, "virusStartMass");
       result.virusStartAmount     = find<uint32_t>(v, "virusStartAmount");
       result.virusMaxAmount       = find<uint32_t>(v, "virusMaxAmount");
-      result.virusLifeTime        = find<uint32_t>(v, "virusLifeTime");
+      result.virusLifeTime        = find<Duration>(v, "virusLifeTime");
       result.virusColor           = find<uint32_t>(v, "virusColor");
 
       result.phageStartMass       = find<uint32_t>(v, "phageStartMass");
       result.phageStartAmount     = find<uint32_t>(v, "phageStartAmount");
       result.phageMaxAmount       = find<uint32_t>(v, "phageMaxAmount");
-      result.phageLifeTime        = find<uint32_t>(v, "phageLifeTime");
+      result.phageLifeTime        = find<Duration>(v, "phageLifeTime");
       result.phageColor           = find<uint32_t>(v, "phageColor");
 
       result.motherStartMass      = find<uint32_t>(v, "motherStartMass");
       result.motherStartAmount    = find<uint32_t>(v, "motherStartAmount");
       result.motherMaxAmount      = find<uint32_t>(v, "motherMaxAmount");
-      result.motherLifeTime       = find<uint32_t>(v, "motherLifeTime");
+      result.motherLifeTime       = find<Duration>(v, "motherLifeTime");
       result.motherExplodeMass    = find<uint32_t>(v, "motherExplodeMass");
       result.motherColor          = find<uint32_t>(v, "motherColor");
       result.motherCheckRadius    = find<uint32_t>(v, "motherCheckRadius");

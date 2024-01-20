@@ -54,9 +54,9 @@ scaleRatio = 0.75
 explodeImpulse = 500
 
 playerMaxCells = 16
-playerDeflationTime = 120
+playerDeflationInterval = '2m'
 playerDeflationRatio = 0.10
-playerAnnihilationTime = 300
+playerAnnihilationInterval = '5m'
 playerForceRatio = 2.5
 
 botAmount = 10
@@ -97,19 +97,19 @@ foodResistanceRatio = 30.0
 virusStartMass = 165
 virusStartAmount = 10
 virusMaxAmount = 20
-virusLifeTime = 300
+virusLifeTime = '5m'
 virusColor = 13
 
 phageStartMass = 165
 phageStartAmount = 10
 phageMaxAmount = 20
-phageLifeTime = 300
+phageLifeTime = '5m'
 phageColor = 14
 
 motherStartMass = 240
 motherStartAmount = 10
 motherMaxAmount = 20
-motherLifeTime = 600
+motherLifeTime = '10m'
 motherExplodeMass = 3000
 motherColor = 12
 motherCheckRadius = 60

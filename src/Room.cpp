@@ -747,8 +747,8 @@ void Room::update()
     simulate(m_simulationInterval);
   }
 
-  auto deflationTime = now - std::chrono::seconds(m_config.playerDeflationTime);
-  auto annihilationTime = now - std::chrono::seconds(m_config.playerAnnihilationTime);
+  auto deflationTime = now - m_config.playerDeflationInterval;
+  auto annihilationTime = now - m_config.playerAnnihilationInterval;
   for (auto& it : m_avatarContainer) {
     Avatar& avatar = it.second;
     const auto& lastActivity = avatar.player->getLastActivity();
@@ -1121,7 +1121,7 @@ void Room::destroyOutdatedCells()
   }
   m_lastDestroyOutdatedCells += m_config.destroyOutdatedCells;
   auto now(TimePoint::clock::now());
-  auto timePoint(now - std::chrono::seconds(m_config.virusLifeTime));
+  auto timePoint(now - m_config.virusLifeTime);
   for (auto it = m_virusContainer.begin(); it != m_virusContainer.end();) {
     auto& virus = it->second;
     if (virus.created < timePoint) {
@@ -1131,7 +1131,7 @@ void Room::destroyOutdatedCells()
       ++it;
     }
   }
-  timePoint = now - std::chrono::seconds(m_config.phageLifeTime);
+  timePoint = now - m_config.phageLifeTime;
   for (auto it = m_phageContainer.begin(); it != m_phageContainer.end();) {
     auto& phage = it->second;
     if (phage.created < timePoint) {
@@ -1141,7 +1141,7 @@ void Room::destroyOutdatedCells()
       ++it;
     }
   }
-  timePoint = now - std::chrono::seconds(m_config.motherLifeTime);
+  timePoint = now - m_config.motherLifeTime;
   for (auto it = m_motherContainer.begin(); it != m_motherContainer.end();) {
     auto& mother = it->second;
     if (mother.created < timePoint) {
@@ -1505,7 +1505,7 @@ void Room::checkPlayers()
       spawnBot(bot->getId());
     }
   }
-  auto time = TimePoint::clock::now() - std::chrono::seconds(m_config.playerAnnihilationTime);
+  auto time = TimePoint::clock::now() - m_config.playerAnnihilationInterval;
   for (auto it = m_zombiePlayers.begin(); it != m_zombiePlayers.end();) {
     Player* player = *it;
     if (player->isDead() && player->getLastActivity() < time) {
