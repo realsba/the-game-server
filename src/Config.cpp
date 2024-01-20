@@ -75,32 +75,32 @@ namespace toml
         throw std::runtime_error("room.updateInterval should be > 0");
       }
 
-      result.simulationsPerUpdate = find<uint32_t>(v, "simulationsPerUpdate");
-      result.spawnPosTryCount     = find<uint32_t>(v, "spawnPosTryCount");
-      result.checkPlayers         = find<uint32_t>(v, "checkPlayers");
-      result.updateLeaderboardInterval = find<Duration>(v, "updateLeaderboardInterval");
-      result.destroyOutdatedCells = find<uint32_t>(v, "destroyOutdatedCells");
-      result.checkMothers         = find<uint32_t>(v, "checkMothers");
-      result.mothersProduce       = find<uint32_t>(v, "mothersProduce");
+      result.simulationsPerUpdate         = find<uint32_t>(v, "simulationsPerUpdate");
+      result.spawnPosTryCount             = find<uint32_t>(v, "spawnPosTryCount");
+      result.checkPlayers                 = find<uint32_t>(v, "checkPlayers");
+      result.updateLeaderboardInterval    = find<Duration>(v, "updateLeaderboardInterval");
+      result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
+      result.checkMothersInterval         = find<uint32_t>(v, "checkMothersInterval");
+      result.mothersProduceInterval       = find<Duration>(v, "mothersProduceInterval");
 
-      result.viewportBase         = find<uint32_t>(v, "viewportBase");
-      result.viewportBuffer       = find<float>(v, "viewportBuffer");
-      result.aspectRatio          = find<float>(v, "aspectRatio");
+      result.viewportBase                 = find<uint32_t>(v, "viewportBase");
+      result.viewportBuffer               = find<float>(v, "viewportBuffer");
+      result.aspectRatio                  = find<float>(v, "aspectRatio");
 
-      result.width                = find<uint32_t>(v, "width");
-      result.height               = find<uint32_t>(v, "height");
-      result.maxMass              = find<uint32_t>(v, "maxMass");
-      result.maxPlayers           = find<uint32_t>(v, "maxPlayers");
-      result.maxRadius            = find<uint32_t>(v, "maxRadius");
-      result.leaderboardVisibleItems = find<uint32_t>(v, "leaderboardVisibleItems");
-      result.scaleRatio           = find<float>(v, "scaleRatio");
-      result.explodeImpulse       = find<uint32_t>(v, "explodeImpulse");
+      result.width                        = find<uint32_t>(v, "width");
+      result.height                       = find<uint32_t>(v, "height");
+      result.maxMass                      = find<uint32_t>(v, "maxMass");
+      result.maxPlayers                   = find<uint32_t>(v, "maxPlayers");
+      result.maxRadius                    = find<uint32_t>(v, "maxRadius");
+      result.leaderboardVisibleItems      = find<uint32_t>(v, "leaderboardVisibleItems");
+      result.scaleRatio                   = find<float>(v, "scaleRatio");
+      result.explodeImpulse               = find<uint32_t>(v, "explodeImpulse");
 
-      result.playerMaxCells             = find<uint32_t>(v, "playerMaxCells");
-      result.playerDeflationInterval    = find<Duration>(v, "playerDeflationInterval");
-      result.playerDeflationRatio       = find<float>(v, "playerDeflationRatio");
-      result.playerAnnihilationInterval = find<Duration>(v, "playerAnnihilationInterval");
-      result.playerForceRatio           = find<float>(v, "playerForceRatio");
+      result.playerMaxCells               = find<uint32_t>(v, "playerMaxCells");
+      result.playerDeflationInterval      = find<Duration>(v, "playerDeflationInterval");
+      result.playerDeflationRatio         = find<float>(v, "playerDeflationRatio");
+      result.playerAnnihilationInterval   = find<Duration>(v, "playerAnnihilationInterval");
+      result.playerForceRatio             = find<float>(v, "playerForceRatio");
 
       result.botAmount            = find<uint32_t>(v, "botAmount");
       result.botStartMass         = find<uint32_t>(v, "botStartMass");

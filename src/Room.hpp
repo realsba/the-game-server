@@ -180,16 +180,16 @@ private:
   uint32_t  m_tick {0};                        // TODO: stop using and remove
   uint32_t  m_lastCheckPlayers {0};            // TODO: use TimePoint
   TimePoint m_lastUpdateLeaderboard {TimePoint::clock::now()};
-  uint32_t  m_lastDestroyOutdatedCells {0};
-  uint32_t  m_lastCheckMothers {0};
-  uint32_t  m_lastMothersProduce {0};
+  TimePoint m_lastDestroyOutdatedCells {TimePoint::clock::now()};
+  uint32_t  m_lastCheckMothers {0};            // TODO: use TimePoint
+  TimePoint m_lastMothersProduce {TimePoint::clock::now()};
 
   double    m_mass {0};
   double    m_simulationInterval {0};
-  float     m_accumulatedFoodMass {0};
-  float     m_accumulatedVirusMass {0};
-  float     m_accumulatedPhageMass {0};
-  float     m_accumulatedMotherMass {0};
+  double    m_accumulatedFoodMass {0};
+  double    m_accumulatedVirusMass {0};
+  double    m_accumulatedPhageMass {0};
+  double    m_accumulatedMotherMass {0};
   bool      m_updateLeaderboard {false};
   bool      m_hasFreeSpace {true};
 };

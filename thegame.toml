@@ -35,9 +35,9 @@ spawnPosTryCount = 10
 # інтервал запуску в тіках
 checkPlayers = 100
 updateLeaderboardInterval = '1s'
-destroyOutdatedCells = 60
-checkMothers = 200
-mothersProduce = 20
+destroyOutdatedCellsInterval = '3s'
+checkMothersInterval = 200
+mothersProduceInterval = '1s'
 
 viewportBase = 743
 viewportBuffer = 0.1

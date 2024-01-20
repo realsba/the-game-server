@@ -30,12 +30,11 @@ struct RoomConfig {
   uint32_t  simulationsPerUpdate {0};
   uint32_t  spawnPosTryCount {0};
 
-  // TODO: use Duration
-  uint32_t  checkPlayers {0};
+  uint32_t  checkPlayers {0}; // TODO: use Duration
   Duration  updateLeaderboardInterval {};
-  uint32_t  destroyOutdatedCells {0};
-  uint32_t  checkMothers {0};
-  uint32_t  mothersProduce {0};
+  Duration  destroyOutdatedCellsInterval {};
+  uint32_t  checkMothersInterval {}; // TODO: use Duration
+  Duration  mothersProduceInterval {};
 
   uint32_t  viewportBase {0};           // коротша сторона (висота)
   float     viewportBuffer {0};         // запас в кожну сторону

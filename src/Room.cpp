@@ -1115,35 +1115,38 @@ void Room::solveCellLocation(Cell& cell)
 
 void Room::destroyOutdatedCells()
 {
-  if (!m_config.destroyOutdatedCells || (m_tick - m_lastDestroyOutdatedCells < m_config.destroyOutdatedCells)) {
+  auto currentTime = TimePoint::clock::now();
+  if (currentTime - m_lastDestroyOutdatedCells < m_config.destroyOutdatedCellsInterval) {
     return;
   }
-  m_lastDestroyOutdatedCells += m_config.destroyOutdatedCells;
-  auto now(TimePoint::clock::now());
-  auto timePoint(now - m_config.virusLifeTime);
+  m_lastDestroyOutdatedCells = currentTime;
+
+  auto expirationTime = currentTime - m_config.virusLifeTime;
   for (auto it = m_virusContainer.begin(); it != m_virusContainer.end();) {
     auto& virus = it->second;
-    if (virus.created < timePoint) {
+    if (virus.created < expirationTime) {
       removeCell(virus);
       it = m_virusContainer.erase(it);
     } else {
       ++it;
     }
   }
-  timePoint = now - m_config.phageLifeTime;
+
+  expirationTime = currentTime - m_config.phageLifeTime;
   for (auto it = m_phageContainer.begin(); it != m_phageContainer.end();) {
     auto& phage = it->second;
-    if (phage.created < timePoint) {
+    if (phage.created < expirationTime) {
       removeCell(phage);
       it = m_phageContainer.erase(it);
     } else {
       ++it;
     }
   }
-  timePoint = now - m_config.motherLifeTime;
+
+  expirationTime = currentTime - m_config.motherLifeTime;
   for (auto it = m_motherContainer.begin(); it != m_motherContainer.end();) {
     auto& mother = it->second;
-    if (mother.created < timePoint) {
+    if (mother.created < expirationTime) {
       removeCell(mother);
       it = m_motherContainer.erase(it);
     } else {
@@ -1158,10 +1161,10 @@ void Room::generate(float dt)
     return;
   }
 
-  int32_t avail = m_config.foodMaxAmount - m_foodContainer.size();
+  auto avail = m_config.foodMaxAmount - m_foodContainer.size();
   if (avail > 0 && m_mass + m_accumulatedFoodMass < m_config.maxMass) {
     m_accumulatedFoodMass += m_config.spawnFoodMass * dt;
-    int32_t count = std::min(static_cast<int>(m_accumulatedFoodMass / m_config.foodMass), avail);
+    auto count = std::min(static_cast<size_t>(m_accumulatedFoodMass / m_config.foodMass), avail);
     if (count > 0) {
       m_accumulatedFoodMass -= m_config.foodMass * count;
       spawnFood(count);
@@ -1171,7 +1174,7 @@ void Room::generate(float dt)
   avail = m_config.virusMaxAmount - m_virusContainer.size();
   if (avail > 0 && m_mass + m_accumulatedVirusMass < m_config.maxMass) {
     m_accumulatedVirusMass += m_config.spawnVirusMass * dt;
-    int32_t count = std::min(static_cast<int>(m_accumulatedVirusMass / m_config.virusStartMass), avail);
+    auto count = std::min(static_cast<size_t>(m_accumulatedVirusMass / m_config.virusStartMass), avail);
     if (count > 0) {
       m_accumulatedVirusMass -= m_config.virusStartMass * count;
       spawnViruses(count);
@@ -1181,7 +1184,7 @@ void Room::generate(float dt)
   avail = m_config.phageMaxAmount - m_phageContainer.size();
   if (avail > 0 && m_mass + m_accumulatedPhageMass < m_config.maxMass) {
     m_accumulatedPhageMass += m_config.spawnPhageMass * dt;
-    int32_t count = std::min(static_cast<int>(m_accumulatedPhageMass / m_config.phageStartMass), avail);
+    auto count = std::min(static_cast<size_t>(m_accumulatedPhageMass / m_config.phageStartMass), avail);
     if (count > 0) {
       m_accumulatedPhageMass -= m_config.phageStartMass * count;
       spawnPhages(count);
@@ -1191,15 +1194,15 @@ void Room::generate(float dt)
   avail = m_config.motherMaxAmount - m_motherContainer.size();
   if (avail > 0 && m_mass + m_accumulatedMotherMass < m_config.maxMass) {
     m_accumulatedMotherMass += m_config.spawnMotherMass * dt;
-    int32_t count = std::min(static_cast<int>(m_accumulatedMotherMass / m_config.motherStartMass), avail);
+    auto count = std::min(static_cast<size_t>(m_accumulatedMotherMass / m_config.motherStartMass), avail);
     if (count > 0) {
       m_accumulatedMotherMass -= m_config.motherStartMass * count;
       spawnMothers(count);
     }
   }
 
-  if (m_tick - m_lastCheckMothers >= m_config.checkMothers) {
-    m_lastCheckMothers += m_config.checkMothers;
+  if (m_tick - m_lastCheckMothers >= m_config.checkMothersInterval) {
+    m_lastCheckMothers += m_config.checkMothersInterval;
     for (auto& it : m_motherContainer) {
       auto& mother = it.second;
       Vec2D radius(mother.radius + m_config.motherCheckRadius, mother.radius + m_config.motherCheckRadius);
@@ -1455,14 +1458,16 @@ void Room::updateLeaderboard()
 
 void Room::mothersProduce()
 {
-  if (!m_config.mothersProduce || (m_tick - m_lastMothersProduce < m_config.mothersProduce)) {
+  auto currentTime = TimePoint::clock::now();
+  if (currentTime - m_lastMothersProduce < m_config.mothersProduceInterval) {
     return;
   }
-  m_lastMothersProduce += m_config.mothersProduce;
-  auto mothersCount = m_motherContainer.size();
-  if (mothersCount == 0 || m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.foodMaxAmount) {
+  m_lastMothersProduce = currentTime;
+
+  if (m_motherContainer.empty() || m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.foodMaxAmount) {
     return;
   }
+
   for (auto& it : m_motherContainer) {
     auto& mother = it.second;
     if (mother.foodCount >= 100) {
