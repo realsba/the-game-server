@@ -47,21 +47,21 @@ public:
   explicit Room(uint32_t id);
   ~Room();
 
-  uint32_t getId() const;
   void init(const RoomConfig& config);
-  bool hasFreeSpace() const;
 
+  uint32_t getId() const;
+  bool hasFreeSpace() const;
   const RoomConfig& getConfig() const;
 
   void join(const SessionPtr& sess);
   void leave(const SessionPtr& sess);
   void play(const SessionPtr& sess, const std::string& name, uint8_t color);
   void spectate(const SessionPtr& sess, uint32_t targetId);
-  void pointer(const SessionPtr& sess, const Vec2D& point);
+  void point(const SessionPtr& sess, const Vec2D& point);
   void eject(const SessionPtr& sess, const Vec2D& point);
   void split(const SessionPtr& sess, const Vec2D& point);
-  void chatMessage(const SessionPtr& sess, const std::string& text);
   void watch(const SessionPtr& sess, uint32_t playerId);
+  void chatMessage(const SessionPtr& sess, const std::string& text);
 
   void interact(Avatar& avatar1, Avatar& avatar2);
   void interact(Avatar& avatar, Food& food);
@@ -81,8 +81,8 @@ public:
   void interact(Phage& phage, Mass& mass);
   void interact(Phage& phage1, Phage& phage2);
 
-  void recombination(Avatar& initiator, Avatar& target);
-  void magnetism(Avatar& initiator, Avatar& target);
+  void recombine(Avatar& initiator, Avatar& target);
+  void magnetism(Avatar& initiator, Avatar& target); // TODO: rename to attract
   void magnetism(Avatar& initiator, Food& target);
   void magnetism(Avatar& initiator, Mass& target);
   void magnetism(Avatar& initiator, Virus& target);
@@ -119,6 +119,7 @@ private:
   void simulate(float dt);
   void synchronize();
   void updateLeaderboard();
+  void checkMothers();
   void mothersProduce();
   void checkPlayers();
 
@@ -181,7 +182,7 @@ private:
   TimePoint m_lastCheckPlayers {TimePoint::clock::now()};
   TimePoint m_lastUpdateLeaderboard {TimePoint::clock::now()};
   TimePoint m_lastDestroyOutdatedCells {TimePoint::clock::now()};
-  uint32_t  m_lastCheckMothers {0};            // TODO: use TimePoint
+  TimePoint m_lastCheckMothers {TimePoint::clock::now()};
   TimePoint m_lastMothersProduce {TimePoint::clock::now()};
 
   double    m_mass {0};
@@ -190,6 +191,10 @@ private:
   double    m_accumulatedVirusMass {0};
   double    m_accumulatedPhageMass {0};
   double    m_accumulatedMotherMass {0};
+  double    m_cellMinRadius {0};
+  double    m_cellMaxRadius {0};
+  double    m_cellRadiusDiff {0};
+  double    m_avatarSpeedDiff {0};
   bool      m_updateLeaderboard {false};
   bool      m_hasFreeSpace {true};
 };

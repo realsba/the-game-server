@@ -80,7 +80,7 @@ namespace toml
       result.checkPlayersInterval         = find<Duration>(v, "checkPlayersInterval");
       result.updateLeaderboardInterval    = find<Duration>(v, "updateLeaderboardInterval");
       result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
-      result.checkMothersInterval         = find<uint32_t>(v, "checkMothersInterval");
+      result.checkMothersInterval         = find<Duration>(v, "checkMothersInterval");
       result.mothersProduceInterval       = find<Duration>(v, "mothersProduceInterval");
 
       result.viewportBase                 = find<uint32_t>(v, "viewportBase");

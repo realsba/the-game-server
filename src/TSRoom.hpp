@@ -23,7 +23,7 @@ public:
   void leave(const SessionPtr& sess);
   void play(const SessionPtr& sess, const std::string& name, uint8_t color);
   void spectate(const SessionPtr& sess, uint32_t targetId);
-  void pointer(const SessionPtr& sess, const Vec2D& point);
+  void point(const SessionPtr& sess, const Vec2D& point);
   void eject(const SessionPtr& sess, const Vec2D& point);
   void split(const SessionPtr& sess, const Vec2D& point);
   void chatMessage(const SessionPtr& sess, const std::string& text);

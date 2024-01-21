@@ -33,7 +33,7 @@ struct RoomConfig {
   Duration  checkPlayersInterval {};
   Duration  updateLeaderboardInterval {};
   Duration  destroyOutdatedCellsInterval {};
-  uint32_t  checkMothersInterval {0}; // TODO: use Duration
+  Duration  checkMothersInterval {};
   Duration  mothersProduceInterval {};
 
   uint32_t  viewportBase {0};           // коротша сторона (висота)

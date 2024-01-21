@@ -40,21 +40,24 @@ Room::~Room()
   }
 }
 
-uint32_t Room::getId() const
-{
-  return m_id;
-}
-
 void Room::init(const RoomConfig& config)
 {
   m_config = config;
+
   m_simulationInterval = duration_cast<duration<double>>(m_config.updateInterval).count();
   m_simulationInterval /= m_config.simulationsPerUpdate;
+
+  m_cellMinRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI);
+  m_cellMaxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);
+  m_cellRadiusDiff = m_cellMaxRadius - m_cellMinRadius;
+  m_avatarSpeedDiff = m_config.avatarMaxSpeed - m_config.avatarMinSpeed;
+
   m_gridmap.resize(m_config.width, m_config.height, 9);
   spawnFood(m_config.foodStartAmount);
   spawnViruses(m_config.virusStartAmount);
   spawnPhages(m_config.phageStartAmount);
   spawnMothers(m_config.motherStartAmount);
+
   for (uint32_t i=0; i<m_config.botAmount; ++i) {
     spawnBot(101 + i);
   }
@@ -67,6 +70,11 @@ void Room::init(const RoomConfig& config)
     }
     (*it++)->name = name;
   }
+}
+
+uint32_t Room::getId() const
+{
+  return m_id;
 }
 
 bool Room::hasFreeSpace() const
@@ -285,7 +293,7 @@ void Room::spectate(const SessionPtr& sess, uint32_t targetId)
   sess->connectionData.observable = target;
 }
 
-void Room::pointer(const SessionPtr& sess, const Vec2D& point)
+void Room::point(const SessionPtr& sess, const Vec2D& point)
 {
   m_pointerRequests.emplace(sess, point);
 }
@@ -298,6 +306,21 @@ void Room::eject(const SessionPtr& sess, const Vec2D& point)
 void Room::split(const SessionPtr& sess, const Vec2D& point)
 {
   m_splitRequests.emplace(sess, point);
+}
+
+void Room::watch(const SessionPtr& sess, uint32_t playerId)
+{
+  auto* player = sess->connectionData.player;
+  if (!player) {
+    return;
+  }
+  const auto& it = m_players.find(playerId);
+  if (it != m_players.end()) {
+    auto* target = it->second;
+    if (target != player) {
+      player->arrowPlayer = target;
+    }
+  }
 }
 
 void Room::chatMessage(const SessionPtr& sess, const std::string& text)
@@ -352,21 +375,6 @@ void Room::chatMessage(const SessionPtr& sess, const std::string& text)
   m_chatHistory.emplace_front(player->getId(), player->name, text);
   while (m_chatHistory.size() > 128) {
     m_chatHistory.pop_back();
-  }
-}
-
-void Room::watch(const SessionPtr& sess, uint32_t playerId)
-{
-  auto* player = sess->connectionData.player;
-  if (!player) {
-    return;
-  }
-  const auto& it = m_players.find(playerId);
-  if (it != m_players.end()) {
-    auto* target = it->second;
-    if (target != player) {
-      player->arrowPlayer = target;
-    }
   }
 }
 
@@ -615,9 +623,8 @@ void Room::interact(Phage& phage1, Phage& phage2)
   }
 }
 
-void Room::recombination(Avatar& initiator, Avatar& target)
+void Room::recombine(Avatar& initiator, Avatar& target)
 {
-  auto dist = geometry::distance(initiator.position, target.position);
   auto direction((initiator.position - target.position).direction());
   if (initiator.isRecombined() && target.isRecombined()) {
     auto force = direction * ((initiator.mass + target.mass) * m_config.elasticityRatio);
@@ -626,9 +633,10 @@ void Room::recombination(Avatar& initiator, Avatar& target)
     m_modifiedCells.insert(&initiator);
     m_modifiedCells.insert(&target);
   } else {
+    auto distance = geometry::distance(initiator.position, target.position);
     auto radius = initiator.radius + target.radius;
-    if (dist < radius) {
-      auto force = direction * ((initiator.mass + target.mass) * (radius - dist) * m_config.elasticityRatio);
+    if (distance < radius) {
+      auto force = direction * ((initiator.mass + target.mass) * (radius - distance) * m_config.elasticityRatio);
       initiator.force += force;
       target.force -= force;
       m_modifiedCells.insert(&initiator);
@@ -772,6 +780,7 @@ void Room::update()
     }
   }
 
+  // TODO: optimize amount of containers
   for (Avatar* avatar : m_zombieAvatars) {
     m_processingAvatars.erase(avatar);
     removeCell(*avatar);
@@ -1074,10 +1083,7 @@ void Room::modifyMass(Cell& cell, float value)
 void Room::modifyMass(Avatar& avatar, float value)
 {
   modifyMass(static_cast<Cell&>(avatar), value);
-  auto minRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI); // TODO: it is the const for the Room, calculate only once
-  auto maxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);     // TODO: it is the const for the Room, calculate only once
-  auto speedDiff = m_config.avatarMaxSpeed - m_config.avatarMinSpeed;            // TODO: it is the const for the Room, calculate only once
-  avatar.maxSpeed = m_config.avatarMaxSpeed - speedDiff * (avatar.radius - minRadius) / (maxRadius - minRadius);
+  avatar.maxSpeed = m_config.avatarMaxSpeed - m_avatarSpeedDiff * (avatar.radius - m_cellMinRadius) / (m_cellRadiusDiff);
 }
 
 void Room::solveCellLocation(Cell& cell)
@@ -1201,16 +1207,25 @@ void Room::generate(float dt)
     }
   }
 
-  if (m_tick - m_lastCheckMothers >= m_config.checkMothersInterval) {
-    m_lastCheckMothers += m_config.checkMothersInterval;
-    for (auto& it : m_motherContainer) {
-      auto& mother = it.second;
-      Vec2D radius(mother.radius + m_config.motherCheckRadius, mother.radius + m_config.motherCheckRadius);
-      AABB box(mother.position - radius, mother.position + radius);
-      mother.foodCount = m_gridmap.count(box);
-    }
-  }
+  checkMothers();
   mothersProduce();
+}
+
+void Room::checkMothers()
+{
+  auto currentTime = TimePoint::clock::now();
+  if (currentTime - m_lastCheckMothers < m_config.checkMothersInterval) {
+    return;
+  }
+  m_lastCheckMothers = currentTime;
+
+  m_lastCheckMothers += m_config.checkMothersInterval;
+  for (auto& it : m_motherContainer) {
+    auto& mother = it.second;
+    Vec2D radius(mother.radius + m_config.motherCheckRadius, mother.radius + m_config.motherCheckRadius);
+    AABB box(mother.position - radius, mother.position + radius);
+    mother.foodCount = m_gridmap.count(box);
+  }
 }
 
 void Room::handlePlayerRequests()
@@ -1263,7 +1278,7 @@ void Room::simulate(float dt)
 {
   // TODO: move to up level, the most of code does not use dt
   for (Player* player : m_fighters) {
-    auto& avatars = player->getAvatars();
+    const auto& avatars = player->getAvatars();
     if (avatars.size() < 2) {
       continue;
     }
@@ -1277,7 +1292,7 @@ void Room::simulate(float dt)
         if (second.zombie || second.protection > m_tick) {
           continue;
         }
-        recombination(first, second);
+        recombine(first, second);
       }
     }
   }

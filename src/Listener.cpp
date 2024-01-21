@@ -22,12 +22,12 @@ Listener::Listener(asio::io_context& ioc, tcp::endpoint&& endpoint, AcceptHandle
 
 void Listener::run()
 {
-  asio::post(m_strand.wrap(std::bind_front(&Listener::doRun, shared_from_this())));
+  asio::post(asio::bind_executor(m_strand, std::bind_front(&Listener::doRun, shared_from_this())));
 }
 
 void Listener::stop()
 {
-  asio::post(m_strand.wrap(std::bind_front(&Listener::doStop, shared_from_this())));
+  asio::post(asio::bind_executor(m_strand, std::bind_front(&Listener::doStop, shared_from_this())));
 }
 
 void Listener::doRun()

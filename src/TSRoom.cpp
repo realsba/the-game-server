@@ -50,9 +50,9 @@ void TSRoom::spectate(const SessionPtr& sess, uint32_t targetId)
   m_strand.post(std::bind_front(&Room::spectate, &m_impl, sess, targetId));
 }
 
-void TSRoom::pointer(const SessionPtr& sess, const Vec2D& point)
+void TSRoom::point(const SessionPtr& sess, const Vec2D& point)
 {
-  m_strand.post(std::bind_front(&Room::pointer, &m_impl, sess, point));
+  m_strand.post(std::bind_front(&Room::point, &m_impl, sess, point));
 }
 
 void TSRoom::eject(const SessionPtr& sess, const Vec2D& point)
