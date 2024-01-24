@@ -3,6 +3,8 @@
 
 #include "RoomManager.hpp"
 
+#include <boost/asio/strand.hpp>
+
 #include <spdlog/spdlog.h>
 
 void RoomManager::start(uint32_t numThreads, const RoomConfig& config)
@@ -10,7 +12,7 @@ void RoomManager::start(uint32_t numThreads, const RoomConfig& config)
   std::lock_guard<std::mutex> lock(m_mutex);
 
   // * TODO: remove
-  auto* room = new TSRoom(m_ioContext, m_nextId++);
+  auto* room = new Room(asio::make_strand(m_ioContext), m_nextId++);
   room->init(config);
   room->start();
   m_items.emplace_back(room);
@@ -52,7 +54,7 @@ void RoomManager::stop()
   m_ioContext.reset();
 }
 
-TSRoom* RoomManager::obtain()
+Room* RoomManager::obtain()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   for (const auto& room : m_items) {
@@ -60,7 +62,7 @@ TSRoom* RoomManager::obtain()
       return room.get();
     }
   }
-  auto room = std::make_unique<TSRoom>(m_ioContext, m_nextId++);
+  auto room = std::make_unique<Room>(asio::make_strand(m_ioContext), m_nextId++);
   room->init(m_config);
   room->start();
   m_items.emplace_back(std::move(room));

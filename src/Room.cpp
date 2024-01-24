@@ -23,13 +23,22 @@
 #include "packet/PacketSpectate.hpp"
 #include "packet/serialization.hpp"
 
+#include <boost/asio/post.hpp>
+
 #include <spdlog/spdlog.h>
 #include <chrono>
 
 using namespace std::chrono;
 
-Room::Room(uint32_t id)
-  : m_id(id)
+Room::Room(asio::any_io_executor executor, uint32_t id)
+  : m_executor(std::move(executor))
+  , m_updateTimer(m_executor, std::bind_front(&Room::update, this))
+  , m_checkPlayersTimer(m_executor, std::bind_front(&Room::checkPlayers, this))
+  , m_updateLeaderboardTimer(m_executor, std::bind_front(&Room::updateLeaderboard, this))
+  , m_destroyOutdatedCellsTimer(m_executor, std::bind_front(&Room::destroyOutdatedCells, this))
+  , m_checkMothersTimer(m_executor, std::bind_front(&Room::checkMothers, this))
+  , m_produceMothersTimer(m_executor, std::bind_front(&Room::produceMothers, this))
+  , m_id(id)
 {
 }
 
@@ -43,6 +52,13 @@ Room::~Room()
 void Room::init(const RoomConfig& config)
 {
   m_config = config;
+
+  m_updateTimer.setInterval(m_config.updateInterval);
+  m_checkPlayersTimer.setInterval(m_config.checkPlayersInterval);
+  m_updateLeaderboardTimer.setInterval(m_config.updateLeaderboardInterval);
+  m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
+  m_checkMothersTimer.setInterval(m_config.checkMothersInterval);
+  m_produceMothersTimer.setInterval(m_config.produceMothersInterval);
 
   m_simulationInterval = duration_cast<duration<double>>(m_config.updateInterval).count();
   m_simulationInterval /= m_config.simulationsPerUpdate;
@@ -72,6 +88,26 @@ void Room::init(const RoomConfig& config)
   }
 }
 
+void Room::start()
+{
+  m_updateTimer.start();
+  m_checkPlayersTimer.start();
+  m_updateLeaderboardTimer.start();
+  m_destroyOutdatedCellsTimer.start();
+  m_checkMothersTimer.start();
+  m_produceMothersTimer.start();
+}
+
+void Room::stop()
+{
+  m_updateTimer.stop();
+  m_checkPlayersTimer.stop();
+  m_updateLeaderboardTimer.stop();
+  m_destroyOutdatedCellsTimer.stop();
+  m_checkMothersTimer.stop();
+  m_produceMothersTimer.stop();
+}
+
 uint32_t Room::getId() const
 {
   return m_id;
@@ -88,6 +124,51 @@ const RoomConfig& Room::getConfig() const
 }
 
 void Room::join(const SessionPtr& sess)
+{
+  asio::post(m_executor, std::bind_front(&Room::doJoin, this, sess));
+}
+
+void Room::leave(const SessionPtr& sess)
+{
+  asio::post(m_executor, std::bind_front(&Room::doLeave, this, sess));
+}
+
+void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
+{
+  asio::post(m_executor, std::bind_front(&Room::doPlay, this, sess, name, color));
+}
+
+void Room::spectate(const SessionPtr& sess, uint32_t targetId)
+{
+  asio::post(m_executor, std::bind_front(&Room::doSpectate, this, sess, targetId));
+}
+
+void Room::point(const SessionPtr& sess, const Vec2D& point)
+{
+  asio::post(m_executor, std::bind_front(&Room::doPoint, this, sess, point));
+}
+
+void Room::eject(const SessionPtr& sess, const Vec2D& point)
+{
+  asio::post(m_executor, std::bind_front(&Room::doEject, this, sess, point));
+}
+
+void Room::split(const SessionPtr& sess, const Vec2D& point)
+{
+  asio::post(m_executor, std::bind_front(&Room::doSplit, this, sess, point));
+}
+
+void Room::watch(const SessionPtr& sess, uint32_t playerId)
+{
+  asio::post(m_executor, std::bind_front(&Room::doWatch, this, sess, playerId));
+}
+
+void Room::chatMessage(const SessionPtr& sess, const std::string& text)
+{
+  asio::post(m_executor, std::bind_front(&Room::doChatMessage, this, sess, text));
+}
+
+void Room::doJoin(const SessionPtr& sess)
 {
   if (!m_sessions.emplace(sess).second) {
     return;
@@ -156,7 +237,7 @@ void Room::join(const SessionPtr& sess)
   }
 }
 
-void Room::leave(const SessionPtr& sess)
+void Room::doLeave(const SessionPtr& sess)
 {
   if (m_sessions.erase(sess)) {
     m_pointerRequests.erase(sess);
@@ -177,7 +258,7 @@ void Room::leave(const SessionPtr& sess)
   }
 }
 
-void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
+void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color)
 {
   const auto& user = sess->connectionData.user;
   if (!user) {
@@ -237,7 +318,7 @@ void Room::play(const SessionPtr& sess, const std::string& name, uint8_t color)
   player->addSession(sess); // TODO: розібратись з додаваннями і забираннями sess
 }
 
-void Room::spectate(const SessionPtr& sess, uint32_t targetId)
+void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
 {
   const auto& user = sess->connectionData.user;
   if (!user) {
@@ -293,22 +374,22 @@ void Room::spectate(const SessionPtr& sess, uint32_t targetId)
   sess->connectionData.observable = target;
 }
 
-void Room::point(const SessionPtr& sess, const Vec2D& point)
+void Room::doPoint(const SessionPtr& sess, const Vec2D& point)
 {
   m_pointerRequests.emplace(sess, point);
 }
 
-void Room::eject(const SessionPtr& sess, const Vec2D& point)
+void Room::doEject(const SessionPtr& sess, const Vec2D& point)
 {
   m_ejectRequests.emplace(sess, point);
 }
 
-void Room::split(const SessionPtr& sess, const Vec2D& point)
+void Room::doSplit(const SessionPtr& sess, const Vec2D& point)
 {
   m_splitRequests.emplace(sess, point);
 }
 
-void Room::watch(const SessionPtr& sess, uint32_t playerId)
+void Room::doWatch(const SessionPtr& sess, uint32_t playerId)
 {
   auto* player = sess->connectionData.player;
   if (!player) {
@@ -323,7 +404,7 @@ void Room::watch(const SessionPtr& sess, uint32_t playerId)
   }
 }
 
-void Room::chatMessage(const SessionPtr& sess, const std::string& text)
+void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
 {
   auto* player = sess->connectionData.player;
   if (!player){
@@ -746,7 +827,6 @@ void Room::update()
   ++m_tick;
   auto dt = duration_cast<duration<double>>(deltaTime).count(); // TODO: replace to deltaTime
 
-  destroyOutdatedCells();
   generate(dt);
   handlePlayerRequests();
 
@@ -835,9 +915,7 @@ void Room::update()
     }
   }
 
-  checkPlayers();
   synchronize();
-  updateLeaderboard();
 }
 
 void Room::recalculateFreeSpace()
@@ -1122,10 +1200,6 @@ void Room::solveCellLocation(Cell& cell)
 void Room::destroyOutdatedCells()
 {
   auto currentTime = TimePoint::clock::now();
-  if (currentTime - m_lastDestroyOutdatedCells < m_config.destroyOutdatedCellsInterval) {
-    return;
-  }
-  m_lastDestroyOutdatedCells = currentTime;
 
   auto expirationTime = currentTime - m_config.virusLifeTime;
   for (auto it = m_virusContainer.begin(); it != m_virusContainer.end();) {
@@ -1206,20 +1280,10 @@ void Room::generate(float dt)
       spawnMothers(count);
     }
   }
-
-  checkMothers();
-  mothersProduce();
 }
 
 void Room::checkMothers()
 {
-  auto currentTime = TimePoint::clock::now();
-  if (currentTime - m_lastCheckMothers < m_config.checkMothersInterval) {
-    return;
-  }
-  m_lastCheckMothers = currentTime;
-
-  m_lastCheckMothers += m_config.checkMothersInterval;
   for (auto& it : m_motherContainer) {
     auto& mother = it.second;
     Vec2D radius(mother.radius + m_config.motherCheckRadius, mother.radius + m_config.motherCheckRadius);
@@ -1455,30 +1519,17 @@ void Room::synchronize()
 void Room::updateLeaderboard()
 {
   if (m_updateLeaderboard) {
-    auto now = TimePoint::clock::now();
-    if (now - m_lastUpdateLeaderboard < m_config.updateLeaderboardInterval) {
-      return;
-    }
-    m_lastUpdateLeaderboard = now;
-
     std::sort(m_leaderboard.begin(), m_leaderboard.end(), [] (Player* a, Player* b) { return *b < *a; });
     const auto& buffer = std::make_shared<Buffer>();
-    PacketLeaderboard packetLeaderboard {m_leaderboard, m_config.leaderboardVisibleItems};
+    PacketLeaderboard packetLeaderboard{m_leaderboard, m_config.leaderboardVisibleItems};
     packetLeaderboard.format(*buffer);
     send(buffer);
-
     m_updateLeaderboard = false;
   }
 }
 
-void Room::mothersProduce()
+void Room::produceMothers()
 {
-  auto currentTime = TimePoint::clock::now();
-  if (currentTime - m_lastMothersProduce < m_config.mothersProduceInterval) {
-    return;
-  }
-  m_lastMothersProduce = currentTime;
-
   if (m_motherContainer.empty() || m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.foodMaxAmount) {
     return;
   }
@@ -1519,19 +1570,13 @@ void Room::mothersProduce()
 
 void Room::checkPlayers()
 {
-  auto currentTime = TimePoint::clock::now();
-  if (currentTime - m_lastCheckPlayers < m_config.checkPlayersInterval) {
-    return;
-  }
-  m_lastCheckPlayers = currentTime;
-
   for (Player* bot : m_bots) {
     if (bot->isDead()) {
       spawnBot(bot->getId());
     }
   }
 
-  auto expirationTime = currentTime - m_config.playerAnnihilationInterval;
+  auto expirationTime = TimePoint::clock::now() - m_config.playerAnnihilationInterval;
   for (auto it = m_zombiePlayers.begin(); it != m_zombiePlayers.end();) {
     Player* player = *it;
     if (player->isDead() && player->getLastActivity() < expirationTime) {

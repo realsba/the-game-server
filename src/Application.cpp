@@ -9,7 +9,7 @@
 
 #include "AsioFormatter.hpp"
 #include "ScopeExit.hpp"
-#include "TSRoom.hpp"
+#include "Room.hpp"
 #include "Player.hpp"
 #include "User.hpp"
 #include "util.hpp"
@@ -23,7 +23,7 @@
 
 Application::Application(std::string configFileName)
   : m_configFileName(std::move(configFileName))
-  , m_timer(m_ioContext, std::bind_front(&Application::update, this))
+  , m_timer(m_ioContext.get_executor(), std::bind_front(&Application::update, this))
 {
   m_listener = std::make_shared<Listener>(
     m_ioContext,
@@ -221,7 +221,7 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
   sess->connectionData.user = user;
   const auto& buffer = std::make_shared<Buffer>();
   packetGreeting.format(*buffer);
-  TSRoom* room = user->getRoom();
+  auto* room = user->getRoom();
   if (!room) {
     room = m_roomManager.obtain();
     user->setRoom(room);
@@ -242,7 +242,7 @@ void Application::actionPlay(const UserPtr& user, const SessionPtr& sess, beast:
     } else if (wstr.length() > m_nameMaxLength) {
       name = cv.to_bytes(wstr.substr(0, m_nameMaxLength));
     }
-    TSRoom* room = user->getRoom();
+    auto* room = user->getRoom();
     if (room) {
       room->play(sess, name, color);
     }
@@ -253,7 +253,7 @@ void Application::actionSpectate(const UserPtr& user, const SessionPtr& sess, be
 {
   auto targetId = deserialize<uint32_t>(request);
   if (user) {
-    TSRoom* room = user->getRoom();
+    auto* room = user->getRoom();
     if (room) {
       room->spectate(sess, targetId);
     }
@@ -266,7 +266,7 @@ void Application::actionPoint(const UserPtr& user, const SessionPtr& sess, beast
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
   if (user) {
-    TSRoom* room = user->getRoom();
+    auto* room = user->getRoom();
     if (room) {
       room->point(sess, point);
     }
@@ -279,7 +279,7 @@ void Application::actionEject(const UserPtr& user, const SessionPtr& sess, beast
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
   if (user) {
-    TSRoom* room = user->getRoom();
+    auto* room = user->getRoom();
     if (room) {
       room->eject(sess, point);
     }
@@ -292,7 +292,7 @@ void Application::actionSplit(const UserPtr& user, const SessionPtr& sess, beast
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
   if (user) {
-    TSRoom* room = user->getRoom();
+    auto* room = user->getRoom();
     if (room) {
       room->split(sess, point);
     }
@@ -303,7 +303,7 @@ void Application::actionWatch(const UserPtr& user, const SessionPtr& sess, beast
 {
   auto playerId = deserialize<uint32_t>(request);
   if (user) {
-    TSRoom* room = user->getRoom();
+    auto* room = user->getRoom();
     if (room) {
       room->watch(sess, playerId);
     }
@@ -314,7 +314,7 @@ void Application::actionChatMessage(const UserPtr& user, const SessionPtr& sess,
 {
   auto text = deserialize<std::string>(request);
   if (user) {
-    TSRoom* room = user->getRoom();
+    auto* room = user->getRoom();
     if (room) {
       std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cv;
       const auto& wstr = cv.from_bytes(text);

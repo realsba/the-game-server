@@ -4,12 +4,10 @@
 #ifndef THEGAME_ROOM_HPP
 #define THEGAME_ROOM_HPP
 
-#include "SessionFwd.hpp"
-#include "TimePoint.hpp"
 #include "Gridmap.hpp"
 #include "NextId.hpp"
 #include "Config.hpp"
-
+#include "Timer.hpp"
 #include "types.hpp"
 
 #include "entity/Avatar.hpp"
@@ -20,6 +18,8 @@
 #include <list>
 #include <map>
 #include <set>
+
+namespace asio = boost::asio;
 
 class Player;
 class Avatar;
@@ -44,10 +44,13 @@ struct ChatMessage {
 
 class Room {
 public:
-  explicit Room(uint32_t id);
+  Room(asio::any_io_executor executor, uint32_t id);
   ~Room();
 
   void init(const RoomConfig& config);
+
+  void start();
+  void stop();
 
   uint32_t getId() const;
   bool hasFreeSpace() const;
@@ -62,6 +65,17 @@ public:
   void split(const SessionPtr& sess, const Vec2D& point);
   void watch(const SessionPtr& sess, uint32_t playerId);
   void chatMessage(const SessionPtr& sess, const std::string& text);
+
+private:
+  void doJoin(const SessionPtr& sess);
+  void doLeave(const SessionPtr& sess);
+  void doPlay(const SessionPtr& sess, const std::string& name, uint8_t color);
+  void doSpectate(const SessionPtr& sess, uint32_t targetId);
+  void doPoint(const SessionPtr& sess, const Vec2D& point);
+  void doEject(const SessionPtr& sess, const Vec2D& point);
+  void doSplit(const SessionPtr& sess, const Vec2D& point);
+  void doWatch(const SessionPtr& sess, uint32_t playerId);
+  void doChatMessage(const SessionPtr& sess, const std::string& text);
 
   void interact(Avatar& avatar1, Avatar& avatar2);
   void interact(Avatar& avatar, Food& food);
@@ -93,7 +107,6 @@ public:
 
   void update();
 
-private:
   void recalculateFreeSpace();
 
   Vec2D getRandomPosition(uint32_t radius) const;
@@ -120,7 +133,7 @@ private:
   void synchronize();
   void updateLeaderboard();
   void checkMothers();
-  void mothersProduce();
+  void produceMothers();
   void checkPlayers();
 
   void spawnFood(uint32_t count);
@@ -137,9 +150,25 @@ private:
   void sendPacketPlayerDead(uint32_t playerId);
 
 private:
+  friend class Avatar;
+  friend class Food;
+  friend class Mass;
+  friend class Virus;
+  friend class Phage;
+  friend class Mother;
+
   using RequestsMap = std::map<SessionPtr, Vec2D>;
 
-  mutable std::random_device m_generator;
+  asio::any_io_executor       m_executor;
+
+  Timer                       m_updateTimer;
+  Timer                       m_checkPlayersTimer;
+  Timer                       m_updateLeaderboardTimer;
+  Timer                       m_destroyOutdatedCellsTimer;
+  Timer                       m_checkMothersTimer;
+  Timer                       m_produceMothersTimer;
+
+  mutable std::random_device  m_generator;
 
   const uint32_t              m_id {0};
   RoomConfig                  m_config;
@@ -179,12 +208,6 @@ private:
   TimePoint m_lastUpdate {TimePoint::clock::now()};
 
   uint32_t  m_tick {0};                        // TODO: stop using and remove
-  TimePoint m_lastCheckPlayers {TimePoint::clock::now()};
-  TimePoint m_lastUpdateLeaderboard {TimePoint::clock::now()};
-  TimePoint m_lastDestroyOutdatedCells {TimePoint::clock::now()};
-  TimePoint m_lastCheckMothers {TimePoint::clock::now()};
-  TimePoint m_lastMothersProduce {TimePoint::clock::now()};
-
   double    m_mass {0};
   double    m_simulationInterval {0};
   double    m_accumulatedFoodMass {0};

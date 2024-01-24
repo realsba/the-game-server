@@ -12,7 +12,7 @@
 #include <string>
 #include <mutex>
 
-class TSRoom;
+class Room;
 
 class User {
 public:
@@ -26,8 +26,8 @@ public:
   SessionPtr getSession() const;
   void setSession(const SessionPtr& sess);
 
-  TSRoom* getRoom() const;
-  void setRoom(TSRoom* room);
+  Room* getRoom() const;
+  void setRoom(Room* room);
 
   struct Touch {
     void operator ()(const UserPtr& obj) {
@@ -46,7 +46,7 @@ private:
   std::string   m_sessId;
   std::string   m_name;
   TimePoint     m_lastAccess {TimePoint::clock::now()};
-  TSRoom*       m_room {nullptr};
+  Room*         m_room {nullptr};
   uint32_t      m_id {0};
   uint8_t       m_color {0};
   bool          m_modified {true};

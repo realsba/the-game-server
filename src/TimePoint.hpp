@@ -6,6 +6,8 @@
 
 #include <chrono>
 
+using namespace std::literals;
+
 using TimePoint = std::chrono::steady_clock::time_point;
 using Duration = std::chrono::steady_clock::duration;
 

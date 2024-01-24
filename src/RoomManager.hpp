@@ -4,7 +4,7 @@
 #ifndef THEGAME_ROOM_MANAGER_HPP
 #define THEGAME_ROOM_MANAGER_HPP
 
-#include "TSRoom.hpp"
+#include "Room.hpp"
 #include "Config.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -19,18 +19,18 @@ public:
   void start(uint32_t numThreads, const RoomConfig& config); // TODO: use only RoomConfig
   void stop();
 
-  TSRoom* obtain();
+  Room* obtain();
   size_t size() const;
 
 private:
-  using Items = std::vector<std::unique_ptr<TSRoom>>;
+  using Items = std::vector<std::unique_ptr<Room>>;
 
-  mutable std::mutex                    m_mutex;
-  asio::io_context                      m_ioContext;
-  std::vector<std::thread>              m_threads;
-  RoomConfig                            m_config;
-  Items                                 m_items;
-  uint32_t                              m_nextId {1};
+  mutable std::mutex          m_mutex;
+  asio::io_context            m_ioContext;
+  std::vector<std::thread>    m_threads;
+  RoomConfig                  m_config;
+  Items                       m_items;
+  uint32_t                    m_nextId {1};
 };
 
 #endif /* THEGAME_ROOM_MANAGER_HPP */

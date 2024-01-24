@@ -34,7 +34,7 @@ struct RoomConfig {
   Duration  updateLeaderboardInterval {};
   Duration  destroyOutdatedCellsInterval {};
   Duration  checkMothersInterval {};
-  Duration  mothersProduceInterval {};
+  Duration  produceMothersInterval {};
 
   uint32_t  viewportBase {0};           // коротша сторона (висота)
   float     viewportBuffer {0};         // запас в кожну сторону

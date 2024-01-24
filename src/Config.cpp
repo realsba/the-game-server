@@ -81,7 +81,7 @@ namespace toml
       result.updateLeaderboardInterval    = find<Duration>(v, "updateLeaderboardInterval");
       result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
       result.checkMothersInterval         = find<Duration>(v, "checkMothersInterval");
-      result.mothersProduceInterval       = find<Duration>(v, "mothersProduceInterval");
+      result.produceMothersInterval       = find<Duration>(v, "produceMothersInterval");
 
       result.viewportBase                 = find<uint32_t>(v, "viewportBase");
       result.viewportBuffer               = find<float>(v, "viewportBuffer");

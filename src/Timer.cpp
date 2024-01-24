@@ -3,77 +3,71 @@
 
 #include "Timer.hpp"
 
-#include <utility>
+#include <boost/asio/post.hpp>
 
-Timer::Timer(boost::asio::io_context& ioc)
-  : m_timer(ioc)
+Timer::Timer(const asio::any_io_executor& executor)
+  : m_timer(executor)
 {
 }
 
-Timer::Timer(boost::asio::io_context& ioc, Handler handler)
-  : m_timer(ioc)
+Timer::Timer(const asio::any_io_executor& executor, Handler handler)
+  : m_timer(executor)
   , m_handler(std::move(handler))
 {
 }
 
-Timer::Timer(boost::asio::io_context& ioc, Handler handler, const std::chrono::steady_clock::duration& interval)
-  : m_timer(ioc)
+Timer::Timer(const asio::any_io_executor& executor, Handler handler, Duration interval)
+  : m_timer(executor)
   , m_interval(interval)
   , m_handler(std::move(handler))
 {
 }
 
-Timer::~Timer()
+void Timer::setInterval(const Duration& interval)
 {
-  stop();
+  asio::post(m_timer.get_executor(),
+    [this, interval]
+    {
+      m_interval = interval;
+    }
+  );
 }
 
-void Timer::setInterval(const std::chrono::steady_clock::duration& interval)
+void Timer::setHandler(Handler&& handler)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_interval = interval;
-}
-
-void Timer::setHandler(const Handler& handler)
-{
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_handler = handler;
+  asio::post(m_timer.get_executor(),
+    [this, handler = std::move(handler)]() mutable
+    {
+      m_handler = std::move(handler);
+    }
+  );
 }
 
 void Timer::start()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  if (!m_started) {
-    m_expiresTime = std::chrono::steady_clock::now();
-    m_started = true;
-    tick();
-  }
+  asio::post(m_timer.get_executor(),
+    [&]
+    {
+      m_expirationTime = TimePoint::clock::now();
+      tick();
+    }
+  );
 }
 
 void Timer::stop()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  if (m_started) {
-    m_started = false;
-    m_timer.cancel();
-  }
+  asio::post(m_timer.get_executor(), [&] { m_timer.cancel(); });
 }
 
 void Timer::tick()
 {
-  if (!m_started) {
-    return;
-  }
-  m_expiresTime += m_interval;
-  m_timer.expires_at(m_expiresTime);
+  m_expirationTime += m_interval;
+  m_timer.expires_at(m_expirationTime);
   m_timer.async_wait(
-    [this, handler = m_handler] (const boost::system::error_code & ec)
+    [&](const boost::system::error_code& ec)
     {
       if (!ec) {
-        if (handler) {
-          handler();
-        }
-        std::lock_guard<std::mutex> lock(m_mutex);
+        m_handler();
         tick();
       }
     }

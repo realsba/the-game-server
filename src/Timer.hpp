@@ -4,37 +4,35 @@
 #ifndef THEGAME_TIMER_HPP
 #define THEGAME_TIMER_HPP
 
+#include "TimePoint.hpp"
+
 #include <boost/asio/steady_timer.hpp>
 #include <boost/noncopyable.hpp>
 
-#include <functional>
-#include <chrono>
-#include <mutex>
+namespace asio = boost::asio;
 
 class Timer final : private boost::noncopyable {
 public:
   using Handler = std::function<void()>;
 
-  explicit Timer(boost::asio::io_context& ioc);
-  Timer(boost::asio::io_context& ioc, Handler handler);
-  Timer(boost::asio::io_context& ioc, Handler handler, const std::chrono::steady_clock::duration& interval);
-  ~Timer();
+  explicit Timer(const asio::any_io_executor& executor);
+  Timer(const asio::any_io_executor& executor, Handler handler);
+  Timer(const asio::any_io_executor& executor, Handler handler, Duration interval);
 
-  void setInterval(const std::chrono::steady_clock::duration& interval);
-  void setHandler(const Handler& handler);
+  void setInterval(const Duration& interval);
+  void setHandler(Handler&& handler);
+
   void start();
   void stop();
 
-protected:
+private:
   void tick();
 
-protected:
-  mutable std::mutex                    m_mutex;
-  boost::asio::steady_timer             m_timer;
-  std::chrono::steady_clock::time_point m_expiresTime;
-  std::chrono::steady_clock::duration   m_interval {std::chrono::seconds(30)};
-  Handler                               m_handler;
-  bool                                  m_started {false};
+private:
+  asio::steady_timer          m_timer;
+  TimePoint                   m_expirationTime;
+  Duration                    m_interval {1s};
+  Handler                     m_handler;
 };
 
 #endif /* THEGAME_TIMER_HPP */

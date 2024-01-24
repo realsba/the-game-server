@@ -67,8 +67,6 @@ add_executable(${PROJECT_NAME}
     src/RoomManager.cpp
     src/RoomManager.hpp
     src/ScopeExit.hpp
-    src/TSRoom.cpp
-    src/TSRoom.hpp
     src/TimePoint.hpp
     src/Timer.cpp
     src/Timer.hpp
