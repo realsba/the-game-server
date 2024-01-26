@@ -74,17 +74,9 @@ void Room::init(const RoomConfig& config)
   spawnPhages(m_config.phageStartAmount);
   spawnMothers(m_config.motherStartAmount);
 
-  for (uint32_t i=0; i<m_config.botAmount; ++i) {
-    spawnBot(101 + i);
-  }
-
-  static std::array<std::string, 7> names = {"To", "start", "the game", "run", "help()", "in", "the console"};
-  auto it = m_bots.begin();
-  for (const auto& name : names) {
-    if (it == m_bots.end()) {
-      break;
-    }
-    (*it++)->name = name;
+  uint32_t id = 100;
+  for (const auto& name : m_config.botNames) {
+    spawnBot(id++, name);
   }
 }
 
@@ -1602,7 +1594,7 @@ void Room::spawnMothers(uint32_t count)
   }
 }
 
-void Room::spawnBot(uint32_t id)
+void Room::spawnBot(uint32_t id, const std::string& name)
 {
   const auto& it = m_players.find(id);
   Player* bot;
@@ -1610,7 +1602,7 @@ void Room::spawnBot(uint32_t id)
     bot = it->second;
   } else {
     bot = new Player(id, *this, m_gridmap);
-    bot->name = "Bot " + std::to_string(id);
+    bot->name = name.empty() ? "Bot " + std::to_string(id) : name;
     bot->online = true;
     m_players.emplace(bot->getId(), bot);
     recalculateFreeSpace();

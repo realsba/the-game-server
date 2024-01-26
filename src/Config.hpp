@@ -23,6 +23,8 @@ struct MySQLConfig {
 };
 
 struct RoomConfig {
+  using BotNames = std::vector<std::string>;
+
   float eps {0.01};
 
   uint32_t  numThreads {0};
@@ -56,7 +58,7 @@ struct RoomConfig {
   Duration  playerAnnihilationInterval {};
   float     playerForceRatio {0};
 
-  uint32_t  botAmount {0};
+  BotNames  botNames;
   uint32_t  botStartMass {0};
   float     botForceCornerRatio {0};
   float     botForceFoodRatio {0};

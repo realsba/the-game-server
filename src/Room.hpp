@@ -139,7 +139,7 @@ private:
   void spawnViruses(uint32_t count);
   void spawnPhages(uint32_t count);
   void spawnMothers(uint32_t count);
-  void spawnBot(uint32_t id);
+  void spawnBot(uint32_t id, const std::string& name = "");
 
   void send(const BufferPtr& buffer);
   void sendPacketPlayer(const Player& player);

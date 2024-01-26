@@ -107,7 +107,7 @@ namespace toml
       result.playerAnnihilationInterval   = find<Duration>(v, "playerAnnihilationInterval");
       result.playerForceRatio             = find<float>(v, "playerForceRatio");
 
-      result.botAmount            = find<uint32_t>(v, "botAmount");
+      result.botNames             = toml::find<RoomConfig::BotNames>(v, "botNames");
       result.botStartMass         = find<uint32_t>(v, "botStartMass");
       result.botForceCornerRatio  = find<float>(v, "botForceCornerRatio");
       result.botForceFoodRatio    = find<float>(v, "botForceFoodRatio");
@@ -197,6 +197,5 @@ void Config::load(const std::string& filename)
   influxdbPort = toml::find<uint16_t>(data, "influxdb", "port");
 
   mysql = toml::find<MySQLConfig>(data, "mysql");
-  auto tmp = room;
-  room  = toml::find<RoomConfig>(data, "room");
+  room = toml::find<RoomConfig>(data, "room");
 }

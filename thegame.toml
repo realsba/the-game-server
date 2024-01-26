@@ -54,7 +54,7 @@ playerDeflationRatio = 0.10
 playerAnnihilationInterval = '5m'
 playerForceRatio = 2.5
 
-botAmount = 10
+botNames = ["Nebula", "Solaris", "Celestia", "Quasar", "Zenith", "Lunar", "Stardust", "Nova", "Galaxia", "Cosmos"]
 botStartMass = 150
 botForceCornerRatio = 25000.0
 botForceFoodRatio = 3000.0
