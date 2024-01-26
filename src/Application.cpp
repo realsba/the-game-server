@@ -114,7 +114,7 @@ void Application::info()
 
 void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer)
 {
-  auto user = sess->connectionData.user;
+  auto user = sess->user();
 
   while (buffer.size()) {
     auto type = deserialize<uint8_t>(buffer);
@@ -125,7 +125,7 @@ void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buff
     }
     try {
       if (type != InputPacketTypes::Ping) {
-        sess->connectionData.lastActivity = TimePoint::clock::now();
+        sess->lastActivity(TimePoint::clock::now());
       }
       it->second(user, sess, buffer);
     } catch (const std::exception& e) {
@@ -150,20 +150,20 @@ void Application::sessionCloseHandler(const SessionPtr& sess)
       ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
       mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
       uint32_t userId = 0;
-      auto& user = sess->connectionData.user;
+      const auto& user = sess->user();
       if (user) {
         userId = user->getId();
         auto* room = user->getRoom();
         if (room) {
           room->leave(sess);
         }
-        user.reset();
+        sess->user(nullptr);
       }
       auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
       query.parse();
       query.execute(
         userId,
-        fmt::to_string(sess->connectionData.created),
+        fmt::to_string(sess->created()),
         fmt::to_string(SystemTimePoint::clock::now()),
         sess->getRemoteEndpoint().address().to_v4().to_ulong()
       );
@@ -204,7 +204,7 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
     ++m_registrations;
   }
   user->setSession(sess);
-  sess->connectionData.user = user;
+  sess->user(user);
   const auto& buffer = std::make_shared<Buffer>();
   packetGreeting.format(*buffer);
   auto* room = user->getRoom();

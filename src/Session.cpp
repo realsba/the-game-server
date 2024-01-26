@@ -12,6 +12,55 @@
 namespace asio = boost::asio;
 namespace http = beast::http;
 
+SystemTimePoint UserData::created() const
+{
+  return m_created;
+}
+
+TimePoint UserData::lastActivity() const
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  return m_lastActivity;
+}
+
+UserPtr UserData::user() const
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  return m_user;
+}
+
+Player* UserData::player() const
+{
+  return m_player;
+}
+
+Player* UserData::observable() const
+{
+  return m_observable;
+}
+
+void UserData::lastActivity(const TimePoint& value)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  m_lastActivity = value;
+}
+
+void UserData::user(const UserPtr& value)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  m_user = value;
+}
+
+void UserData::player(Player* value)
+{
+  m_player = value;
+}
+
+void UserData::observable(Player* value)
+{
+  m_observable = value;
+}
+
 Session::Session(tcp::socket&& socket)
   : m_socket(std::move(socket))
   , m_remoteEndpoint([&]() -> tcp::endpoint{

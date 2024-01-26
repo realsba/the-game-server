@@ -23,20 +23,31 @@ using tcp = boost::asio::ip::tcp;
 
 class Player;
 
-// TODO: implement thread safety
-struct ConnectionData {
-  const SystemTimePoint created {SystemTimePoint::clock::now()};  // thread-safe, const
-  TimePoint             lastActivity {TimePoint::clock::now()};
-  UserPtr               user {nullptr};
-  Player*               player {nullptr};                         // thread-safe, accessed only from Room
-  Player*               observable {nullptr};                     // thread-safe, accessed only from Room
+class UserData {
+public:
+  SystemTimePoint created() const;
+  TimePoint lastActivity() const;
+  UserPtr user() const;
+  Player* player() const;
+  Player* observable() const;
+
+  void lastActivity(const TimePoint& value);
+  void user(const UserPtr& value);
+  void player(Player* value);
+  void observable(Player* value);
+
+private:
+  mutable std::mutex    m_mutex;
+  const SystemTimePoint m_created {SystemTimePoint::clock::now()};  // thread-safe, const
+  TimePoint             m_lastActivity {TimePoint::clock::now()};
+  UserPtr               m_user {nullptr};
+  Player*               m_player {nullptr};                         // thread-safe, accessed only from Room
+  Player*               m_observable {nullptr};                     // thread-safe, accessed only from Room
 };
 
-class Session : public std::enable_shared_from_this<Session>
+class Session : public std::enable_shared_from_this<Session>, public UserData
 {
 public:
-  ConnectionData connectionData {};
-
   using MessageHandler = std::function<void(const SessionPtr& sess, beast::flat_buffer& buffer)>;
   using OpenHandler = std::function<void(const SessionPtr& sess)>;
   using CloseHandler = std::function<void(const SessionPtr& sess)>;

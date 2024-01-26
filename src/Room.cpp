@@ -174,7 +174,7 @@ void Room::doJoin(const SessionPtr& sess)
     return;
   }
 
-  const auto& user = sess->connectionData.user;
+  const auto& user = sess->user();
   if (!user) {
     throw std::runtime_error("Room::join(): the user doesn't set");
   }
@@ -221,7 +221,7 @@ void Room::doJoin(const SessionPtr& sess)
       packet.format(*buffer);
     } else {
       player->addSession(sess);
-      sess->connectionData.player = player;
+      sess->player(player);
       PacketPlay packetPlay(*player);
       packetPlay.format(*buffer);
     }
@@ -243,10 +243,10 @@ void Room::doLeave(const SessionPtr& sess)
     m_pointerRequests.erase(sess);
     m_ejectRequests.erase(sess);
     m_splitRequests.erase(sess);
-    auto player = sess->connectionData.player;
+    auto player = sess->player();
     if (player) {
       sendPacketPlayerLeave(player->getId());
-      sess->connectionData.player = nullptr;
+      sess->player(nullptr);
       m_zombiePlayers.insert(player);
       player->online = false;
     }
@@ -260,13 +260,13 @@ void Room::doLeave(const SessionPtr& sess)
 
 void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color)
 {
-  const auto& user = sess->connectionData.user;
+  const auto& user = sess->user();
   if (!user) {
     throw std::runtime_error("Room::play(): the user doesn't set");
   }
 
   uint32_t playerId = user->getId();
-  auto* player = sess->connectionData.player;
+  auto* player = sess->player();
   if (!player) {
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
@@ -279,7 +279,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
       sendPacketPlayer(*player);
     }
     player->online = true;
-    sess->connectionData.player = player;
+    sess->player(player);
     sendPacketPlayerJoin(player->getId());
   }
 
@@ -287,9 +287,10 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     return;
   }
 
-  if (sess->connectionData.observable) {
-    sess->connectionData.observable->removeSession(sess);
-    sess->connectionData.observable = nullptr;
+  auto* observable = sess->observable();
+  if (observable) {
+    observable->removeSession(sess);
+    sess->observable(nullptr);
   }
 
   player->init();
@@ -320,13 +321,13 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
 
 void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
 {
-  const auto& user = sess->connectionData.user;
+  const auto& user = sess->user();
   if (!user) {
     throw std::runtime_error("Room::spectate(): the user doesn't set");
   }
 
   uint32_t playerId = user->getId();
-  auto* player = sess->connectionData.player;
+  auto* player = sess->player();
   if (!player) {
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
@@ -339,7 +340,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
       sendPacketPlayer(*player);
     }
     player->online = true;
-    sess->connectionData.player = player;
+    sess->player(player);
     sendPacketPlayerJoin(player->getId());
   }
 
@@ -351,27 +352,27 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
   const auto& it = m_players.find(targetId);
   if (it != m_players.end()) {
     target = it->second;
-  } else if (m_leaderboard.size()) {
+  } else if (!m_leaderboard.empty()) {
     target = m_leaderboard.at(0);
   }
   if (m_fighters.find(target) == m_fighters.end()) {
     return;
   }
-  if (player == target || sess->connectionData.observable == target) {
+  if (player == target || sess->observable() == target) {
     return;
   }
   if (player) {
     player->removeSession(sess);
   }
-  if (sess->connectionData.observable) {
-    sess->connectionData.observable->removeSession(sess);
+  if (auto observable = sess->observable()) {
+    observable->removeSession(sess);
   }
   const auto& buffer = std::make_shared<Buffer>();
   PacketSpectate packet(*target);
   packet.format(*buffer);
   sess->send(buffer);
   target->addSession(sess);
-  sess->connectionData.observable = target;
+  sess->observable(target);
 }
 
 void Room::doPoint(const SessionPtr& sess, const Vec2D& point)
@@ -391,7 +392,7 @@ void Room::doSplit(const SessionPtr& sess, const Vec2D& point)
 
 void Room::doWatch(const SessionPtr& sess, uint32_t playerId)
 {
-  auto* player = sess->connectionData.player;
+  auto* player = sess->player();
   if (!player) {
     return;
   }
@@ -406,7 +407,7 @@ void Room::doWatch(const SessionPtr& sess, uint32_t playerId)
 
 void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
 {
-  auto* player = sess->connectionData.player;
+  auto* player = sess->player();
   if (!player){
     return;
   }
@@ -1296,7 +1297,7 @@ void Room::handlePlayerRequests()
 {
   for (const auto& it : m_pointerRequests) {
     const auto& sess = it.first;
-    auto* player = sess->connectionData.player;
+    auto* player = sess->player();
     if (player && !player->isDead()) {
       player->setPointer(it.second);
       const auto& avatars = player->getAvatars();
@@ -1307,7 +1308,7 @@ void Room::handlePlayerRequests()
 
   for (const auto& it : m_ejectRequests) {
     const auto& sess = it.first;
-    auto* player = sess->connectionData.player;
+    auto* player = sess->player();
     if (player && !player->isDead()) {
       for (auto* avatar : player->getAvatars()) {
         eject(*avatar, it.second);
@@ -1318,7 +1319,7 @@ void Room::handlePlayerRequests()
 
   for (const auto& it : m_splitRequests) {
     const auto& sess = it.first;
-    auto* player = sess->connectionData.player;
+    auto* player = sess->player();
     if (player && !player->isDead()) {
       auto avatars = player->getAvatars();
       size_t count = avatars.size();
@@ -1479,7 +1480,7 @@ void Room::synchronize()
         for (const auto& sess : player->getSessions()) {
           sess->send(buffer);
           observable->addSession(sess);
-          sess->connectionData.observable = observable;
+          sess->observable(observable);
         }
       } else {
         EmptyPacket packet(OutputPacketTypes::Finish);
