@@ -1031,38 +1031,6 @@ void Room::removeCell(Cell& cell)
   m_cellNextId.push(cell.id);
 }
 
-void Room::spawnBot(uint32_t id)
-{
-  const auto& it = m_players.find(id);
-  Player* bot;
-  if (it != m_players.end()) {
-    bot = it->second;
-  } else {
-    bot = new Player(id, *this, m_gridmap);
-    bot->name = "Bot " + std::to_string(id);
-    bot->online = true;
-    m_players.emplace(bot->getId(), bot);
-    recalculateFreeSpace();
-    m_bots.emplace(bot);
-    sendPacketPlayer(*bot);
-  }
-  if (bot->isDead()) {
-    auto& obj = createAvatar();
-    modifyMass(obj, m_config.botStartMass);
-    int radius = obj.radius;
-    obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
-    obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
-    obj.color = m_generator() % 12;
-    bot->addAvatar(&obj);
-    bot->calcParams();
-    bot->wakeUp();
-    m_leaderboard.emplace_back(bot);
-    m_updateLeaderboard = true;
-    m_fighters.insert(bot);
-    sendPacketPlayerBorn(bot->getId());
-  }
-}
-
 bool Room::eject(Avatar& avatar, const Vec2D& point)
 {
   float massLoss = m_config.avatarEjectMassLoss;
@@ -1631,6 +1599,38 @@ void Room::spawnMothers(uint32_t count)
     auto& obj = createMother();
     modifyMass(obj, m_config.motherStartMass);
     obj.position = getRandomPosition(obj.radius);
+  }
+}
+
+void Room::spawnBot(uint32_t id)
+{
+  const auto& it = m_players.find(id);
+  Player* bot;
+  if (it != m_players.end()) {
+    bot = it->second;
+  } else {
+    bot = new Player(id, *this, m_gridmap);
+    bot->name = "Bot " + std::to_string(id);
+    bot->online = true;
+    m_players.emplace(bot->getId(), bot);
+    recalculateFreeSpace();
+    m_bots.emplace(bot);
+    sendPacketPlayer(*bot);
+  }
+  if (bot->isDead()) {
+    auto& obj = createAvatar();
+    modifyMass(obj, m_config.botStartMass);
+    int radius = obj.radius;
+    obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
+    obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
+    obj.color = m_generator() % 12;
+    bot->addAvatar(&obj);
+    bot->calcParams();
+    bot->wakeUp();
+    m_leaderboard.emplace_back(bot);
+    m_updateLeaderboard = true;
+    m_fighters.insert(bot);
+    sendPacketPlayerBorn(bot->getId());
   }
 }
 

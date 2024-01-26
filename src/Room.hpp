@@ -117,7 +117,6 @@ private:
   Phage& createPhage();
   Mother& createMother();
   void removeCell(Cell& cell);
-  void spawnBot(uint32_t id);
 
   bool eject(Avatar& avatar, const Vec2D& point);
   bool split(Avatar& avatar, const Vec2D& point);
@@ -140,6 +139,7 @@ private:
   void spawnViruses(uint32_t count);
   void spawnPhages(uint32_t count);
   void spawnMothers(uint32_t count);
+  void spawnBot(uint32_t id);
 
   void send(const BufferPtr& buffer);
   void sendPacketPlayer(const Player& player);
@@ -160,7 +160,6 @@ private:
   using RequestsMap = std::map<SessionPtr, Vec2D>;
 
   asio::any_io_executor       m_executor;
-
   Timer                       m_updateTimer;
   Timer                       m_checkPlayersTimer;
   Timer                       m_updateLeaderboardTimer;
