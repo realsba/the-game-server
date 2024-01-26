@@ -25,7 +25,7 @@ public:
   bool isAttractive(const Avatar& avatar) override;
 
   void recombination(float t);
-  bool isRecombined() const;
+  [[nodiscard]] bool isRecombined() const;
 
   uint32_t          protection {0};
   float             maxSpeed {0};

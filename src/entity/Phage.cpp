@@ -6,7 +6,7 @@
 #include "src/Room.hpp"
 
 Phage::Phage(Room& room)
- : Cell(room)
+  : Cell(room)
 {
   type = typePhage;
 }

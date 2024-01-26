@@ -37,12 +37,6 @@ void Application::start()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if (m_started) {
-    return;
-  }
-
-  m_started = true;
-
   m_config.load(m_configFileName);
 
   m_mysqlConnectionPool.init(m_config.mysql);
@@ -58,8 +52,9 @@ void Application::start()
 
   spdlog::info("Server started. address={}", m_config.address);
 
-  m_roomManager.start(m_config.roomThreads, m_config.room);
-  for (uint i = 0; i < m_config.ioContextThreads; ++i) {
+  m_roomManager.start(m_config.room);
+
+  for (uint i = 0; i < m_config.numThreads; ++i) {
     m_threads.emplace_back(
       [this]
       {
@@ -82,19 +77,15 @@ void Application::stop()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if (!m_started) {
-    return;
-  }
-
-  m_started = false;
-
   m_influxdb.close();
   m_listener->stop();
   m_statisticTimer.stop();
 
   m_ioContext.stop();
   for (auto& thread : m_threads) {
-    thread.join();
+    if (thread.joinable()) {
+      thread.join();
+    }
   }
   m_threads.clear();
   m_ioContext.reset();

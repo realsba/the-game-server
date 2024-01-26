@@ -7,6 +7,7 @@
 #include "Room.hpp"
 #include "Config.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 
 #include <memory>
@@ -16,7 +17,7 @@
 
 class RoomManager {
 public:
-  void start(uint32_t numThreads, const RoomConfig& config); // TODO: use only RoomConfig
+  void start(const RoomConfig& config);
   void stop();
 
   Room* obtain();
@@ -24,9 +25,11 @@ public:
 
 private:
   using Items = std::vector<std::unique_ptr<Room>>;
+  using WorkGuard = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
 
   mutable std::mutex          m_mutex;
   asio::io_context            m_ioContext;
+  WorkGuard                   m_workGuard {m_ioContext.get_executor()};
   std::vector<std::thread>    m_threads;
   RoomConfig                  m_config;
   Items                       m_items;

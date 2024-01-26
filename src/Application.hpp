@@ -85,7 +85,6 @@ private:
   std::size_t                   m_maxSessions {0};
   uint32_t                      m_registrations {0};
   const size_t                  m_nameMaxLength {16};
-  bool                          m_started {false};
 
   ListenerPtr                   m_listener;
 };

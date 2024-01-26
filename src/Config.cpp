@@ -70,6 +70,11 @@ namespace toml
     {
       RoomConfig result{};
 
+      result.numThreads = find<uint32_t>(v, "numThreads");
+      if (result.numThreads < 1) {
+        throw std::runtime_error("room.numThreads should be > 0");
+      }
+
       result.updateInterval = find<Duration>(v, "updateInterval");
       if (result.updateInterval == Duration::zero()) {
         throw std::runtime_error("room.updateInterval should be > 0");
@@ -175,17 +180,12 @@ void Config::load(const std::string& filename)
   auto data = toml::parse("thegame.toml");
 
   const auto host = toml::find<std::string>(data, "host");
-  const auto port = toml::find<std::uint16_t>(data, "port");
+  const auto port = toml::find<uint16_t>(data, "port");
   address = asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port);
 
-  ioContextThreads = toml::find<std::uint16_t>(data, "ioContextThreads");
-  if (ioContextThreads < 1) {
-    throw std::runtime_error("ioContextThreads should be > 0");
-  }
-
-  roomThreads = toml::find<std::uint16_t>(data, "roomThreads");
-  if (roomThreads < 1) {
-    throw std::runtime_error("roomThreads should be > 0");
+  numThreads = toml::find<uint32_t >(data, "numThreads");
+  if (numThreads < 1) {
+    throw std::runtime_error("numThreads should be > 0");
   }
 
   statisticInterval = toml::find<Duration>(data, "statisticInterval");

@@ -83,13 +83,13 @@ int main(int argc, char** argv)
 
     application->start();
     ioContext.run();
-    application->stop();
-    showStatistic();
   } catch (const std::exception& e) {
     spdlog::error("Caught exception: {}", e.what());
   } catch (...) {
     spdlog::error("Caught an unknown exception");
   }
+
+  showStatistic();
 
   application.reset();
 

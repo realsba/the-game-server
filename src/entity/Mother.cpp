@@ -6,7 +6,7 @@
 #include "src/Room.hpp"
 
 Mother::Mother(Room& room)
- : Cell(room)
+  : Cell(room)
 {
   type = typeMother;
   const auto& config = room.getConfig();

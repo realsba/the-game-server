@@ -6,7 +6,6 @@
 #include "src/geometry/geometry.hpp"
 #include "src/Room.hpp"
 
-
 Food::Food(Room& room)
   : Cell(room)
 {

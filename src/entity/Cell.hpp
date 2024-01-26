@@ -28,7 +28,7 @@ public:
 
   virtual ~Cell() = default;
 
-  AABB getAABB() const;
+  [[nodiscard]] AABB getAABB() const;
 
   void applyImpulse(const Vec2D& value);
 

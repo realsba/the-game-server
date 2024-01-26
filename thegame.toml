@@ -7,8 +7,7 @@
 
 host                = '0.0.0.0'
 port                = 3333
-ioContextThreads    = 2
-roomThreads         = 4
+numThreads          = 2
 statisticInterval   = '1m'
 
 [influxdb]
@@ -25,6 +24,7 @@ port      = 0
 maxIdleTime = 600
 
 [room]
+numThreads = 4
 updateInterval = '50ms'
 simulationsPerUpdate = 5
 spawnPosTryCount = 10

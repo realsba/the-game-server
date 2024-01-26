@@ -202,7 +202,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     serialize(*buffer, position.x);
     serialize(*buffer, position.y);
   } else {
-    serialize(*buffer, static_cast<std::uint32_t>(0));
+    serialize(*buffer, static_cast<uint32_t>(0));
   }
   for (const auto& session : m_sessions) {
     session->send(buffer);

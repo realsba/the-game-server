@@ -25,6 +25,7 @@ struct MySQLConfig {
 struct RoomConfig {
   float eps {0.01};
 
+  uint32_t  numThreads {0};
   Duration  updateInterval;
 
   uint32_t  simulationsPerUpdate {0};
@@ -63,8 +64,8 @@ struct RoomConfig {
   float     botForceDangerRatio {0};
   float     botForceStarRatio {0};
 
-  float     resistanceRatio {0};        // коефіцієнт лобового опору
-  float     elasticityRatio {0};        // коефіцієнт відштовхування
+  float     resistanceRatio {0};
+  float     elasticityRatio {0};
 
   uint32_t  cellMinMass {0};
   float     cellRadiusRatio {0};
@@ -122,8 +123,7 @@ public:
 
   asio::ip::tcp::endpoint     address;
   Duration                    statisticInterval {1min};
-  uint                        ioContextThreads {1};
-  uint                        roomThreads {2};
+  uint32_t                    numThreads {0};
 
   std::string                 influxdbServer;
   uint                        influxdbPort {0};

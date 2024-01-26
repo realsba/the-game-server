@@ -22,9 +22,9 @@ sql_create_4(DboUser, 1, 0,
   mysqlpp::sql_varchar, password
 )
 
-UsersCache::UsersCache(MySQLConnectionPool& pool) :
-  m_mysqlConnectionPool(pool),
-  m_ttl(std::chrono::minutes(60))
+UsersCache::UsersCache(MySQLConnectionPool& pool)
+  : m_mysqlConnectionPool(pool)
+  , m_ttl(std::chrono::minutes(60))
 {
   DboUserCreate::table("users");
   DboUser::table("users");

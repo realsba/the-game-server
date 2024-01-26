@@ -48,7 +48,6 @@ private:
   TimePoint     m_lastAccess {TimePoint::clock::now()};
   Room*         m_room {nullptr};
   uint32_t      m_id {0};
-  uint8_t       m_color {0};
   bool          m_modified {true};
 
   friend class UsersCache;
