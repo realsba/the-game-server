@@ -53,7 +53,6 @@ private:
   void actionChatMessage(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
   void actionWatch(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
 
-  void update();
   void statistic();
 
 private:
@@ -82,7 +81,7 @@ private:
   std::vector<std::thread>      m_threads;
   std::string                   m_configFileName;
   Config                        m_config;
-  Timer                         m_timer;
+  Timer                         m_statisticTimer;
   std::size_t                   m_maxSessions {0};
   uint32_t                      m_registrations {0};
   const size_t                  m_nameMaxLength {16};

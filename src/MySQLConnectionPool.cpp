@@ -19,7 +19,7 @@ void MySQLConnectionPool::init(const MySQLConfig& config)
 
 size_t MySQLConnectionPool::size() const
 {
-  // TODO: можливо непотокобезпечна операція
+  // TODO: * можливо непотокобезпечна операція
   return mysqlpp::ConnectionPool::size();
 }
 

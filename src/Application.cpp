@@ -9,21 +9,16 @@
 
 #include "AsioFormatter.hpp"
 #include "ScopeExit.hpp"
-#include "Room.hpp"
-#include "Player.hpp"
 #include "User.hpp"
-#include "util.hpp"
 
 #include <spdlog/spdlog.h>
 #include <fmt/chrono.h>
 
-#include <locale>
 #include <codecvt>
-#include <utility>
 
 Application::Application(std::string configFileName)
   : m_configFileName(std::move(configFileName))
-  , m_timer(m_ioContext.get_executor(), std::bind_front(&Application::update, this))
+  , m_statisticTimer(m_ioContext.get_executor(), std::bind_front(&Application::statistic, this))
 {
   m_listener = std::make_shared<Listener>(
     m_ioContext,
@@ -58,8 +53,8 @@ void Application::start()
 
   m_listener->run();
 
-  m_timer.setInterval(m_config.updateInterval);
-  m_timer.start();
+  m_statisticTimer.setInterval(m_config.statisticInterval);
+  m_statisticTimer.start();
 
   spdlog::info("Server started. address={}", m_config.address);
 
@@ -95,7 +90,7 @@ void Application::stop()
 
   m_influxdb.close();
   m_listener->stop();
-  m_timer.stop();
+  m_statisticTimer.stop();
 
   m_ioContext.stop();
   for (auto& thread : m_threads) {
@@ -329,19 +324,9 @@ void Application::actionChatMessage(const UserPtr& user, const SessionPtr& sess,
   }
 }
 
-void Application::update()
-{
-  std::lock_guard<std::mutex> lock(m_mutex);
-  statistic();
-}
-
 void Application::statistic()
 {
-  using namespace std::chrono;
-  auto now = time_point_cast<seconds>(SystemTimePoint::clock::now());
-  if (now.time_since_epoch().count() %  m_config.statisticInterval.count()) {
-    return;
-  }
+  std::lock_guard<std::mutex> lock(m_mutex);
   std::stringstream ss;
   if (m_maxSessions > 0) {
     ss << "connections value=" << m_maxSessions << "\n";

@@ -17,7 +17,6 @@ asio::signal_set                        sigHup {ioContext, SIGHUP};
 asio::signal_set                        sigUsr1 {ioContext, SIGUSR1};
 asio::signal_set                        sigUsr2 {ioContext, SIGUSR2};
 auto                                    startTime {std::chrono::steady_clock::now()};
-pid_t                                   pid;
 std::unique_ptr<Application>            application;
 
 void showStatistic()

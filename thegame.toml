@@ -5,14 +5,11 @@
 #    m - minutes
 #    h - hours
 
-host = '0.0.0.0'
-port = 3333
-
-ioContextThreads = 2
-roomThreads = 4
-updateInterval = '1s'
-statisticInterval = '1m'
-connectionTTL = '5m'
+host                = '0.0.0.0'
+port                = 3333
+ioContextThreads    = 2
+roomThreads         = 4
+statisticInterval   = '1m'
 
 [influxdb]
 server    = '127.0.0.1'

@@ -121,8 +121,7 @@ public:
   void load(const std::string& filename);
 
   asio::ip::tcp::endpoint     address;
-  std::chrono::milliseconds   updateInterval {std::chrono::seconds(1)};
-  std::chrono::seconds        statisticInterval {std::chrono::minutes(1)};
+  Duration                    statisticInterval {1min};
   uint                        ioContextThreads {1};
   uint                        roomThreads {2};
 

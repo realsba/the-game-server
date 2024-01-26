@@ -188,15 +188,7 @@ void Config::load(const std::string& filename)
     throw std::runtime_error("roomThreads should be > 0");
   }
 
-//  updateInterval = toml::find<Duration>(data, "updateInterval"); // TODO: fix
-  auto d = toml::find<Duration>(data, "updateInterval");
-  updateInterval = duration_cast<milliseconds>(d);
-  if (updateInterval == Duration::zero()) {
-    throw std::runtime_error("updateInterval should be > 0");
-  }
-
-//  statisticInterval = toml::find<Duration>(data, "statisticInterval"); // TODO: fix
-  d = toml::find<Duration>(data, "statisticInterval");
+  statisticInterval = toml::find<Duration>(data, "statisticInterval");
   if (statisticInterval == Duration::zero()) {
     throw std::runtime_error("statisticInterval should be > 0");
   }
