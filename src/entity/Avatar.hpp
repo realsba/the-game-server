@@ -21,7 +21,7 @@ public:
   void interact(Phage& phage) override;
   void interact(Mother& mother) override;
 
-  void magnetism(Avatar& avatar) override;
+  void attract(Avatar& avatar) override;
   bool isAttractive(const Avatar& avatar) override;
 
   void recombination(float t);

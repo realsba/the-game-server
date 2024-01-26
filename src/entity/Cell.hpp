@@ -44,7 +44,7 @@ public:
   virtual void interact(Phage&);
   virtual void interact(Mother&);
 
-  virtual void magnetism(Avatar& avatar);
+  virtual void attract(Avatar& avatar);
   virtual bool isAttractive(const Avatar& avatar);
 
   enum Type {

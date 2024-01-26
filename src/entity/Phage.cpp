@@ -46,7 +46,7 @@ void Phage::interact(Mother& mother)
   room.interact(mother, *this);
 }
 
-void Phage::magnetism(Avatar& avatar)
+void Phage::attract(Avatar& avatar)
 {
-  room.magnetism(avatar, *this);
+  room.attract(avatar, *this);
 }

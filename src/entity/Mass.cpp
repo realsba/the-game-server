@@ -36,9 +36,9 @@ void Mass::interact(Mother& mother)
   room.interact(mother, *this);
 }
 
-void Mass::magnetism(Avatar& avatar)
+void Mass::attract(Avatar& avatar)
 {
-  room.magnetism(avatar, *this);
+  room.attract(avatar, *this);
 }
 
 bool Mass::isAttractive(const Avatar& avatar)

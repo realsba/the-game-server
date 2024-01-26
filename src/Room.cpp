@@ -726,7 +726,7 @@ void Room::recombine(Avatar& initiator, Avatar& target)
   }
 }
 
-void Room::magnetism(Avatar& initiator, Avatar& target)
+void Room::attract(Avatar& initiator, Avatar& target)
 {
   if (initiator.player == target.player) {
     return;
@@ -749,7 +749,7 @@ void Room::magnetism(Avatar& initiator, Avatar& target)
   initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * forceRatio / dist);
 }
 
-void Room::magnetism(Avatar& initiator, Food& target)
+void Room::attract(Avatar& initiator, Food& target)
 {
   float dist(geometry::squareDistance(target.position, initiator.position));
   if (dist < m_config.eps) {
@@ -759,7 +759,7 @@ void Room::magnetism(Avatar& initiator, Food& target)
   initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceFoodRatio / dist);
 }
 
-void Room::magnetism(Avatar& initiator, Mass& target)
+void Room::attract(Avatar& initiator, Mass& target)
 {
   float dist(geometry::squareDistance(target.position, initiator.position));
   if (dist < m_config.eps) {
@@ -769,7 +769,7 @@ void Room::magnetism(Avatar& initiator, Mass& target)
   initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceHungerRatio / dist);
 }
 
-void Room::magnetism(Avatar& initiator, Virus& target)
+void Room::attract(Avatar& initiator, Virus& target)
 {
   float dist(geometry::squareDistance(target.position, initiator.position));
   if (dist < m_config.eps) {
@@ -779,7 +779,7 @@ void Room::magnetism(Avatar& initiator, Virus& target)
   initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceStarRatio / dist);
 }
 
-void Room::magnetism(Avatar& initiator, Phage& target)
+void Room::attract(Avatar& initiator, Phage& target)
 {
   float dist(geometry::squareDistance(target.position, initiator.position));
   if (dist < m_config.eps) {
@@ -789,7 +789,7 @@ void Room::magnetism(Avatar& initiator, Phage& target)
   initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceStarRatio / dist);
 }
 
-void Room::magnetism(Avatar& initiator, Mother& target)
+void Room::attract(Avatar& initiator, Mother& target)
 {
   float dist(geometry::squareDistance(target.position, initiator.position));
   if (dist < m_config.eps) {
@@ -799,7 +799,7 @@ void Room::magnetism(Avatar& initiator, Mother& target)
   initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceStarRatio / dist);
 }
 
-void Room::magnetism(Avatar& initiator, const Vec2D& point)
+void Room::attract(Avatar& initiator, const Vec2D& point)
 {
   float dist(geometry::squareDistance(point, initiator.position));
   if (dist < m_config.eps) {
@@ -809,7 +809,7 @@ void Room::magnetism(Avatar& initiator, const Vec2D& point)
   initiator.force += (velocity - initiator.velocity) * (initiator.mass * m_config.botForceCornerRatio / dist);
 }
 
-void Room::integration(Avatar& initiator, const Vec2D& point)
+void Room::integrate(Avatar& initiator, const Vec2D& point)
 {
   float dist(geometry::squareDistance(point, initiator.position));
   if (dist < m_config.eps) {
@@ -1370,7 +1370,7 @@ void Room::simulate(float dt)
       if (!avatar->zombie) {
         m_gridmap.query(avatar->player->getViewBox(), [&avatar, &eatTarget](Cell& target) -> bool {
           if (avatar != &target && !target.zombie) {
-            target.magnetism(*avatar);
+            target.attract(*avatar);
             if (target.isAttractive(*avatar)) {
               if (!eatTarget || eatTarget->mass < target.mass) {
                 eatTarget = &target;
@@ -1379,12 +1379,12 @@ void Room::simulate(float dt)
           }
           return true;
         });
-        magnetism(*avatar, Vec2D(0, 0));
-        magnetism(*avatar, Vec2D(m_config.width, 0));
-        magnetism(*avatar, Vec2D(0, m_config.height));
-        magnetism(*avatar, Vec2D(m_config.width, m_config.height));
+        attract(*avatar, Vec2D(0, 0));
+        attract(*avatar, Vec2D(m_config.width, 0));
+        attract(*avatar, Vec2D(0, m_config.height));
+        attract(*avatar, Vec2D(m_config.width, m_config.height));
         if (applyPointerForce) {
-          magnetism(*avatar, bot->getPosition());
+          attract(*avatar, bot->getPosition());
         }
         if (avatar->force) {
           m_modifiedCells.insert(avatar);

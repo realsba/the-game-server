@@ -19,7 +19,7 @@ public:
   void interact(Virus& virus) override;
   void interact(Phage& phage) override;
 
-  void magnetism(Avatar& avatar) override;
+  void attract(Avatar& avatar) override;
 
   TimePoint         created {TimePoint::clock::now()};
   uint32_t          foodCount {0};

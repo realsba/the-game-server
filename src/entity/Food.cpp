@@ -45,7 +45,7 @@ void Food::interact(Mother& mother)
   room.interact(mother, *this);
 }
 
-void Food::magnetism(Avatar& avatar)
+void Food::attract(Avatar& avatar)
 {
-  room.magnetism(avatar, *this);
+  room.attract(avatar, *this);
 }

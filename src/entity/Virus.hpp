@@ -20,7 +20,7 @@ public:
   void interact(Phage& phage) override;
   void interact(Mother& mother) override;
 
-  void magnetism(Avatar& avatar) override;
+  void attract(Avatar& avatar) override;
 
   TimePoint created {TimePoint::clock::now()};
 };

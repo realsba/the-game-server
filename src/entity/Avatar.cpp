@@ -78,9 +78,9 @@ void Avatar::interact(Mother& mother)
   room.interact(*this, mother);
 }
 
-void Avatar::magnetism(Avatar& avatar)
+void Avatar::attract(Avatar& avatar)
 {
-  room.magnetism(avatar, *this);
+  room.attract(avatar, *this);
 }
 
 bool Avatar::isAttractive(const Avatar& avatar)

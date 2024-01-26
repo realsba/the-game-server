@@ -96,14 +96,14 @@ private:
   void interact(Phage& phage1, Phage& phage2);
 
   void recombine(Avatar& initiator, Avatar& target);
-  void magnetism(Avatar& initiator, Avatar& target); // TODO: rename to attract
-  void magnetism(Avatar& initiator, Food& target);
-  void magnetism(Avatar& initiator, Mass& target);
-  void magnetism(Avatar& initiator, Virus& target);
-  void magnetism(Avatar& initiator, Phage& target);
-  void magnetism(Avatar& initiator, Mother& target);
-  void magnetism(Avatar& initiator, const Vec2D& point);
-  void integration(Avatar& initiator, const Vec2D& point); // * TODO: it is never used
+  void attract(Avatar& initiator, Avatar& target);
+  void attract(Avatar& initiator, Food& target);
+  void attract(Avatar& initiator, Mass& target);
+  void attract(Avatar& initiator, Virus& target);
+  void attract(Avatar& initiator, Phage& target);
+  void attract(Avatar& initiator, Mother& target);
+  void attract(Avatar& initiator, const Vec2D& point);
+  void integrate(Avatar& initiator, const Vec2D& point); // * TODO: it is never used
 
   void update();
 

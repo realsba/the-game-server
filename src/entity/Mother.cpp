@@ -43,7 +43,7 @@ void Mother::interact(Phage& phage)
   room.interact(*this, phage);
 }
 
-void Mother::magnetism(Avatar& avatar)
+void Mother::attract(Avatar& avatar)
 {
-  room.magnetism(avatar, *this);
+  room.attract(avatar, *this);
 }

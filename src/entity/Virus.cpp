@@ -46,7 +46,7 @@ void Virus::interact(Mother& mother)
   room.interact(mother, *this);
 }
 
-void Virus::magnetism(Avatar& avatar)
+void Virus::attract(Avatar& avatar)
 {
-  room.magnetism(avatar, *this);
+  room.attract(avatar, *this);
 }

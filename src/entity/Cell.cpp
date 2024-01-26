@@ -77,7 +77,7 @@ void Cell::interact(Phage&) { }
 
 void Cell::interact(Mother&) { }
 
-void Cell::magnetism(Avatar& avatar) { }
+void Cell::attract(Avatar& avatar) { }
 
 bool Cell::isAttractive(const Avatar& avatar)
 {
