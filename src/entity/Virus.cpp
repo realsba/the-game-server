@@ -5,10 +5,12 @@
 
 #include "src/Room.hpp"
 
-Virus::Virus(Room& room)
-  : Cell(room)
+Virus::Virus(Room& room, uint32_t id)
+  : Cell(room, id)
 {
+  const auto& config = room.getConfig();
   type = typeVirus;
+  color = config.virusColor;
 }
 
 void Virus::interact(Cell& cell)

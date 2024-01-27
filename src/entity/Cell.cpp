@@ -9,8 +9,9 @@
 #include "src/Player.hpp"
 #include "src/Room.hpp"
 
-Cell::Cell(Room& room)
+Cell::Cell(Room& room, uint32_t id)
   : room(room)
+  , id(id)
 {
   const auto& config = room.getConfig();
   resistanceRatio = config.resistanceRatio;

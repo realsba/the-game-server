@@ -10,7 +10,7 @@
 
 class Virus : public Cell {
 public:
-  explicit Virus(Room& room);
+  explicit Virus(Room& room, uint32_t id = 0);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;

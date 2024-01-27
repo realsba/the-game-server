@@ -6,11 +6,12 @@
 #include "src/geometry/geometry.hpp"
 #include "src/Room.hpp"
 
-Food::Food(Room& room)
-  : Cell(room)
+Food::Food(Room& room, uint32_t id)
+  : Cell(room, id)
 {
-  type = typeFood;
   const auto& config = room.getConfig();
+  type = typeFood;
+  materialPoint = true;
   resistanceRatio = config.foodResistanceRatio;
 }
 

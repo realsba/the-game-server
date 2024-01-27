@@ -47,6 +47,24 @@ Room::~Room()
   for (const auto& it : m_players) {
     delete it.second;
   }
+//  for (auto* it : m_avatarContainer) {
+//    delete it;
+//  }
+  for (auto* it : m_foodContainer) {
+    delete it;
+  }
+  for (auto* it : m_massContainer) {
+    delete it;
+  }
+  for (auto* it : m_virusContainer) {
+    delete it;
+  }
+  for (auto* it : m_phageContainer) {
+    delete it;
+  }
+  for (auto* it : m_motherContainer) {
+    delete it;
+  }
 }
 
 void Room::init(const RoomConfig& config)
@@ -415,20 +433,20 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
       ss << "id=" << player->getId();
     } else if (text == "#info") {
       float mass = 0;
-      for (const auto& it : m_foodContainer) {
-        mass += it.second.mass;
+      for (auto* item : m_foodContainer) {
+        mass += item->mass;
       }
-      for (const auto& it : m_massContainer) {
-        mass += it.second.mass;
+      for (auto* item : m_massContainer) {
+        mass += item->mass;
       }
-      for (const auto& it : m_virusContainer) {
-        mass += it.second.mass;
+      for (auto* item : m_virusContainer) {
+        mass += item->mass;
       }
-      for (const auto& it : m_phageContainer) {
-        mass += it.second.mass;
+      for (auto* item : m_phageContainer) {
+        mass += item->mass;
       }
-      for (const auto& it : m_motherContainer) {
-        mass += it.second.mass;
+      for (auto* item : m_motherContainer) {
+        mass += item->mass;
       }
       for (const auto& it : m_avatarContainer) {
         mass += it.second.mass;
@@ -862,37 +880,41 @@ void Room::update()
   m_zombieAvatars.clear();
   for (Food* food : m_zombieFoods) {
     removeCell(*food);
-    m_foodContainer.erase(food->id);
+    m_foodContainer.erase(food);
+    delete food;
   }
   m_zombieFoods.clear();
   for (Mass* mass : m_zombieMasses) {
     removeCell(*mass);
-    m_massContainer.erase(mass->id);
+    m_massContainer.erase(mass);
+    delete mass;
   }
   m_zombieMasses.clear();
   for (Virus* virus : m_zombieViruses) {
     removeCell(*virus);
-    m_virusContainer.erase(virus->id);
+    m_virusContainer.erase(virus);
+    delete virus;
   }
   m_zombieViruses.clear();
   for (Phage* phage : m_zombiePhages) {
     removeCell(*phage);
-    m_phageContainer.erase(phage->id);
+    m_phageContainer.erase(phage);
+    delete phage;
   }
   m_zombiePhages.clear();
   for (Mother* mother : m_zombieMothers) {
     removeCell(*mother);
-    m_motherContainer.erase(mother->id);
+    m_motherContainer.erase(mother);
+    delete mother;
   }
   m_zombieMothers.clear();
 
   // вибух гамнозірки
   std::vector<Mother*> mothers;
   mothers.reserve(m_motherContainer.size());
-  for (auto&& it : m_motherContainer) {
-    Mother& mother = it.second;
-    if (mother.mass >= m_config.motherExplodeMass) {
-      mothers.emplace_back(&mother);
+  for (auto* mother : m_motherContainer) {
+    if (mother->mass >= m_config.motherExplodeMass) {
+      mothers.emplace_back(mother);
     }
   }
   float doubleMass = m_config.motherStartMass * 2;
@@ -951,64 +973,52 @@ Avatar& Room::createAvatar()
 
 Food& Room::createFood()
 {
-  uint32_t id = m_cellNextId.pop();
-  auto& obj = m_foodContainer.emplace(id, *this).first->second;
-  obj.id = id;
-  obj.materialPoint = true;
-  m_createdCells.push_back(&obj);
-  m_modifiedCells.insert(&obj);
-  m_activatedCells.insert(&obj);
-  return obj;
+  auto* cell = new Food(*this, m_cellNextId.pop());
+  m_foodContainer.insert(cell);
+  updateNewCellRegistries(cell, false);
+  return *cell;
 }
 
 Mass& Room::createMass()
 {
-  uint32_t id = m_cellNextId.pop();
-  auto& obj = m_massContainer.emplace(id, *this).first->second;
-  obj.id = id;
-  m_createdCells.push_back(&obj);
-  m_modifiedCells.insert(&obj);
-  m_activatedCells.insert(&obj);
-  return obj;
+  auto* cell = new Mass(*this, m_cellNextId.pop());
+  m_massContainer.insert(cell);
+  updateNewCellRegistries(cell, false);
+  return *cell;
 }
 
 Virus& Room::createVirus()
 {
-  uint32_t id = m_cellNextId.pop();
-  auto& obj = m_virusContainer.emplace(id, *this).first->second;
-  obj.id = id;
-  obj.color = m_config.virusColor;
-  m_createdCells.push_back(&obj);
-  m_modifiedCells.insert(&obj);
-  m_activatedCells.insert(&obj);
-  m_forCheckRandomPos.insert(&obj);
-  return obj;
+  auto* cell = new Virus(*this, m_cellNextId.pop());
+  m_virusContainer.insert(cell);
+  updateNewCellRegistries(cell);
+  return *cell;
 }
 
 Phage& Room::createPhage()
 {
-  uint32_t id = m_cellNextId.pop();
-  auto& obj = m_phageContainer.emplace(id, *this).first->second;
-  obj.id = id;
-  obj.color = m_config.phageColor;
-  m_createdCells.push_back(&obj);
-  m_modifiedCells.insert(&obj);
-  m_activatedCells.insert(&obj);
-  m_forCheckRandomPos.insert(&obj);
-  return obj;
+  auto* cell = new Phage(*this, m_cellNextId.pop());
+  m_phageContainer.insert(cell);
+  updateNewCellRegistries(cell);
+  return *cell;
 }
 
 Mother& Room::createMother()
 {
-  uint32_t id = m_cellNextId.pop();
-  auto& obj = m_motherContainer.emplace(id, *this).first->second;
-  obj.id = id;
-  obj.color = m_config.motherColor;
-  m_createdCells.push_back(&obj);
-  m_modifiedCells.insert(&obj);
-  m_activatedCells.insert(&obj);
-  m_forCheckRandomPos.insert(&obj);
-  return obj;
+  auto* cell = new Mother(*this, m_cellNextId.pop());
+  m_motherContainer.insert(cell);
+  updateNewCellRegistries(cell);
+  return *cell;
+}
+
+void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
+{
+  m_createdCells.push_back(cell);
+  m_modifiedCells.insert(cell);
+  m_activatedCells.insert(cell);
+  if (checkRandomPos) {
+    m_forCheckRandomPos.insert(cell);
+  }
 }
 
 void Room::removeCell(Cell& cell)
@@ -1164,9 +1174,9 @@ void Room::destroyOutdatedCells()
 
   auto expirationTime = currentTime - m_config.virusLifeTime;
   for (auto it = m_virusContainer.begin(); it != m_virusContainer.end();) {
-    auto& virus = it->second;
-    if (virus.created < expirationTime) {
-      removeCell(virus);
+    auto* virus = *it;
+    if (virus->created < expirationTime) {
+      removeCell(*virus);
       it = m_virusContainer.erase(it);
     } else {
       ++it;
@@ -1175,9 +1185,9 @@ void Room::destroyOutdatedCells()
 
   expirationTime = currentTime - m_config.phageLifeTime;
   for (auto it = m_phageContainer.begin(); it != m_phageContainer.end();) {
-    auto& phage = it->second;
-    if (phage.created < expirationTime) {
-      removeCell(phage);
+    auto* phage = *it;
+    if (phage->created < expirationTime) {
+      removeCell(*phage);
       it = m_phageContainer.erase(it);
     } else {
       ++it;
@@ -1186,9 +1196,9 @@ void Room::destroyOutdatedCells()
 
   expirationTime = currentTime - m_config.motherLifeTime;
   for (auto it = m_motherContainer.begin(); it != m_motherContainer.end();) {
-    auto& mother = it->second;
-    if (mother.created < expirationTime) {
-      removeCell(mother);
+    auto* mother = *it;
+    if (mother->created < expirationTime) {
+      removeCell(*mother);
       it = m_motherContainer.erase(it);
     } else {
       ++it;
@@ -1245,11 +1255,10 @@ void Room::generate(float dt)
 
 void Room::checkMothers()
 {
-  for (auto& it : m_motherContainer) {
-    auto& mother = it.second;
-    Vec2D radius(mother.radius + m_config.motherCheckRadius, mother.radius + m_config.motherCheckRadius);
-    AABB box(mother.position - radius, mother.position + radius);
-    mother.foodCount = m_gridmap.count(box);
+  for (auto* mother : m_motherContainer) {
+    Vec2D radius(mother->radius + m_config.motherCheckRadius, mother->radius + m_config.motherCheckRadius);
+    AABB box(mother->position - radius, mother->position + radius);
+    mother->foodCount = m_gridmap.count(box);
   }
 }
 
@@ -1495,29 +1504,28 @@ void Room::produceMothers()
     return;
   }
 
-  for (auto& it : m_motherContainer) {
-    auto& mother = it.second;
-    if (mother.foodCount >= 100) {
+  for (auto* mother : m_motherContainer) {
+    if (mother->foodCount >= 100) {
       continue;
     }
     int cnt = 0;
-    int bonus = mother.mass - m_config.motherStartMass;
+    int bonus = mother->mass - m_config.motherStartMass;
     if (bonus > 0) {
       cnt = bonus > 100 ? 20 : bonus > 25 ? 5 : 1;
-      modifyMass(mother, -cnt);
+      modifyMass(*mother, -cnt);
     } else {
-      cnt = mother.foodCount < 20 ? 5 : 1;
+      cnt = mother->foodCount < 20 ? 5 : 1;
     }
-    mother.foodCount += cnt;
+    mother->foodCount += cnt;
     uint32_t impulse = m_config.foodMaxImpulse - m_config.foodMinImpulse;
     for (int i=0; i<cnt; ++i) {
       auto angle = M_PI * (m_generator() % 3600) / 1800;
       Vec2D direction(sin(angle), cos(angle));
       auto& obj = createFood();
-      obj.creator = &mother;
-      obj.position = mother.position;
-      if (mother.radius > mother.startRadius) {
-        obj.position += direction * (mother.radius - mother.startRadius);
+      obj.creator = mother;
+      obj.position = mother->position;
+      if (mother->radius > mother->startRadius) {
+        obj.position += direction * (mother->radius - mother->startRadius);
       }
       obj.color = m_generator() % 16;
       obj.mass = m_config.foodMass;

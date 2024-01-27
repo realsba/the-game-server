@@ -116,6 +116,8 @@ private:
   Virus& createVirus();
   Phage& createPhage();
   Mother& createMother();
+
+  void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
   void removeCell(Cell& cell);
 
   bool eject(Avatar& avatar, const Vec2D& point);
@@ -183,11 +185,11 @@ private:
   RequestsMap                 m_splitRequests;
   NextId                      m_cellNextId;
   std::map<uint32_t, Avatar>  m_avatarContainer;
-  std::map<uint32_t, Food>    m_foodContainer;
-  std::map<uint32_t, Mass>    m_massContainer;
-  std::map<uint32_t, Virus>   m_virusContainer;
-  std::map<uint32_t, Phage>   m_phageContainer;
-  std::map<uint32_t, Mother>  m_motherContainer;
+  std::set<Food*>             m_foodContainer;
+  std::set<Mass*>             m_massContainer;
+  std::set<Virus*>            m_virusContainer;
+  std::set<Phage*>            m_phageContainer;
+  std::set<Mother*>           m_motherContainer;
   std::vector<Avatar*>        m_zombieAvatars;
   std::vector<Food*>          m_zombieFoods;
   std::vector<Mass*>          m_zombieMasses;

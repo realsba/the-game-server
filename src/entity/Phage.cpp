@@ -5,10 +5,12 @@
 
 #include "src/Room.hpp"
 
-Phage::Phage(Room& room)
-  : Cell(room)
+Phage::Phage(Room& room, uint32_t id)
+  : Cell(room, id)
 {
+  const auto& config = room.getConfig();
   type = typePhage;
+  color = config.phageColor;
 }
 
 void Phage::interact(Cell& cell)

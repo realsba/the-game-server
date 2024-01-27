@@ -10,7 +10,7 @@
 
 class Phage : public Cell {
 public:
-  explicit Phage(Room& room);
+  explicit Phage(Room& room, uint32_t id = 0);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;

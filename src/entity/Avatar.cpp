@@ -8,8 +8,8 @@
 #include "src/Player.hpp"
 #include "src/Room.hpp"
 
-Avatar::Avatar(Room& room)
-  : Cell(room)
+Avatar::Avatar(Room& room, uint32_t id)
+  : Cell(room, id)
 {
   type = typeAvatar;
 }

@@ -8,7 +8,7 @@
 
 class Food : public Cell {
 public:
-  explicit Food(Room& room);
+  explicit Food(Room& room, uint32_t id = 0);
 
   bool intersects(const AABB& box) override;
 

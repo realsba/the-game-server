@@ -5,12 +5,13 @@
 
 #include "src/Room.hpp"
 
-Mother::Mother(Room& room)
-  : Cell(room)
+Mother::Mother(Room& room, uint32_t id)
+  : Cell(room, id)
 {
-  type = typeMother;
   const auto& config = room.getConfig();
+  type = typeMother;
   startRadius = static_cast<float>(config.cellRadiusRatio * sqrt(config.motherStartMass / M_PI));
+  color = config.motherColor;
 }
 
 void Mother::interact(Cell& cell)

@@ -24,7 +24,7 @@ class Mother;
 
 class Cell : public Circle {
 public:
-  explicit Cell(Room& room);
+  explicit Cell(Room& room, uint32_t id = 0);
 
   virtual ~Cell() = default;
 
