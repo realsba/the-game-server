@@ -47,9 +47,9 @@ Room::~Room()
   for (const auto& it : m_players) {
     delete it.second;
   }
-//  for (auto* it : m_avatarContainer) {
-//    delete it;
-//  }
+  for (auto* it : m_avatarContainer) {
+    delete it;
+  }
   for (auto* it : m_foodContainer) {
     delete it;
   }
@@ -448,8 +448,8 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
       for (auto* item : m_motherContainer) {
         mass += item->mass;
       }
-      for (const auto& it : m_avatarContainer) {
-        mass += it.second.mass;
+      for (auto* item : m_avatarContainer) {
+        mass += item->mass;
       }
       ss << "roomId=" << m_id << "; connections=" << m_sessions.size()
         << "; players=" << m_players.size()
@@ -847,26 +847,25 @@ void Room::update()
 
   auto deflationTime = now - m_config.playerDeflationInterval;
   auto annihilationTime = now - m_config.playerAnnihilationInterval;
-  for (auto& it : m_avatarContainer) {
-    Avatar& avatar = it.second;
-    const auto& lastActivity = avatar.player->getLastActivity();
+  for (auto* avatar : m_avatarContainer) {
+    const auto& lastActivity = avatar->player->getLastActivity();
     if (lastActivity < deflationTime) {
-      float mass = avatar.mass * m_config.playerDeflationRatio * dt;
-      if (avatar.mass - mass >= m_config.cellMinMass) {
-        modifyMass(avatar, -mass);
+      float mass = avatar->mass * m_config.playerDeflationRatio * dt;
+      if (avatar->mass - mass >= m_config.cellMinMass) {
+        modifyMass(*avatar, -mass);
         m_updateLeaderboard = true;
       }
     }
     if (lastActivity < annihilationTime) {
-      avatar.player->removeAvatar(&avatar);
-      m_zombieAvatars.push_back(&avatar);
-      avatar.zombie = true;
+      avatar->player->removeAvatar(avatar);
+      m_zombieAvatars.push_back(avatar);
+      avatar->zombie = true;
       m_updateLeaderboard = true;
       if (m_mass < m_config.maxMass) {
         auto& obj = createVirus();
-        modifyMass(obj, avatar.mass > m_config.virusStartMass ? avatar.mass : m_config.virusStartMass);
-        obj.position = avatar.position;
-        obj.color = avatar.color;
+        modifyMass(obj, avatar->mass > m_config.virusStartMass ? avatar->mass : m_config.virusStartMass);
+        obj.position = avatar->position;
+        obj.color = avatar->color;
       }
     }
   }
@@ -875,7 +874,8 @@ void Room::update()
   for (Avatar* avatar : m_zombieAvatars) {
     m_processingAvatars.erase(avatar);
     removeCell(*avatar);
-    m_avatarContainer.erase(avatar->id);
+    m_avatarContainer.erase(avatar);
+    delete avatar;
   }
   m_zombieAvatars.clear();
   for (Food* food : m_zombieFoods) {
@@ -961,14 +961,13 @@ Vec2D Room::getRandomPosition(uint32_t radius) const
 
 Avatar& Room::createAvatar()
 {
-  uint32_t id = m_cellNextId.pop();
-  auto& obj = m_avatarContainer.emplace(id, *this).first->second;
-  obj.id = id;
-  m_createdAvatars.push_back(&obj);
-  m_createdCells.push_back(&obj);
-  m_modifiedCells.insert(&obj);
-  m_forCheckRandomPos.insert(&obj);
-  return obj;
+  auto* cell = new Avatar(*this, m_cellNextId.pop());
+  m_avatarContainer.insert(cell);
+  m_createdAvatars.push_back(cell);
+  m_createdCells.push_back(cell);
+  m_modifiedCells.insert(cell);
+  m_forCheckRandomPos.insert(cell);
+  return *cell;
 }
 
 Food& Room::createFood()

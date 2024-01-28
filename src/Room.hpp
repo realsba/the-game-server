@@ -184,7 +184,7 @@ private:
   RequestsMap                 m_ejectRequests;
   RequestsMap                 m_splitRequests;
   NextId                      m_cellNextId;
-  std::map<uint32_t, Avatar>  m_avatarContainer;
+  std::set<Avatar*>           m_avatarContainer;
   std::set<Food*>             m_foodContainer;
   std::set<Mass*>             m_massContainer;
   std::set<Virus*>            m_virusContainer;
