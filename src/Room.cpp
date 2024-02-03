@@ -1032,7 +1032,7 @@ bool Room::eject(Avatar& avatar, const Vec2D& point)
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.applyImpulse(direction * obj.mass * m_config.avatarEjectImpulse);
+    obj.applyVelocity(direction * m_config.avatarEjectVelocity);
     obj.position += direction * avatar.radius;
   }
   m_updateLeaderboard = true;
@@ -1055,7 +1055,7 @@ bool Room::split(Avatar& avatar, const Vec2D& point)
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.applyImpulse(direction * (obj.mass * m_config.avatarSplitImpulse));
+    obj.applyVelocity(direction * m_config.avatarSplitVelocity);
   }
   obj.recombination(m_config.avatarRecombineTime);
   avatar.recombination(m_config.avatarRecombineTime);
@@ -1086,7 +1086,7 @@ void Room::explode(Avatar& avatar)
     Vec2D direction(sin(angle), cos(angle));
     obj.position = avatar.position + direction * (avatar.radius + obj.radius);
     obj.color = avatar.color;
-    obj.applyImpulse(direction * (obj.mass * m_config.explodeImpulse));
+    obj.applyVelocity(direction * m_config.explodeVelocity);
     obj.recombination(m_config.avatarRecombineTime);
     avatar.player->addAvatar(&obj);
     if (avatars.size() >= m_config.playerMaxCells) {
@@ -1108,7 +1108,7 @@ void Room::explode(Mother& mother)
     float angle = (m_generator() % 3600) * M_PI / 1800;
     Vec2D direction(sin(angle), cos(angle));
     obj.position = mother.position;
-    obj.applyImpulse(direction * (obj.mass * m_config.explodeImpulse));
+    obj.applyVelocity(direction * m_config.explodeVelocity);
     modifyMass(mother, -static_cast<float>(m_config.motherStartMass));
   }
 }
@@ -1512,7 +1512,7 @@ void Room::produceMothers()
       cnt = mother->foodCount < 20 ? 5 : 1;
     }
     mother->foodCount += cnt;
-    uint32_t impulse = m_config.foodMaxImpulse - m_config.foodMinImpulse;
+    uint32_t impulse = m_config.foodMaxVelocity - m_config.foodMinVelocity;
     for (int i=0; i<cnt; ++i) {
       auto angle = M_PI * (m_generator() % 3600) / 1800;
       Vec2D direction(sin(angle), cos(angle));
@@ -1525,8 +1525,8 @@ void Room::produceMothers()
       obj.color = m_generator() % 16;
       obj.mass = m_config.foodMass;
       obj.radius = m_config.foodRadius;
-      float k = obj.mass * (m_config.foodMinImpulse + (m_generator() % impulse));
-      obj.applyImpulse(direction * k);
+      float magnitude = m_config.foodMinVelocity + (m_generator() % impulse);
+      obj.applyVelocity(direction * magnitude);
       m_mass += obj.mass;
     }
   }

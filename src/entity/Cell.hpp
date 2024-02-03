@@ -30,6 +30,7 @@ public:
 
   [[nodiscard]] AABB getAABB() const;
 
+  void applyVelocity(const Vec2D& value);
   void applyImpulse(const Vec2D& value);
 
   virtual bool intersects(const AABB& box);

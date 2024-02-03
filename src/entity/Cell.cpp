@@ -23,6 +23,11 @@ AABB Cell::getAABB() const
   return {position - delta, position + delta};
 }
 
+void Cell::applyVelocity(const Vec2D& value)
+{
+  velocity += value;
+}
+
 void Cell::applyImpulse(const Vec2D& value)
 {
   velocity += value / mass;

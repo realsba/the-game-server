@@ -99,7 +99,7 @@ namespace toml
       result.maxRadius                    = find<uint32_t>(v, "maxRadius");
       result.leaderboardVisibleItems      = find<uint32_t>(v, "leaderboardVisibleItems");
       result.scaleRatio                   = find<float>(v, "scaleRatio");
-      result.explodeImpulse               = find<uint32_t>(v, "explodeImpulse");
+      result.explodeVelocity               = find<uint32_t>(v, "explodeVelocity");
 
       result.playerMaxCells               = find<uint32_t>(v, "playerMaxCells");
       result.playerDeflationInterval      = find<Duration>(v, "playerDeflationInterval");
@@ -127,9 +127,9 @@ namespace toml
       result.avatarExplodeMinMass = find<uint32_t>(v, "avatarExplodeMinMass");
       result.avatarExplodeParts   = find<uint32_t>(v, "avatarExplodeParts");
       result.avatarSplitMinMass   = find<uint32_t>(v, "avatarSplitMinMass");
-      result.avatarSplitImpulse   = find<uint32_t>(v, "avatarSplitImpulse");
+      result.avatarSplitVelocity   = find<uint32_t>(v, "avatarSplitVelocity");
       result.avatarEjectMinMass   = find<uint32_t>(v, "avatarEjectMinMass");
-      result.avatarEjectImpulse   = find<uint32_t>(v, "avatarEjectImpulse");
+      result.avatarEjectVelocity   = find<uint32_t>(v, "avatarEjectVelocity");
       result.avatarEjectMass      = find<uint32_t>(v, "avatarEjectMass");
       result.avatarEjectMassLoss  = find<uint32_t>(v, "avatarEjectMassLoss");
       result.avatarRecombineTime  = find<uint32_t>(v, "avatarRecombineTime");
@@ -138,11 +138,11 @@ namespace toml
       result.foodMaxAmount        = find<uint32_t>(v, "foodMaxAmount");
       result.foodMass             = find<uint32_t>(v, "foodMass");
       result.foodRadius           = find<uint32_t>(v, "foodRadius");
-      result.foodMinImpulse       = find<uint32_t>(v, "foodMinImpulse");
-      result.foodMaxImpulse       = find<uint32_t>(v, "foodMaxImpulse");
+      result.foodMinVelocity       = find<uint32_t>(v, "foodMinVelocity");
+      result.foodMaxVelocity       = find<uint32_t>(v, "foodMaxVelocity");
       result.foodResistanceRatio  = find<float>(v, "foodResistanceRatio");
-      if (result.foodMinImpulse > result.foodMaxImpulse) {
-        spdlog::warn("room.foodMinImpulse > room.foodMaxImpulse");
+      if (result.foodMinVelocity > result.foodMaxVelocity) {
+        spdlog::warn("room.foodMinVelocity > room.foodMaxVelocity");
       }
 
       result.virusStartMass       = find<uint32_t>(v, "virusStartMass");

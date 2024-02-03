@@ -50,7 +50,7 @@ struct RoomConfig {
   uint32_t  maxRadius {0};
   uint32_t  leaderboardVisibleItems {0};
   float     scaleRatio {0};
-  uint32_t  explodeImpulse {0};
+  uint32_t  explodeVelocity {0};
 
   uint32_t  playerMaxCells {0};
   Duration  playerDeflationInterval {};
@@ -78,9 +78,9 @@ struct RoomConfig {
   uint32_t  avatarExplodeMinMass {0};
   uint32_t  avatarExplodeParts {0};
   uint32_t  avatarSplitMinMass {0};
-  uint32_t  avatarSplitImpulse {0};
+  uint32_t  avatarSplitVelocity {0};
   uint32_t  avatarEjectMinMass {0};
-  uint32_t  avatarEjectImpulse {0};
+  uint32_t  avatarEjectVelocity {0};
   uint32_t  avatarRecombineTime {0}; // TODO: use Duration
   uint32_t  avatarEjectMass {0};
   uint32_t  avatarEjectMassLoss {0};
@@ -89,8 +89,8 @@ struct RoomConfig {
   uint32_t  foodMaxAmount {0};
   uint32_t  foodMass {0};
   uint32_t  foodRadius {0};
-  uint32_t  foodMinImpulse {0};
-  uint32_t  foodMaxImpulse {0};
+  uint32_t  foodMinVelocity {0};
+  uint32_t  foodMaxVelocity {0};
   float     foodResistanceRatio {0};
 
   uint32_t  virusStartMass {0};

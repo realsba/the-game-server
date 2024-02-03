@@ -46,7 +46,7 @@ maxPlayers = 50
 maxRadius = 100
 leaderboardVisibleItems = 20
 scaleRatio = 0.75
-explodeImpulse = 500
+explodeVelocity = 500
 
 playerMaxCells = 16
 playerDeflationInterval = '2m'
@@ -74,10 +74,10 @@ avatarMaxSpeed = 600
 avatarExplodeMinMass = 35
 avatarExplodeParts = 5
 avatarSplitMinMass = 100
-avatarSplitImpulse = 600
+avatarSplitVelocity = 600
 avatarEjectMinMass = 82
-avatarEjectImpulse = 550
-avatarEjectMass = 35
+avatarEjectVelocity = 550
+avatarEjectMass = 250
 avatarEjectMassLoss = 47
 avatarRecombineTime = 8
 
@@ -85,8 +85,8 @@ foodStartAmount = 2000
 foodMaxAmount = 5000
 foodMass = 5
 foodRadius = 8
-foodMinImpulse = 190
-foodMaxImpulse = 210
+foodMinVelocity = 190
+foodMaxVelocity = 210
 foodResistanceRatio = 30.0
 
 virusStartMass = 165
