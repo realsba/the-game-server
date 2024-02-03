@@ -37,6 +37,7 @@ add_executable(${PROJECT_NAME}
     src/geometry/Vec2D.hpp
     src/geometry/geometry.cpp
     src/geometry/geometry.hpp
+    src/geometry/formatter.hpp
     src/packet/EmptyPacket.cpp
     src/packet/EmptyPacket.hpp
     src/packet/InputPacketTypes.hpp
