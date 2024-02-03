@@ -117,7 +117,7 @@ private:
 
   void recalculateFreeSpace();
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
-  void removeCell(Cell& cell);
+  void removeCell(Cell* cell);
 
   bool eject(Avatar& avatar, const Vec2D& point);
   bool split(Avatar& avatar, const Vec2D& point);

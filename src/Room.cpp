@@ -871,39 +871,33 @@ void Room::update()
   // TODO: optimize amount of containers
   for (Avatar* avatar : m_zombieAvatars) {
     m_processingAvatars.erase(avatar);
-    removeCell(*avatar);
     m_avatarContainer.erase(avatar);
-    delete avatar;
+    removeCell(avatar);
   }
   m_zombieAvatars.clear();
   for (Food* food : m_zombieFoods) {
-    removeCell(*food);
     m_foodContainer.erase(food);
-    delete food;
+    removeCell(food);
   }
   m_zombieFoods.clear();
   for (Mass* mass : m_zombieMasses) {
-    removeCell(*mass);
     m_massContainer.erase(mass);
-    delete mass;
+    removeCell(mass);
   }
   m_zombieMasses.clear();
   for (Virus* virus : m_zombieViruses) {
-    removeCell(*virus);
     m_virusContainer.erase(virus);
-    delete virus;
+    removeCell(virus);
   }
   m_zombieViruses.clear();
   for (Phage* phage : m_zombiePhages) {
-    removeCell(*phage);
     m_phageContainer.erase(phage);
-    delete phage;
+    removeCell(phage);
   }
   m_zombiePhages.clear();
   for (Mother* mother : m_zombieMothers) {
-    removeCell(*mother);
     m_motherContainer.erase(mother);
-    delete mother;
+    removeCell(mother);
   }
   m_zombieMothers.clear();
 
@@ -1008,16 +1002,17 @@ void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
   }
 }
 
-void Room::removeCell(Cell& cell)
+void Room::removeCell(Cell* cell)
 {
-  m_mass -= cell.mass;
-  m_forCheckRandomPos.erase(&cell);
-  m_processingCells.erase(&cell);
-  m_modifiedCells.erase(&cell);
-  m_activatedCells.erase(&cell);
-  m_gridmap.erase(&cell);
-  m_removedCellIds.push_back(cell.id);
-  m_cellNextId.push(cell.id);
+  m_mass -= cell->mass;
+  m_forCheckRandomPos.erase(cell);
+  m_processingCells.erase(cell);
+  m_modifiedCells.erase(cell);
+  m_activatedCells.erase(cell);
+  m_gridmap.erase(cell);
+  m_removedCellIds.push_back(cell->id);
+  m_cellNextId.push(cell->id);
+  delete cell;
 }
 
 bool Room::eject(Avatar& avatar, const Vec2D& point)
@@ -1177,8 +1172,8 @@ void Room::destroyOutdatedCells()
   for (auto it = m_virusContainer.begin(); it != m_virusContainer.end();) {
     auto* virus = *it;
     if (virus->created < expirationTime) {
-      removeCell(*virus);
       it = m_virusContainer.erase(it);
+      removeCell(virus);
     } else {
       ++it;
     }
@@ -1188,8 +1183,8 @@ void Room::destroyOutdatedCells()
   for (auto it = m_phageContainer.begin(); it != m_phageContainer.end();) {
     auto* phage = *it;
     if (phage->created < expirationTime) {
-      removeCell(*phage);
       it = m_phageContainer.erase(it);
+      removeCell(phage);
     } else {
       ++it;
     }
@@ -1199,8 +1194,8 @@ void Room::destroyOutdatedCells()
   for (auto it = m_motherContainer.begin(); it != m_motherContainer.end();) {
     auto* mother = *it;
     if (mother->created < expirationTime) {
-      removeCell(*mother);
       it = m_motherContainer.erase(it);
+      removeCell(mother);
     } else {
       ++it;
     }
