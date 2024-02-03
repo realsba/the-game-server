@@ -1,4 +1,4 @@
-// file   : geometry/AABB.hpp
+// file   : src/geometry/AABB.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_GEOMETRY_AABB_HPP
@@ -14,15 +14,12 @@ public:
 
   void normalize();
   void translate(const Vec2D& point);
-  bool contain(const Vec2D& point) const;
-  float width() const;
-  float height() const;
+  [[nodiscard]] bool contain(const Vec2D& point) const;
+  [[nodiscard]] float width() const;
+  [[nodiscard]] float height() const;
 
   Vec2D a;
   Vec2D b;
-
-private:
-  friend std::ostream& operator<<(std::ostream& os, const AABB& obj);
 };
 
 #endif /* THEGAME_GEOMETRY_AABB_HPP */

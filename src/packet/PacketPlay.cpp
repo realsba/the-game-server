@@ -1,4 +1,4 @@
-// file   : packet/PacketPlay.cpp
+// file   : src/packet/PacketPlay.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "PacketPlay.hpp"

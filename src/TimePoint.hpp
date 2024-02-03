@@ -1,4 +1,4 @@
-// file   : TimePoint.hpp
+// file   : src/TimePoint.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_TIME_POINT_HPP

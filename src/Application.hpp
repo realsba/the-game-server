@@ -1,4 +1,4 @@
-// file   : Application.hpp
+// file   : src/Application.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_APPLICATION_HPP
@@ -84,8 +84,6 @@ private:
   Timer                         m_statisticTimer;
   std::size_t                   m_maxSessions {0};
   uint32_t                      m_registrations {0};
-  const size_t                  m_nameMaxLength {16};
-
   ListenerPtr                   m_listener;
 };
 

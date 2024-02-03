@@ -1,4 +1,4 @@
-// file   : util.hpp
+// file   : src/util.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "util.hpp"

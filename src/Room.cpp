@@ -1,4 +1,4 @@
-// file   : Room.cpp
+// file   : src/Room.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Room.hpp"
@@ -253,17 +253,15 @@ void Room::doLeave(const SessionPtr& sess)
     m_pointerRequests.erase(sess);
     m_ejectRequests.erase(sess);
     m_splitRequests.erase(sess);
-    auto player = sess->player();
+    auto* player = sess->player();
     if (player) {
       sendPacketPlayerLeave(player->getId());
       sess->player(nullptr);
       m_zombiePlayers.insert(player);
       player->online = false;
     }
-    // TODO: так як m_players не мають містити жодних з'єднань, то можна перебирати лише колекцію m_fighters
     for (const auto& it : m_players) {
-      Player* player = it.second;
-      player->removeSession(sess);
+      it.second->removeSession(sess);
     }
   }
 }
@@ -909,7 +907,6 @@ void Room::update()
   }
   m_zombieMothers.clear();
 
-  // вибух гамнозірки
   std::vector<Mother*> mothers;
   mothers.reserve(m_motherContainer.size());
   for (auto* mother : m_motherContainer) {
@@ -917,25 +914,11 @@ void Room::update()
       mothers.emplace_back(mother);
     }
   }
-  float doubleMass = m_config.motherStartMass * 2;
   for (Mother* mother : mothers) {
-    while (mother->mass >= doubleMass) {
-      auto& obj = createMother();
-      modifyMass(obj, m_config.motherStartMass);
-      float angle = (m_generator() % 3600) * M_PI / 1800;
-      Vec2D direction(sin(angle), cos(angle));
-      obj.position = mother->position;
-      obj.applyImpulse(direction * (obj.mass * m_config.explodeImpulse));
-      modifyMass(*mother, -static_cast<float>(m_config.motherStartMass));
-    }
+    explode(*mother);
   }
 
   synchronize();
-}
-
-void Room::recalculateFreeSpace()
-{
-  m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
 }
 
 Vec2D Room::getRandomPosition(uint32_t radius) const
@@ -1008,6 +991,11 @@ Mother& Room::createMother()
   m_motherContainer.insert(cell);
   updateNewCellRegistries(cell);
   return *cell;
+}
+
+void Room::recalculateFreeSpace()
+{
+  m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
 }
 
 void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
@@ -1113,6 +1101,20 @@ void Room::explode(Avatar& avatar)
   if (explodedMass) {
     avatar.recombination(m_config.avatarRecombineTime);
     modifyMass(avatar, -explodedMass);
+  }
+}
+
+void Room::explode(Mother& mother)
+{
+  float doubleMass = m_config.motherStartMass * 2;
+  while (mother.mass >= doubleMass) {
+    auto& obj = createMother();
+    modifyMass(obj, m_config.motherStartMass);
+    float angle = (m_generator() % 3600) * M_PI / 1800;
+    Vec2D direction(sin(angle), cos(angle));
+    obj.position = mother.position;
+    obj.applyImpulse(direction * (obj.mass * m_config.explodeImpulse));
+    modifyMass(mother, -static_cast<float>(m_config.motherStartMass));
   }
 }
 
@@ -1309,7 +1311,6 @@ void Room::handlePlayerRequests()
 
 void Room::simulate(float dt)
 {
-  // TODO: move to up level, the most of code does not use dt
   for (Player* player : m_fighters) {
     const auto& avatars = player->getAvatars();
     if (avatars.size() < 2) {

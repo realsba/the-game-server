@@ -1,4 +1,4 @@
-// file   : entity/Virus.cpp
+// file   : src/entity/Virus.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Virus.hpp"

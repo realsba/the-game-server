@@ -1,4 +1,4 @@
-// file   : entity/Mother.hpp
+// file   : src/entity/Mother.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ENTITY_MOTHER_HPP

@@ -1,4 +1,4 @@
-// file   : Timer.hpp
+// file   : src/Timer.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_TIMER_HPP

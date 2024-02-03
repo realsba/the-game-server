@@ -1,4 +1,4 @@
-// file   : entity/Cell.cpp
+// file   : src/entity/Cell.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Cell.hpp"

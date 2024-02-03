@@ -1,4 +1,4 @@
-// file   : entity/Cell.hpp
+// file   : src/entity/Cell.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ENTITY_CELL_HPP

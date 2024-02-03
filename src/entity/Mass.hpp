@@ -1,4 +1,4 @@
-// file   : entity/Mass.hpp
+// file   : src/entity/Mass.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ENTITY_MASS_HPP

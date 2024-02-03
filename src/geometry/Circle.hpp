@@ -1,4 +1,4 @@
-// file   : geometry/Circle.hpp
+// file   : src/geometry/Circle.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_GEOMETRY_CIRCLE_HPP

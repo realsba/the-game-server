@@ -1,4 +1,4 @@
-// file   : ScopeExit.hpp
+// file   : src/ScopeExit.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_SCOPE_EXIT_HPP

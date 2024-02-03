@@ -1,4 +1,4 @@
-// file   : entity/Mother.cpp
+// file   : src/entity/Mother.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Mother.hpp"

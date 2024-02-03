@@ -1,4 +1,4 @@
-// file   : Player.hpp
+// file   : src/Player.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PLAYER_HPP

@@ -1,4 +1,4 @@
-// file   : User.cpp
+// file   : src/User.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "User.hpp"
@@ -10,7 +10,6 @@ User::User(uint32_t id)
 
 uint32_t User::getId() const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
   return m_id;
 }
 

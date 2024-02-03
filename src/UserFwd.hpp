@@ -1,4 +1,4 @@
-// file   : UserFwd.hpp
+// file   : src/UserFwd.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_USER_FWD_HPP

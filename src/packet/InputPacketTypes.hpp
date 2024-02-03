@@ -1,4 +1,4 @@
-// file   : packet/InputPacketTypes.hpp
+// file   : src/packet/InputPacketTypes.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PACKET_INPUT_PACKET_TYPES_HPP

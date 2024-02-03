@@ -1,4 +1,4 @@
-// file   : version.hpp
+// file   : src/version.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef VERSION_HPP

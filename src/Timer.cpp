@@ -1,4 +1,4 @@
-// file   : Timer.cpp
+// file   : src/Timer.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Timer.hpp"

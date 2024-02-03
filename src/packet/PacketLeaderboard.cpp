@@ -1,4 +1,4 @@
-// file   : packet/PacketLeaderboard.cpp
+// file   : src/packet/PacketLeaderboard.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "PacketLeaderboard.hpp"

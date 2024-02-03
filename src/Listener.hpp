@@ -1,4 +1,4 @@
-// file   : Listener.hpp
+// file   : src/Listener.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_LISTENER_HPP
@@ -32,7 +32,7 @@ private:
 
 private:
   mutable asio::io_context::strand      m_strand;
-  asio::io_context&                     m_ioc;
+  asio::io_context&                     m_ioContext;
   tcp::endpoint                         m_endpoint;
   tcp::acceptor                         m_acceptor;
   AcceptHandler                         m_acceptHandler;

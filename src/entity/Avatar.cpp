@@ -1,4 +1,4 @@
-// file   : entity/Avatar.cpp
+// file   : src/entity/Avatar.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Avatar.hpp"

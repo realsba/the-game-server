@@ -1,4 +1,4 @@
-// file   : MySQLConnectionPool.hpp
+// file   : src/MySQLConnectionPool.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_MYSQL_CONNECTION_POOL_HPP

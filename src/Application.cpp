@@ -1,4 +1,4 @@
-// file   : Application.cpp
+// file   : src/Application.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Application.hpp"
@@ -96,7 +96,6 @@ void Application::stop()
 
 void Application::save()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
   try {
     m_users.save();
   } catch (const std::exception& e) {
@@ -218,6 +217,8 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
 
 void Application::actionPlay(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
+  static const uint NAME_MAX_LENGTH = 16;
+
   auto name = deserialize<std::string>(request);
   auto color = deserialize<uint8_t>(request);
   if (user) {
@@ -225,8 +226,8 @@ void Application::actionPlay(const UserPtr& user, const SessionPtr& sess, beast:
     const auto& wstr = cv.from_bytes(name);
     if (wstr.empty()) {
       name = "Player " + std::to_string(user->getId());
-    } else if (wstr.length() > m_nameMaxLength) {
-      name = cv.to_bytes(wstr.substr(0, m_nameMaxLength));
+    } else if (wstr.length() > NAME_MAX_LENGTH) {
+      name = cv.to_bytes(wstr.substr(0, NAME_MAX_LENGTH));
     }
     auto* room = user->getRoom();
     if (room) {

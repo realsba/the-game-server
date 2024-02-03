@@ -1,4 +1,4 @@
-// file   : entity/Food.hpp
+// file   : src/entity/Food.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ENTITY_FOOD_HPP

@@ -1,4 +1,4 @@
-// file   : entity/Avatar.hpp
+// file   : src/entity/Avatar.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ENTITY_AVATAR_HPP

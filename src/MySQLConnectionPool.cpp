@@ -1,4 +1,4 @@
-// file   : MySQLConnectionPool.cpp
+// file   : src/MySQLConnectionPool.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "MySQLConnectionPool.hpp"

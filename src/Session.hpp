@@ -1,4 +1,4 @@
-// file   : Session.hpp
+// file   : src/Session.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_SESSION_HPP

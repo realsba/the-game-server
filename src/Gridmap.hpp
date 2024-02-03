@@ -1,4 +1,4 @@
-// file   : Gridmap.hpp
+// file   : src/Gridmap.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_GRIDMAP_HPP

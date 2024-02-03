@@ -1,4 +1,4 @@
-// file   : User.hpp
+// file   : src/User.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_USER_HPP
@@ -40,15 +40,14 @@ private:
   void setLastAccess(const TimePoint& v);
 
 private:
-  mutable std::mutex m_mutex;
-
-  SessionPtr    m_session;
-  std::string   m_sessId;
-  std::string   m_name;
-  TimePoint     m_lastAccess {TimePoint::clock::now()};
-  Room*         m_room {nullptr};
-  uint32_t      m_id {0};
-  bool          m_modified {true};
+  mutable std::mutex  m_mutex;
+  SessionPtr          m_session;
+  std::string         m_sessId;
+  std::string         m_name;
+  TimePoint           m_lastAccess {TimePoint::clock::now()};
+  Room*               m_room {nullptr};
+  const uint32_t      m_id {0};
+  bool                m_modified {true};
 
   friend class UsersCache;
 };

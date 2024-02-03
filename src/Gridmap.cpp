@@ -1,4 +1,4 @@
-// file   : Gridmap.cpp
+// file   : src/Gridmap.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Gridmap.hpp"

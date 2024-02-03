@@ -1,10 +1,10 @@
-// file      : AsioFormatter.cpp
+// file      : src/AsioFormatter.cpp
 // author    : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ASIO_FORMATTER_HPP
 #define THEGAME_ASIO_FORMATTER_HPP
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include <boost/asio/ip/tcp.hpp>
 
@@ -12,12 +12,9 @@
 namespace fmt {
 
 template <>
-struct formatter<boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>, char> {
+struct formatter<boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>> {
   template <typename ParseContext>
-  constexpr auto parse(ParseContext& ctx)
-  {
-    return ctx.begin();
-  }
+  constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
   template <typename FormatContext>
   auto format(const boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>& ep, FormatContext& ctx)

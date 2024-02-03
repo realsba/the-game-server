@@ -1,4 +1,4 @@
-// file   : Room.hpp
+// file   : src/Room.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ROOM_HPP
@@ -107,8 +107,6 @@ private:
 
   void update();
 
-  void recalculateFreeSpace();
-
   Vec2D getRandomPosition(uint32_t radius) const;
   Avatar& createAvatar();
   Food& createFood();
@@ -117,12 +115,14 @@ private:
   Phage& createPhage();
   Mother& createMother();
 
+  void recalculateFreeSpace();
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
   void removeCell(Cell& cell);
 
   bool eject(Avatar& avatar, const Vec2D& point);
   bool split(Avatar& avatar, const Vec2D& point);
   void explode(Avatar& avatar);
+  void explode(Mother& mother);
 
   void modifyMass(Cell& cell, float value);
   void modifyMass(Avatar& avatar, float value);

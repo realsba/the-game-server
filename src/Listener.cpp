@@ -1,4 +1,4 @@
-// file   : Listener.cpp
+// file   : src/Listener.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Listener.hpp"
@@ -13,7 +13,7 @@
 
 Listener::Listener(asio::io_context& ioc, tcp::endpoint&& endpoint, AcceptHandler&& handler)
   : m_strand(ioc)
-  , m_ioc(ioc)
+  , m_ioContext(ioc)
   , m_endpoint(std::move(endpoint))
   , m_acceptor(ioc)
   , m_acceptHandler(std::move(handler))
@@ -22,12 +22,12 @@ Listener::Listener(asio::io_context& ioc, tcp::endpoint&& endpoint, AcceptHandle
 
 void Listener::run()
 {
-  asio::post(asio::bind_executor(m_strand, std::bind_front(&Listener::doRun, shared_from_this())));
+  asio::post(m_strand, std::bind_front(&Listener::doRun, shared_from_this()));
 }
 
 void Listener::stop()
 {
-  asio::post(asio::bind_executor(m_strand, std::bind_front(&Listener::doStop, shared_from_this())));
+  asio::post(m_strand, std::bind_front(&Listener::doStop, shared_from_this()));
 }
 
 void Listener::doRun()
@@ -74,7 +74,8 @@ void Listener::doStop()
 void Listener::doAccept()
 {
   m_acceptor.async_accept(
-    asio::make_strand(m_ioc), asio::bind_executor(m_strand, std::bind_front(&Listener::onAccept, shared_from_this()))
+    asio::make_strand(m_ioContext),
+    asio::bind_executor(m_strand, std::bind_front(&Listener::onAccept, shared_from_this()))
   );
 }
 

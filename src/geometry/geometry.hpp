@@ -1,4 +1,4 @@
-// file   : geometry/geometry.hpp
+// file   : src/geometry/geometry.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_GEOMETRY_GEOMETRY_HPP

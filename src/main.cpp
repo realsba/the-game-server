@@ -1,4 +1,4 @@
-// file      : main.cpp
+// file      : src/main.cpp
 // author    : sba <bohdan.sadovyak@gmail.com>
 
 #include "Application.hpp"

@@ -1,9 +1,8 @@
-// file   : geometry/Vec2D.cpp
+// file   : src/geometry/Vec2D.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Vec2D.hpp"
 
-#include <ostream>
 #include <cmath>
 
 Vec2D::Vec2D(float x, float y) : x(x), y(y) { }
@@ -116,10 +115,4 @@ bool operator<(const Vec2D& a, const Vec2D& b)
 bool operator>(const Vec2D& a, const Vec2D& b)
 {
   return (a.x > b.x) || ((a.x == b.x) && (a.y > b.y));
-}
-
-std::ostream& operator<<(std::ostream& os, const Vec2D& obj)
-{
-  os << "(" << obj.x << ", " << obj.y << ")";
-  return os;
 }

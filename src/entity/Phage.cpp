@@ -1,4 +1,4 @@
-// file   : entity/Phage.cpp
+// file   : src/entity/Phage.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Phage.hpp"

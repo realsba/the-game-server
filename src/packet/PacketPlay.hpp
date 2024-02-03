@@ -1,4 +1,4 @@
-// file   : packet/PacketPlay.hpp
+// file   : src/packet/PacketPlay.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PACKET_PACKET_PLAY_HPP

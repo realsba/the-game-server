@@ -1,4 +1,4 @@
-// file   : ListenerFwd.hpp
+// file   : src/ListenerFwd.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_LISTENER_FWD_HPP

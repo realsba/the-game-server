@@ -1,4 +1,4 @@
-// file   : packet/PacketGreeting.cpp
+// file   : src/packet/PacketGreeting.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "PacketGreeting.hpp"

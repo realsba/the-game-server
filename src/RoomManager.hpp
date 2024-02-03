@@ -1,4 +1,4 @@
-// file   : RoomManager.hpp
+// file   : src/RoomManager.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ROOM_MANAGER_HPP

@@ -1,4 +1,4 @@
-// file   : packet/PacketSpectate.cpp
+// file   : src/packet/PacketSpectate.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "PacketSpectate.hpp"

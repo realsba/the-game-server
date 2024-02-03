@@ -1,4 +1,4 @@
-// file      : Config.cpp
+// file      : src/Config.cpp
 // author    : sba <bohdan.sadovyak@gmail.com>
 
 #include "Config.hpp"

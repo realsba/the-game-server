@@ -1,4 +1,4 @@
-// file   : entity/Food.cpp
+// file   : src/entity/Food.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Food.hpp"

@@ -1,4 +1,4 @@
-// file   : Session.cpp
+// file   : src/Session.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Session.hpp"

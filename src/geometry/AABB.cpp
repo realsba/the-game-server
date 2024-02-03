@@ -1,9 +1,8 @@
-// file   : geometry/AABB.cpp
+// file   : src/geometry/AABB.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "AABB.hpp"
 
-#include <ostream>
 #include <utility>
 
 AABB::AABB(float ax, float ay, float bx, float by)
@@ -43,10 +42,4 @@ float AABB::width() const
 float AABB::height() const
 {
   return b.y - a.y;
-}
-
-std::ostream& operator<<(std::ostream& os, const AABB& obj)
-{
-  os << "[" << obj.a << "; " << obj.b << "]";
-  return os;
 }

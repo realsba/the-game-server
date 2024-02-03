@@ -1,4 +1,4 @@
-// file   : packet/PacketSpectate.hpp
+// file   : src/packet/PacketSpectate.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PACKET_PACKET_SPECTATE_HPP

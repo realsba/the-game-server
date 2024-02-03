@@ -1,4 +1,4 @@
-// file   : RoomManager.cpp
+// file   : src/RoomManager.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "RoomManager.hpp"

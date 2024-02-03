@@ -1,4 +1,4 @@
-// file   : types.hpp
+// file   : src/types.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_TYPES_HPP

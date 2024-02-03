@@ -1,4 +1,4 @@
-// file   : packet/EmptyPacket.cpp
+// file   : src/packet/EmptyPacket.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "EmptyPacket.hpp"

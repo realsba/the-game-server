@@ -1,4 +1,4 @@
-// file   : packet/EmptyPacket.hpp
+// file   : src/packet/EmptyPacket.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PACKET_EMPTY_PACKET_HPP

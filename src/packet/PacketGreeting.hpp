@@ -1,4 +1,4 @@
-// file   : packet/PacketGreeting.hpp
+// file   : src/packet/PacketGreeting.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PACKET_PACKET_GREETING_HPP

@@ -1,4 +1,4 @@
-// file   : entity/Phage.hpp
+// file   : src/entity/Phage.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_ENTITY_PHAGE_HPP

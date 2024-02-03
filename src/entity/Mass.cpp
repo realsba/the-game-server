@@ -1,4 +1,4 @@
-// file   : entity/Mass.cpp
+// file   : src/entity/Mass.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Mass.hpp"

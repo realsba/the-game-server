@@ -1,4 +1,4 @@
-// file   : packet/OutputPacketTypes.hpp
+// file   : src/packet/OutputPacketTypes.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PACKET_OUTPUT_PACKET_TYPES_HPP

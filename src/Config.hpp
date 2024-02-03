@@ -1,4 +1,4 @@
-// file      : Config.hpp
+// file      : src/Config.hpp
 // author    : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_CONFIG_HPP

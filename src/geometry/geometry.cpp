@@ -1,4 +1,4 @@
-// file   : geometry/geometry.cpp
+// file   : src/geometry/geometry.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "geometry.hpp"
