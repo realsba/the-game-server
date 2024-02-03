@@ -10,7 +10,9 @@
 #include "entity/Avatar.hpp"
 #include "src/packet/serialization.hpp"
 #include "packet/OutputPacketTypes.hpp"
+#include "geometry/geometry.hpp"
 
+#include <spdlog/spdlog.h>
 #include <tuple>
 
 Player::Player(uint32_t id, Room& room, Gridmap& gridmap)
@@ -272,6 +274,60 @@ void Player::removePlayer(Player* player)
 {
   if (arrowPlayer == player) {
     arrowPlayer = nullptr;
+  }
+}
+
+void Player::applyDestinationAttractionForce(uint32_t tick)
+{
+  auto forceRatio = m_room.getConfig().playerForceRatio;
+  const auto& destination = getDestination();
+  for (auto* avatar : m_avatars) {
+    if (avatar->protection <= tick) {
+      Vec2D direction(destination - avatar->position);
+      float distance = direction.length();
+      float k = distance < avatar->radius ? distance / avatar->radius : 1;
+      Vec2D velocity = direction.direction() * (k * avatar->maxSpeed);
+      avatar->force += (velocity - avatar->velocity) * (avatar->mass * forceRatio);
+    }
+  }
+}
+
+void Player::recombine(uint32_t tick)
+{
+  if (m_avatars.size() < 2) {
+    return;
+  }
+  for (auto it = m_avatars.begin(); it != m_avatars.end(); ++it) {
+    Avatar& first = **it;
+    if (first.zombie || first.protection > tick) {
+      continue;
+    }
+    for (auto jt = std::next(it); jt != m_avatars.end(); ++jt) {
+      Avatar& second = **jt;
+      if (second.zombie || second.protection > tick) {
+        continue;
+      }
+      recombine(first, second);
+    }
+  }
+}
+
+void Player::recombine(Avatar& initiator, Avatar& target)
+{
+  auto elasticityRatio = m_room.getConfig().elasticityRatio;
+  auto direction((initiator.position - target.position).direction());
+  if (initiator.isRecombined() && target.isRecombined()) {
+    auto force = direction * ((initiator.mass + target.mass) * elasticityRatio);
+    initiator.force -= force;
+    target.force += force;
+  } else {
+    auto distance = geometry::distance(initiator.position, target.position);
+    auto radius = initiator.radius + target.radius;
+    if (distance < radius) {
+      auto force = direction * ((initiator.mass + target.mass) * (radius - distance) * elasticityRatio);
+      initiator.force += force;
+      target.force -= force;
+    }
   }
 }
 

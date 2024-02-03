@@ -32,6 +32,7 @@ public:
 
   void applyVelocity(const Vec2D& value);
   void applyImpulse(const Vec2D& value);
+  void applyResistanceForce();
 
   virtual bool intersects(const AABB& box);
   virtual void simulate(float dt);

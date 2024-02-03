@@ -5,6 +5,7 @@
 
 #include "Session.hpp"
 #include "Player.hpp"
+#include "Bot.hpp"
 #include "User.hpp"
 
 #include "entity/Avatar.hpp"
@@ -713,28 +714,6 @@ void Room::interact(Phage& phage1, Phage& phage2)
   }
 }
 
-void Room::recombine(Avatar& initiator, Avatar& target)
-{
-  auto direction((initiator.position - target.position).direction());
-  if (initiator.isRecombined() && target.isRecombined()) {
-    auto force = direction * ((initiator.mass + target.mass) * m_config.elasticityRatio);
-    initiator.force -= force;
-    target.force += force;
-    m_modifiedCells.insert(&initiator);
-    m_modifiedCells.insert(&target);
-  } else {
-    auto distance = geometry::distance(initiator.position, target.position);
-    auto radius = initiator.radius + target.radius;
-    if (distance < radius) {
-      auto force = direction * ((initiator.mass + target.mass) * (radius - distance) * m_config.elasticityRatio);
-      initiator.force += force;
-      target.force -= force;
-      m_modifiedCells.insert(&initiator);
-      m_modifiedCells.insert(&target);
-    }
-  }
-}
-
 void Room::attract(Avatar& initiator, Avatar& target)
 {
   if (initiator.player == target.player) {
@@ -1306,75 +1285,27 @@ void Room::handlePlayerRequests()
 
 void Room::simulate(float dt)
 {
-  for (Player* player : m_fighters) {
-    const auto& avatars = player->getAvatars();
-    if (avatars.size() < 2) {
-      continue;
-    }
-    for (auto it = avatars.begin(); it != avatars.end(); ++it) {
-      Avatar& first = **it;
-      if (first.zombie || first.protection > m_tick) {
-        continue;
-      }
-      for (auto jt = std::next(it); jt != avatars.end(); ++jt) {
-        Avatar& second = **jt;
-        if (second.zombie || second.protection > m_tick) {
-          continue;
-        }
-        recombine(first, second);
-      }
-    }
+  for (auto* bot : m_bots) {
+    bot->choseTarget();
   }
-
-  // TODO: замінити на один прохід по m_botAvatars
-  for (Player* bot : m_bots) {
-    const auto& avatars = bot->getAvatars();
-    bool applyPointerForce = avatars.size() > 1;
-    Cell* eatTarget = nullptr;
-    for (Avatar* avatar : avatars) {
-      if (!avatar->zombie) {
-        m_gridmap.query(avatar->player->getViewBox(), [&avatar, &eatTarget](Cell& target) -> bool {
-          if (avatar != &target && !target.zombie) {
-            target.attract(*avatar);
-            if (target.isAttractiveFor(*avatar)) {
-              if (!eatTarget || eatTarget->mass < target.mass) {
-                eatTarget = &target;
-              }
-            }
-          }
-          return true;
-        });
-        attract(*avatar, Vec2D(0, 0));
-        attract(*avatar, Vec2D(m_config.width, 0));
-        attract(*avatar, Vec2D(0, m_config.height));
-        attract(*avatar, Vec2D(m_config.width, m_config.height));
-        if (applyPointerForce) {
-          attract(*avatar, bot->getPosition());
-        }
-        if (avatar->force) {
-          m_modifiedCells.insert(avatar);
-        }
-      }
-    }
-    if (eatTarget) {
-      bot->setPointer(eatTarget->position - bot->getPosition());
-    }
+  for (auto* player : m_fighters) {
+    player->applyDestinationAttractionForce(m_tick);
+    player->recombine(m_tick);
   }
-
-  for (Avatar* avatar : m_processingAvatars) {
-    if (avatar->protection <= m_tick) {
-      Vec2D direction(avatar->player->getDestination() - avatar->position);
-      float dist = direction.length();
-      float k = dist < avatar->radius ? dist / avatar->radius : 1;
-      Vec2D velocity = direction.direction() * (k * avatar->maxSpeed);
-      avatar->force += (velocity - avatar->velocity) * (avatar->mass * m_config.playerForceRatio);
+  for (auto* avatar : m_processingAvatars) {
+    avatar->applyResistanceForce();
+    if (avatar->force) {
       m_modifiedCells.insert(avatar);
     }
     avatar->simulate(dt);
     solveCellLocation(*avatar);
     m_gridmap.update(avatar);
   }
-  for (Cell* cell : m_processingCells) {
+  for (auto* cell : m_processingCells) {
+    cell->applyResistanceForce();
+    if (cell->force) {
+      m_modifiedCells.insert(cell);
+    }
     cell->simulate(dt);
     solveCellLocation(*cell);
     m_gridmap.update(cell);
@@ -1534,7 +1465,7 @@ void Room::produceMothers()
 
 void Room::checkPlayers()
 {
-  for (Player* bot : m_bots) {
+  for (auto* bot : m_bots) {
     if (bot->isDead()) {
       spawnBot(bot->getId());
     }
@@ -1600,11 +1531,11 @@ void Room::spawnMothers(uint32_t count)
 void Room::spawnBot(uint32_t id, const std::string& name)
 {
   const auto& it = m_players.find(id);
-  Player* bot;
+  Bot* bot;
   if (it != m_players.end()) {
-    bot = it->second;
+    bot = dynamic_cast<Bot*>(it->second);
   } else {
-    bot = new Player(id, *this, m_gridmap);
+    bot = new Bot(id, *this, m_gridmap);
     bot->name = name.empty() ? "Bot " + std::to_string(id) : name;
     bot->online = true;
     m_players.emplace(bot->getId(), bot);
@@ -1627,6 +1558,7 @@ void Room::spawnBot(uint32_t id, const std::string& name)
     m_fighters.insert(bot);
     sendPacketPlayerBorn(bot->getId());
   }
+  bot->init();
 }
 
 void Room::send(const BufferPtr& buffer)

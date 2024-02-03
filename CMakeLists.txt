@@ -53,6 +53,8 @@ add_executable(${PROJECT_NAME}
     src/packet/PacketSpectate.hpp
     src/Application.cpp
     src/Application.hpp
+    src/Bot.cpp
+    src/Bot.hpp
     src/Config.cpp
     src/Config.hpp
     src/Gridmap.cpp

@@ -22,6 +22,7 @@ using Avatars = std::set<Avatar*>;
 class Player {
 public:
   Player(uint32_t id, Room& room, Gridmap& gridmap);
+  virtual ~Player() = default;
 
   [[nodiscard]] uint32_t getId() const;
   [[nodiscard]] uint32_t getMass() const;
@@ -36,7 +37,8 @@ public:
   [[nodiscard]] uint8_t getStatus() const;
   [[nodiscard]] const Sessions& getSessions() const;
 
-  void init();
+  virtual void init();
+
   void setPointer(const Vec2D& value);
   void addSession(const SessionPtr& sess);
   void removeSession(const SessionPtr& sess);
@@ -47,6 +49,9 @@ public:
   void wakeUp();
   void calcParams();
   void removePlayer(Player* player);
+  void applyDestinationAttractionForce(uint32_t tick);
+  void recombine(uint32_t tick);
+  void recombine(Avatar& initiator, Avatar& target);
 
 // * TODO: make private
   std::string name;
@@ -54,7 +59,7 @@ public:
   Player*     killer {nullptr};
   bool        online {false};
 
-private:
+protected:
   const uint32_t        m_id {0};
   const Room&           m_room;
   const Gridmap&        m_gridmap;

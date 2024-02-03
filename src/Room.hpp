@@ -22,6 +22,7 @@
 namespace asio = boost::asio;
 
 class Player;
+class Bot;
 class Avatar;
 class Food;
 class Mass;
@@ -95,7 +96,6 @@ private:
   void interact(Phage& phage, Mass& mass);
   void interact(Phage& phage1, Phage& phage2);
 
-  void recombine(Avatar& initiator, Avatar& target);
   void attract(Avatar& initiator, Avatar& target);
   void attract(Avatar& initiator, Food& target);
   void attract(Avatar& initiator, Mass& target);
@@ -179,7 +179,7 @@ private:
   std::set<Player*>           m_fighters;
   std::set<Player*>           m_zombiePlayers;
   std::vector<Player*>        m_leaderboard;
-  std::set<Player*>           m_bots;
+  std::set<Bot*>              m_bots;
   RequestsMap                 m_pointerRequests;
   RequestsMap                 m_ejectRequests;
   RequestsMap                 m_splitRequests;
