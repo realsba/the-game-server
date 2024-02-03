@@ -55,6 +55,19 @@ const Avatars& Player::getAvatars() const
   return m_avatars;
 }
 
+Avatar* Player::getTheBiggestAvatar() const
+{
+  if (m_avatars.empty()) {
+    return nullptr;
+  }
+
+  auto maxElementIt = std::max_element(
+    m_avatars.begin(), m_avatars.end(), [](const Cell* a, const Cell* b) { return a->mass < b->mass; }
+  );
+
+  return *maxElementIt;
+}
+
 bool Player::isDead() const
 {
   return m_avatars.empty();

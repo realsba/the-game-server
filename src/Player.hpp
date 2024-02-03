@@ -30,6 +30,7 @@ public:
   [[nodiscard]] Vec2D getPosition() const;
   [[nodiscard]] Vec2D getDestination() const;
   [[nodiscard]] const Avatars& getAvatars() const;
+  [[nodiscard]] Avatar* getTheBiggestAvatar() const;
   [[nodiscard]] bool isDead() const;
   [[nodiscard]] TimePoint getLastActivity() const;
   [[nodiscard]] uint8_t getStatus() const;
