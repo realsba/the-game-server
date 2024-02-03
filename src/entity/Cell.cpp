@@ -85,7 +85,7 @@ void Cell::interact(Mother&) { }
 
 void Cell::attract(Avatar& avatar) { }
 
-bool Cell::isAttractive(const Avatar& avatar)
+bool Cell::isAttractiveFor(const Avatar& avatar)
 {
   return false;
 }

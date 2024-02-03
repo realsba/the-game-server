@@ -46,7 +46,7 @@ public:
   virtual void interact(Mother&);
 
   virtual void attract(Avatar& avatar);
-  virtual bool isAttractive(const Avatar& avatar);
+  virtual bool isAttractiveFor(const Avatar& avatar);
 
   enum Type {
     typeAvatar = 1,

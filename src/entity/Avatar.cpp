@@ -83,7 +83,7 @@ void Avatar::attract(Avatar& avatar)
   room.attract(avatar, *this);
 }
 
-bool Avatar::isAttractive(const Avatar& avatar)
+bool Avatar::isAttractiveFor(const Avatar& avatar)
 {
   return mass < 1.25 * avatar.mass;
 }

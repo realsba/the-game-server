@@ -41,7 +41,7 @@ void Mass::attract(Avatar& avatar)
   room.attract(avatar, *this);
 }
 
-bool Mass::isAttractive(const Avatar& avatar)
+bool Mass::isAttractiveFor(const Avatar& avatar)
 {
   return true;
 }

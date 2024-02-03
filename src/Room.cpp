@@ -1336,7 +1336,7 @@ void Room::simulate(float dt)
         m_gridmap.query(avatar->player->getViewBox(), [&avatar, &eatTarget](Cell& target) -> bool {
           if (avatar != &target && !target.zombie) {
             target.attract(*avatar);
-            if (target.isAttractive(*avatar)) {
+            if (target.isAttractiveFor(*avatar)) {
               if (!eatTarget || eatTarget->mass < target.mass) {
                 eatTarget = &target;
               }

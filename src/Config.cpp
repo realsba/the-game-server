@@ -99,7 +99,7 @@ namespace toml
       result.maxRadius                    = find<uint32_t>(v, "maxRadius");
       result.leaderboardVisibleItems      = find<uint32_t>(v, "leaderboardVisibleItems");
       result.scaleRatio                   = find<float>(v, "scaleRatio");
-      result.explodeVelocity               = find<uint32_t>(v, "explodeVelocity");
+      result.explodeVelocity              = find<uint32_t>(v, "explodeVelocity");
 
       result.playerMaxCells               = find<uint32_t>(v, "playerMaxCells");
       result.playerDeflationInterval      = find<Duration>(v, "playerDeflationInterval");
@@ -107,13 +107,13 @@ namespace toml
       result.playerAnnihilationInterval   = find<Duration>(v, "playerAnnihilationInterval");
       result.playerForceRatio             = find<float>(v, "playerForceRatio");
 
-      result.botNames             = toml::find<RoomConfig::BotNames>(v, "botNames");
-      result.botStartMass         = find<uint32_t>(v, "botStartMass");
-      result.botForceCornerRatio  = find<float>(v, "botForceCornerRatio");
-      result.botForceFoodRatio    = find<float>(v, "botForceFoodRatio");
-      result.botForceHungerRatio  = find<float>(v, "botForceHungerRatio");
-      result.botForceDangerRatio  = find<float>(v, "botForceDangerRatio");
-      result.botForceStarRatio    = find<float>(v, "botForceStarRatio");
+      result.botNames                     = toml::find<RoomConfig::BotNames>(v, "botNames");
+      result.botStartMass                 = find<uint32_t>(v, "botStartMass");
+      result.botForceCornerRatio          = find<float>(v, "botForceCornerRatio");
+      result.botForceFoodRatio            = find<float>(v, "botForceFoodRatio");
+      result.botForceHungerRatio          = find<float>(v, "botForceHungerRatio");
+      result.botForceDangerRatio          = find<float>(v, "botForceDangerRatio");
+      result.botForceStarRatio            = find<float>(v, "botForceStarRatio");
 
       result.resistanceRatio      = find<float>(v, "resistanceRatio");
       result.elasticityRatio      = find<float>(v, "elasticityRatio");
@@ -127,9 +127,9 @@ namespace toml
       result.avatarExplodeMinMass = find<uint32_t>(v, "avatarExplodeMinMass");
       result.avatarExplodeParts   = find<uint32_t>(v, "avatarExplodeParts");
       result.avatarSplitMinMass   = find<uint32_t>(v, "avatarSplitMinMass");
-      result.avatarSplitVelocity   = find<uint32_t>(v, "avatarSplitVelocity");
+      result.avatarSplitVelocity  = find<uint32_t>(v, "avatarSplitVelocity");
       result.avatarEjectMinMass   = find<uint32_t>(v, "avatarEjectMinMass");
-      result.avatarEjectVelocity   = find<uint32_t>(v, "avatarEjectVelocity");
+      result.avatarEjectVelocity  = find<uint32_t>(v, "avatarEjectVelocity");
       result.avatarEjectMass      = find<uint32_t>(v, "avatarEjectMass");
       result.avatarEjectMassLoss  = find<uint32_t>(v, "avatarEjectMassLoss");
       result.avatarRecombineTime  = find<uint32_t>(v, "avatarRecombineTime");
@@ -138,8 +138,8 @@ namespace toml
       result.foodMaxAmount        = find<uint32_t>(v, "foodMaxAmount");
       result.foodMass             = find<uint32_t>(v, "foodMass");
       result.foodRadius           = find<uint32_t>(v, "foodRadius");
-      result.foodMinVelocity       = find<uint32_t>(v, "foodMinVelocity");
-      result.foodMaxVelocity       = find<uint32_t>(v, "foodMaxVelocity");
+      result.foodMinVelocity      = find<uint32_t>(v, "foodMinVelocity");
+      result.foodMaxVelocity      = find<uint32_t>(v, "foodMaxVelocity");
       result.foodResistanceRatio  = find<float>(v, "foodResistanceRatio");
       if (result.foodMinVelocity > result.foodMaxVelocity) {
         spdlog::warn("room.foodMinVelocity > room.foodMaxVelocity");

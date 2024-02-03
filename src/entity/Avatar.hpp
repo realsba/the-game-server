@@ -22,7 +22,7 @@ public:
   void interact(Mother& mother) override;
 
   void attract(Avatar& avatar) override;
-  bool isAttractive(const Avatar& avatar) override;
+  bool isAttractiveFor(const Avatar& avatar) override;
 
   void recombination(float t);
   [[nodiscard]] bool isRecombined() const;
