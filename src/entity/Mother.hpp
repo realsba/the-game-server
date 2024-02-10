@@ -6,8 +6,6 @@
 
 #include "Cell.hpp"
 
-#include "src/TimePoint.hpp"
-
 class Mother : public Cell {
 public:
   explicit Mother(Room& room, uint32_t id = 0);
@@ -21,7 +19,6 @@ public:
 
   void attract(Avatar& avatar) override;
 
-  TimePoint         created {TimePoint::clock::now()};
   uint32_t          foodCount {0};
   float             startRadius {0};
 };

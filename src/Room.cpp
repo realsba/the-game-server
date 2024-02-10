@@ -1146,39 +1146,25 @@ void Room::solveCellLocation(Cell& cell)
 void Room::destroyOutdatedCells()
 {
   auto currentTime = TimePoint::clock::now();
+  TimePoint expirationTime;
 
-  auto expirationTime = currentTime - m_config.virusLifeTime;
-  for (auto it = m_virusContainer.begin(); it != m_virusContainer.end();) {
-    auto* virus = *it;
-    if (virus->created < expirationTime) {
-      it = m_virusContainer.erase(it);
-      removeCell(virus);
-    } else {
-      ++it;
-    }
-  }
+  auto expired = [&](Cell* cell)
+    {
+      if (cell->created < expirationTime) {
+        removeCell(cell);
+        return true;
+      };
+      return false;
+    };
+
+  expirationTime = currentTime - m_config.virusLifeTime;
+  std::erase_if(m_virusContainer, expired);
 
   expirationTime = currentTime - m_config.phageLifeTime;
-  for (auto it = m_phageContainer.begin(); it != m_phageContainer.end();) {
-    auto* phage = *it;
-    if (phage->created < expirationTime) {
-      it = m_phageContainer.erase(it);
-      removeCell(phage);
-    } else {
-      ++it;
-    }
-  }
+  std::erase_if(m_phageContainer, expired);
 
   expirationTime = currentTime - m_config.motherLifeTime;
-  for (auto it = m_motherContainer.begin(); it != m_motherContainer.end();) {
-    auto* mother = *it;
-    if (mother->created < expirationTime) {
-      it = m_motherContainer.erase(it);
-      removeCell(mother);
-    } else {
-      ++it;
-    }
-  }
+  std::erase_if(m_motherContainer, expired);
 }
 
 void Room::generate(float dt)
@@ -1334,15 +1320,16 @@ void Room::simulate(float dt)
 
 void Room::synchronize()
 {
-  for (auto it = m_processingCells.begin(); it != m_processingCells.end();) {
-    Cell* cell = *it;
-    if (!cell->velocity) {
-      m_modifiedCells.insert(cell);
-      it = m_processingCells.erase(it);
-    } else {
-      ++it;
+  std::erase_if(m_processingCells,
+    [this](Cell* cell)
+    {
+      if (!cell->velocity) {
+        m_modifiedCells.insert(cell);
+        return true;
+      }
+      return false;
     }
-  }
+  );
   if (!m_activatedCells.empty()) {
     m_processingCells.insert(m_activatedCells.begin(), m_activatedCells.end());
     m_activatedCells.clear();
@@ -1402,14 +1389,7 @@ void Room::synchronize()
     m_createdCells.clear();
   }
 
-  for (auto it = m_fighters.begin(); it != m_fighters.end();) {
-    Player* player = *it;
-    if (player->isDead()) {
-      it = m_fighters.erase(it);
-    } else {
-      ++it;
-    }
-  }
+  std::erase_if(m_fighters, [&](auto* player) { return player->isDead(); });
 }
 
 void Room::updateLeaderboard()
@@ -1472,19 +1452,19 @@ void Room::checkPlayers()
   }
 
   auto expirationTime = TimePoint::clock::now() - m_config.playerAnnihilationInterval;
-  for (auto it = m_zombiePlayers.begin(); it != m_zombiePlayers.end();) {
-    Player* player = *it;
-    if (player->isDead() && player->getLastActivity() < expirationTime) {
-      it = m_zombiePlayers.erase(it);
-      m_players.erase(player->getId());
-      for (auto& jt : m_players) {
-        Player* p = jt.second;
-        p->removePlayer(player);
+  std::erase_if(m_zombiePlayers,
+    [&](auto* player)
+    {
+      if (player->isDead() && player->getLastActivity() < expirationTime) {
+        m_players.erase(player->getId());
+        for (auto& it : m_players) {
+          it.second->removePlayer(player);
+        }
+        return true;
       }
-    } else {
-      ++it;
+      return false;
     }
-  }
+  );
 
   recalculateFreeSpace();
 }

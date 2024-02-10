@@ -12,7 +12,6 @@
 #include "packet/OutputPacketTypes.hpp"
 #include "geometry/geometry.hpp"
 
-#include <spdlog/spdlog.h>
 #include <tuple>
 
 Player::Player(uint32_t id, Room& room, Gridmap& gridmap)
@@ -161,19 +160,20 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
 
   if (sectorsChanged) {
     const auto& sectors = m_gridmap.getSectors(viewport);
-    for (auto it = m_sectors.begin(); it != m_sectors.end();) {
-      if (sectors.find(*it) == sectors.end()) {
-        const Sector* sector = *it;
-        for (Cell* cell : sector->cells) {
-          if (!cell->intersects(m_viewbox)) {
-            removedIds.insert(cell->id);
+    std::erase_if(m_sectors,
+      [&](Sector* sector)
+      {
+        if (sectors.find(sector) == sectors.end()) {
+          for (Cell* cell : sector->cells) {
+            if (!cell->intersects(m_viewbox)) {
+              removedIds.insert(cell->id);
+            }
           }
+          return true;
         }
-        it = m_sectors.erase(it);
-      } else {
-        ++it;
+        return false;
       }
-    }
+    );
     for (Sector* sector : sectors) {
       const auto& res = m_sectors.insert(sector);
       if (res.second) {

@@ -6,8 +6,6 @@
 
 #include "Cell.hpp"
 
-#include "src/TimePoint.hpp"
-
 class Virus : public Cell {
 public:
   explicit Virus(Room& room, uint32_t id = 0);
@@ -21,8 +19,6 @@ public:
   void interact(Mother& mother) override;
 
   void attract(Avatar& avatar) override;
-
-  TimePoint created {TimePoint::clock::now()};
 };
 
 #endif /* THEGAME_ENTITY_VIRUS_HPP */

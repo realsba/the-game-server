@@ -5,6 +5,7 @@
 #define THEGAME_ENTITY_CELL_HPP
 
 #include "src/geometry/Circle.hpp"
+#include "src/TimePoint.hpp"
 #include "src/types.hpp"
 
 #include <cstdint>
@@ -64,7 +65,7 @@ public:
   std::set<Sector*> sectors;
   Sector*           leftTopSector {nullptr};
   Sector*           rightBottomSector {nullptr};
-
+  TimePoint         created {TimePoint::clock::now()};
   Vec2D             velocity;
   Vec2D             force;
   Room&             room;
