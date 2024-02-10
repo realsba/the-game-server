@@ -1301,11 +1301,11 @@ void Room::synchronize()
   std::erase_if(m_processingCells,
     [this](Cell* cell)
     {
-      if (!cell->velocity) {
-        m_modifiedCells.insert(cell);
-        return true;
+      if (cell->shouldBeProcessed()) {
+        return false;
       }
-      return false;
+      m_modifiedCells.insert(cell);
+      return true;
     }
   );
   if (!m_activatedCells.empty()) {

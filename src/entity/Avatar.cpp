@@ -14,6 +14,11 @@ Avatar::Avatar(Room& room, uint32_t id)
   type = typeAvatar;
 }
 
+bool Avatar::shouldBeProcessed() const
+{
+  return player->getAvatars().size() > 1 || Cell::shouldBeProcessed();
+}
+
 void Avatar::simulate(float dt)
 {
   Cell::simulate(dt);

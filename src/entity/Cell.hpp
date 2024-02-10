@@ -35,6 +35,7 @@ public:
   void applyImpulse(const Vec2D& value);
   void applyResistanceForce();
 
+  virtual bool shouldBeProcessed() const;
   virtual bool intersects(const AABB& box);
   virtual void simulate(float dt);
   virtual void format(Buffer& buffer);

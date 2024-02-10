@@ -10,6 +10,7 @@ class Avatar : public Cell {
 public:
   explicit Avatar(Room& room, uint32_t id = 0);
 
+  bool shouldBeProcessed() const override;
   void simulate(float dt) override;
   void format(Buffer& buffer) override;
 

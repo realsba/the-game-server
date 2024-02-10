@@ -38,6 +38,11 @@ void Cell::applyResistanceForce()
   force -= velocity.direction() * (radius * resistanceRatio);
 }
 
+bool Cell::shouldBeProcessed() const
+{
+  return static_cast<bool>(velocity);
+}
+
 bool Cell::intersects(const AABB& box)
 {
   return geometry::intersects(box, *this);
