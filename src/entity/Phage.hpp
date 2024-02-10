@@ -15,7 +15,7 @@ public:
   void interact(Food& food) override;
   void interact(Mass& mass) override;
   void interact(Virus& virus) override;
-  void interact(Phage& phage) override;
+  void interact(Phage& other) override;
   void interact(Mother& mother) override;
 
   void attract(Avatar& avatar) override;

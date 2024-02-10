@@ -12,18 +12,33 @@ class Event {
 public:
   using Handler = std::function<void(Args...)>;
 
-  void subscribe(void* tag, Handler&& handler) {
+  void subscribe(void* tag, Handler&& handler)
+  {
     m_subscribers.emplace(tag, std::forward<Handler>(handler));
   }
 
-  void unsubscribe(void* tag) {
+  void unsubscribe(void* tag)
+  {
     m_subscribers.erase(tag);
   }
 
-  void notify(Args&&... args) {
+  void notify(const Args&... args)
+  {
+    for (const auto& it : m_subscribers) {
+      it.second(args...);
+    }
+  }
+
+  void notify(Args&&... args)
+  {
     for (const auto& it : m_subscribers) {
       it.second(std::forward<Args>(args)...);
     }
+  }
+
+  void clear()
+  {
+    m_subscribers.clear();
   }
 
 private:

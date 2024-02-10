@@ -16,7 +16,7 @@ Bot::Bot(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap
 Bot::~Bot()
 {
   if (m_target) {
-    m_target->unsubscribeFromDestroyEvent(this);
+    m_target->unsubscribeFromDeathEvent(this);
   }
 }
 
@@ -67,8 +67,6 @@ void Bot::choseTarget()
 
   if (target) {
     m_target = target;
-    m_target->subscribeToDestroyEvent(this,
-      [&](auto* cell) { m_target = nullptr; }
-    );
+    m_target->subscribeToDeathEvent(this, [&](auto *cell) { m_target = nullptr; });
   }
 }

@@ -78,24 +78,6 @@ private:
   void doWatch(const SessionPtr& sess, uint32_t playerId);
   void doChatMessage(const SessionPtr& sess, const std::string& text);
 
-  void interact(Avatar& avatar1, Avatar& avatar2);
-  void interact(Avatar& avatar, Food& food);
-  void interact(Avatar& avatar, Mass& mass);
-  void interact(Avatar& avatar, Virus& virus);
-  void interact(Avatar& avatar, Phage& phage);
-  void interact(Avatar& avatar, Mother& mother);
-  void interact(Mother& mother, Food& food);
-  void interact(Mother& mother, Mass& mass);
-  void interact(Mother& mother, Virus& virus);
-  void interact(Mother& mother, Phage& phage);
-  void interact(Virus& virus, Food& food);
-  void interact(Virus& virus, Mass& mass);
-  void interact(Virus& virus1, Virus& virus2);
-  void interact(Virus& virus, Phage& phage);
-  void interact(Phage& phage, Food& food);
-  void interact(Phage& phage, Mass& mass);
-  void interact(Phage& phage1, Phage& phage2);
-
   void attract(Avatar& initiator, Avatar& target);
   void attract(Avatar& initiator, Food& target);
   void attract(Avatar& initiator, Mass& target);
@@ -128,7 +110,7 @@ private:
   void solveCellLocation(Cell& cell);
   void destroyOutdatedCells();
   void handlePlayerRequests();
-  void simulate(float dt);
+  void simulate(double dt);
   void synchronize();
   void updateLeaderboard();
   void checkMothers();
@@ -153,6 +135,16 @@ private:
   void sendPacketPlayerLeave(uint32_t playerId);
   void sendPacketPlayerBorn(uint32_t playerId);
   void sendPacketPlayerDead(uint32_t playerId);
+
+  void onAvatarDeath(Cell* cell);
+  void onFoodDeath(Cell* cell);
+  void onMassDeath(Cell* cell);
+  void onVirusDeath(Cell* cell);
+  void onPhageDeath(Cell* cell);
+  void onMotherDeath(Cell* cell);
+  void onMotionStarted(Cell* cell);
+  void onCellMassChange(Cell* cell, float deltaMass);
+  void onAvatarMassChange(Cell* cell, float deltaMass);
 
 private:
   friend class Avatar;
@@ -197,12 +189,13 @@ private:
   std::set<Virus*>            m_virusContainer;
   std::set<Phage*>            m_phageContainer;
   std::set<Mother*>           m_motherContainer;
-  std::vector<Avatar*>        m_zombieAvatars;
-  std::vector<Food*>          m_zombieFoods;
-  std::vector<Mass*>          m_zombieMasses;
-  std::vector<Virus*>         m_zombieViruses;
-  std::vector<Phage*>         m_zombiePhages;
-  std::vector<Mother*>        m_zombieMothers;
+  std::set<Cell*>             m_cells;
+  std::vector<Cell*>          m_zombieAvatars;
+  std::vector<Cell*>          m_zombieFoods;
+  std::vector<Cell*>          m_zombieMasses;
+  std::vector<Cell*>          m_zombieViruses;
+  std::vector<Cell*>          m_zombiePhages;
+  std::vector<Cell*>          m_zombieMothers;
   std::vector<uint32_t>       m_removedCellIds;
   std::vector<Cell*>          m_createdCells;
   std::set<Cell*>             m_modifiedCells;
@@ -215,7 +208,6 @@ private:
 
   uint32_t  m_tick {0};                        // TODO: stop using and remove
   double    m_mass {0};
-  double    m_simulationInterval {0};
   double    m_cellMinRadius {0};
   double    m_cellMaxRadius {0};
   double    m_cellRadiusDiff {0};

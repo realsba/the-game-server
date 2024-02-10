@@ -3,8 +3,14 @@
 
 #include "Avatar.hpp"
 
-#include "src/packet/serialization.hpp"
+#include "Food.hpp"
+#include "Mass.hpp"
+#include "Virus.hpp"
+#include "Phage.hpp"
+#include "Mother.hpp"
 
+#include "src/packet/serialization.hpp"
+#include "src/geometry/geometry.hpp"
 #include "src/Player.hpp"
 #include "src/Room.hpp"
 
@@ -12,6 +18,12 @@ Avatar::Avatar(Room& room, uint32_t id)
   : Cell(room, id)
 {
   type = typeAvatar;
+}
+
+void Avatar::modifyMass(float value)
+{
+  Cell::modifyMass(value);
+  maxSpeed = m_config.avatarMaxSpeed - m_config.avatarSpeedDiff * (radius - m_config.cellMinRadius) / (m_config.cellRadiusDiff);
 }
 
 bool Avatar::shouldBeProcessed() const
@@ -53,34 +65,99 @@ void Avatar::interact(Cell& cell)
   cell.interact(*this);
 }
 
-void Avatar::interact(Avatar& avatar)
+void Avatar::interact(Avatar& other)
 {
-  room.interact(*this, avatar);
+  Avatar* attacker = this;
+  Avatar* defender = &other;
+  if (attacker->mass < defender->mass) {
+    std::swap(attacker, defender);
+  }
+  auto dd = geometry::squareDistance(attacker->position, defender->position);
+  auto d = attacker->radius - 0.6 * defender->radius;
+  if (attacker->player == defender->player) {
+    if (!attacker->isRecombined() || !defender->isRecombined()) {
+      return;
+    }
+    auto d2 = 0.25 * attacker->radius;
+    if ((dd > d * d) && (dd > d2 * d2)) {
+      return;
+    }
+    attacker->recombination(m_config.avatarRecombineTime);
+  } else {
+    if (attacker->mass < 1.25 * defender->mass || dd > d * d) {
+      return;
+    }
+    attacker->player->wakeUp();
+  }
+  attacker->modifyMass(defender->mass);
+  defender->kill();
+  Player& player = *defender->player;
+  player.removeAvatar(defender);
+  if (player.isDead()) {
+    player.killer = attacker->player;
+  }
 }
 
 void Avatar::interact(Food& food)
 {
-  room.interact(*this, food);
+  auto distance = radius + food.radius;
+  if (geometry::squareDistance(position, food.position) < distance * distance) {
+    player->wakeUp();
+    modifyMass(food.mass);
+    food.kill();
+  }
 }
 
-void Avatar::interact(Mass& mass)
+void Avatar::interact(Mass& target)
 {
-  room.interact(*this, mass);
+  if (mass < 1.25 * target.mass || player == target.player && target.velocity) {
+    return;
+  }
+  auto d = radius - 0.6 * target.radius;
+  if (geometry::squareDistance(position, target.position) < d * d) {
+    if (player != target.player) {
+      player->wakeUp();
+    }
+    modifyMass(target.mass);
+    target.kill();
+  }
 }
 
 void Avatar::interact(Virus& virus)
 {
-  room.interact(*this, virus);
+  if (mass < 1.25 * virus.mass) {
+    return;
+  }
+  auto distance = radius - 0.6 * virus.radius;
+  if (geometry::squareDistance(position, virus.position) < distance * distance) {
+    room.explode(*this);
+    virus.kill();
+  }
 }
 
 void Avatar::interact(Phage& phage)
 {
-  room.interact(*this, phage);
+  if (mass <= m_config.cellMinMass || mass < 1.25 * phage.mass) { // TODO: move the constant to the config
+    return;
+  }
+  auto distance = radius + phage.radius;
+  if (geometry::squareDistance(position, phage.position) < distance * distance) {
+    auto m = std::min(static_cast<float>(m_config.simulationInterval * phage.mass), mass - m_config.cellMinMass);
+    modifyMass(-m);
+  }
 }
 
 void Avatar::interact(Mother& mother)
 {
-  room.interact(*this, mother);
+  auto dist = geometry::distance(position, mother.position);
+  if (mother.mass >= 1.25 * mass && dist < mother.radius - 0.25 * radius) {
+    mother.modifyMass(mass);
+    player->removeAvatar(this); // TODO: player can subscribe to event
+    kill();
+  } else if (mass > 1.25 * mother.mass && dist < radius - 0.25 * mother.radius) {
+    room.explode(*this);
+    mother.kill();
+  }
 }
 
 void Avatar::attract(Avatar& avatar)

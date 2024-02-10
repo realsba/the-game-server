@@ -106,7 +106,6 @@ namespace toml
         throw std::runtime_error("room.updateInterval should be > 0");
       }
 
-      result.simulationsPerUpdate         = find<uint32_t>(v, "simulationsPerUpdate");
       result.spawnPosTryCount             = find<uint32_t>(v, "spawnPosTryCount");
       result.checkPlayersInterval         = find<Duration>(v, "checkPlayersInterval");
       result.updateLeaderboardInterval    = find<Duration>(v, "updateLeaderboardInterval");

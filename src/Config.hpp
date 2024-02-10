@@ -42,7 +42,6 @@ struct RoomConfig {
   uint32_t  numThreads {0};
   Duration  updateInterval;
 
-  uint32_t  simulationsPerUpdate {0};
   uint32_t  spawnPosTryCount {0};
 
   Duration  checkPlayersInterval {};
@@ -126,6 +125,12 @@ struct RoomConfig {
   uint32_t  motherCheckRadius {0};
 
   Generator generator;
+
+  double    simulationInterval {0};
+  double    cellMinRadius {0};
+  double    cellMaxRadius {0};
+  double    cellRadiusDiff {0};
+  double    avatarSpeedDiff {0};
 };
 
 class Config {

@@ -3,6 +3,12 @@
 
 #include "Mother.hpp"
 
+#include "Food.hpp"
+#include "Mass.hpp"
+#include "Virus.hpp"
+#include "Phage.hpp"
+
+#include "src/geometry/geometry.hpp"
 #include "src/Room.hpp"
 
 Mother::Mother(Room& room, uint32_t id)
@@ -21,27 +27,44 @@ void Mother::interact(Cell& cell)
 
 void Mother::interact(Avatar& avatar)
 {
-  room.interact(avatar, *this);
+  avatar.interact(*this);
 }
 
 void Mother::interact(Food& food)
 {
-  room.interact(*this, food);
+  if (food.creator == this && food.velocity) {
+    return;
+  }
+  if (geometry::squareDistance(position, food.position) < radius * radius) {
+    food.kill();
+  }
 }
 
-void Mother::interact(Mass& mass)
+void Mother::interact(Mass& target)
 {
-  room.interact(*this, mass);
+  auto distance = radius - 0.25 * target.radius;
+  if (geometry::squareDistance(position, target.position) < distance * distance) {
+    modifyMass(target.mass);
+    target.kill();
+  }
 }
 
 void Mother::interact(Virus& virus)
 {
-  room.interact(*this, virus);
+  auto distance = radius + virus.radius;
+  if (geometry::squareDistance(position, virus.position) < distance * distance) {
+    modifyMass(virus.mass);
+    virus.kill();
+  }
 }
 
 void Mother::interact(Phage& phage)
 {
-  room.interact(*this, phage);
+  auto distance = radius + phage.radius;
+  if (geometry::squareDistance(position, phage.position) < distance * distance) {
+    modifyMass(phage.mass);
+    phage.kill();
+  }
 }
 
 void Mother::attract(Avatar& avatar)

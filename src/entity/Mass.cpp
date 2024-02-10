@@ -3,6 +3,11 @@
 
 #include "Mass.hpp"
 
+#include "Avatar.hpp"
+#include "Virus.hpp"
+#include "Phage.hpp"
+#include "Mother.hpp"
+
 #include "src/Room.hpp"
 
 Mass::Mass(Room& room, uint32_t id)
@@ -18,22 +23,22 @@ void Mass::interact(Cell& cell)
 
 void Mass::interact(Avatar& avatar)
 {
-  room.interact(avatar, *this);
+  avatar.interact(*this);
 }
 
 void Mass::interact(Virus& virus)
 {
-  room.interact(virus, *this);
+  virus.interact(*this);
 }
 
 void Mass::interact(Phage& phage)
 {
-  room.interact(phage, *this);
+  phage.interact(*this);
 }
 
 void Mass::interact(Mother& mother)
 {
-  room.interact(mother, *this);
+  mother.interact(*this);
 }
 
 void Mass::attract(Avatar& avatar)

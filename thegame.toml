@@ -25,8 +25,7 @@ maxIdleTime = 600
 
 [room]
 numThreads = 4
-updateInterval = '50ms'
-simulationsPerUpdate = 5
+updateInterval = '20ms'
 spawnPosTryCount = 10
 
 checkPlayersInterval = '5s'

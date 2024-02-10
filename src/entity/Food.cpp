@@ -3,6 +3,11 @@
 
 #include "Food.hpp"
 
+#include "Mass.hpp"
+#include "Virus.hpp"
+#include "Phage.hpp"
+#include "Mother.hpp"
+
 #include "src/geometry/geometry.hpp"
 #include "src/Room.hpp"
 
@@ -27,22 +32,22 @@ void Food::interact(Cell& cell)
 
 void Food::interact(Avatar& avatar)
 {
-  room.interact(avatar, *this);
+  avatar.interact(*this);
 }
 
 void Food::interact(Virus& virus)
 {
-  room.interact(virus, *this);
+  virus.interact(*this);
 }
 
 void Food::interact(Phage& phage)
 {
-  room.interact(phage, *this);
+  phage.interact(*this);
 }
 
 void Food::interact(Mother& mother)
 {
-  room.interact(mother, *this);
+  mother.interact(*this);
 }
 
 void Food::attract(Avatar& avatar)

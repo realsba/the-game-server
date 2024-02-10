@@ -14,6 +14,7 @@
 
 class Sector;
 class Player;
+class RoomConfig;
 class Room;
 class AABB;
 
@@ -27,10 +28,11 @@ class Mother;
 class Cell : public Circle {
 public:
   explicit Cell(Room& room, uint32_t id = 0);
-  virtual ~Cell();
+  virtual ~Cell() = default;
 
   [[nodiscard]] AABB getAABB() const;
 
+  virtual void modifyMass(float value);
   void applyVelocity(const Vec2D& value);
   void applyImpulse(const Vec2D& value);
   void applyResistanceForce();
@@ -52,8 +54,14 @@ public:
   virtual void attract(Avatar& avatar);
   virtual bool isAttractiveFor(const Avatar& avatar);
 
-  void subscribeToDestroyEvent(void* tag, Event<Cell*>::Handler&& handler);
-  void unsubscribeFromDestroyEvent(void* tag);
+  void kill();
+  void startMotion();
+  void subscribeToDeathEvent(void* tag, Event<Cell*>::Handler&& handler);
+  void unsubscribeFromDeathEvent(void* tag);
+  void subscribeToMassChangeEvent(void* tag, Event<Cell*, float>::Handler&& handler);
+  void unsubscribeFromMassChangeEvent(void* tag);
+  void subscribeToMotionStartedEvent(void* tag, Event<Cell*>::Handler&& handler);
+  void unsubscribeFromMotionStartedEvent(void* tag);
 
   enum Type {
     typeAvatar = 1,
@@ -74,6 +82,7 @@ public:
   Vec2D             velocity;
   Vec2D             force;
   Room&             room;
+  const RoomConfig& m_config;
   Cell*             creator {nullptr};
   Player*           player {nullptr};
   float             mass {0};
@@ -86,7 +95,9 @@ public:
   bool              materialPoint {false};
 
 private:
-  Event<Cell*>      m_destroyEvent;
+  Event<Cell*>          m_deathEvent;
+  Event<Cell*, float>   m_massChangeEvent;
+  Event<Cell*>          m_motionStartedEvent;
 };
 
 #endif /* THEGAME_ENTITY_CELL_HPP */

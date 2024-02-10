@@ -29,6 +29,8 @@
 #include <spdlog/spdlog.h>
 #include <chrono>
 
+using namespace std::placeholders;
+
 Room::Room(asio::any_io_executor executor, uint32_t id)
   : m_executor(std::move(executor))
   , m_updateTimer(m_executor, std::bind_front(&Room::update, this))
@@ -85,13 +87,18 @@ void Room::init(const RoomConfig& config)
   m_phageGeneratorTimer.setInterval(m_config.generator.phage.interval);
   m_motherGeneratorTimer.setInterval(m_config.generator.mother.interval);
 
-  m_simulationInterval = std::chrono::duration_cast<std::chrono::duration<double>>(m_config.updateInterval).count();
-  m_simulationInterval /= m_config.simulationsPerUpdate;
-
+  // TODO: remove
   m_cellMinRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI);
   m_cellMaxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);
   m_cellRadiusDiff = m_cellMaxRadius - m_cellMinRadius;
   m_avatarSpeedDiff = m_config.avatarMaxSpeed - m_config.avatarMinSpeed;
+
+  // TODO: move to loading of config
+  m_config.simulationInterval = std::chrono::duration_cast<std::chrono::duration<double>>(m_config.updateInterval).count();
+  m_config.cellMinRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI);
+  m_config.cellMaxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);
+  m_config.cellRadiusDiff = m_cellMaxRadius - m_cellMinRadius;
+  m_config.avatarSpeedDiff = m_config.avatarMaxSpeed - m_config.avatarMinSpeed;
 
   m_gridmap.resize(m_config.width, m_config.height, 9);
   spawnFood(m_config.foodStartAmount);
@@ -448,34 +455,35 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
     if (text == "#id") {
       ss << "id=" << player->getId();
     } else if (text == "#info") {
-      float mass = 0;
-      for (auto* item : m_foodContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_massContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_virusContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_phageContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_motherContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_avatarContainer) {
-        mass += item->mass;
-      }
-      ss << "roomId=" << m_id << "; connections=" << m_sessions.size()
-        << "; players=" << m_players.size()
-        << "; totalMass=" << m_mass << ":" << mass
-        << "; avatars=" << m_avatarContainer.size()
-        << "; food=" << m_foodContainer.size()
-        << "; masses=" << m_massContainer.size()
-        << "; viruses=" << m_virusContainer.size()
-        << "; phages=" << m_phageContainer.size()
-        << "; mothers=" << m_motherContainer.size();
+// TODO: implement
+//      float mass = 0;
+//      for (auto* item : m_foodContainer) {
+//        mass += item->mass;
+//      }
+//      for (auto* item : m_massContainer) {
+//        mass += item->mass;
+//      }
+//      for (auto* item : m_virusContainer) {
+//        mass += item->mass;
+//      }
+//      for (auto* item : m_phageContainer) {
+//        mass += item->mass;
+//      }
+//      for (auto* item : m_motherContainer) {
+//        mass += item->mass;
+//      }
+//      for (auto* item : m_avatarContainer) {
+//        mass += item->mass;
+//      }
+//      ss << "roomId=" << m_id << "; connections=" << m_sessions.size()
+//        << "; players=" << m_players.size()
+//        << "; totalMass=" << m_mass << ":" << mass
+//        << "; avatars=" << m_avatarContainer.size()
+//        << "; food=" << m_foodContainer.size()
+//        << "; masses=" << m_massContainer.size()
+//        << "; viruses=" << m_virusContainer.size()
+//        << "; phages=" << m_phageContainer.size()
+//        << "; mothers=" << m_motherContainer.size();
     }
     serialize(*buffer, ss.str());
   }
@@ -483,251 +491,6 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
   m_chatHistory.emplace_front(player->getId(), player->name, text);
   while (m_chatHistory.size() > 128) {
     m_chatHistory.pop_back();
-  }
-}
-
-void Room::interact(Avatar& avatar1, Avatar& avatar2)
-{
-  Avatar* attacker = &avatar1;
-  Avatar* defender = &avatar2;
-  if (attacker->mass < defender->mass) {
-    std::swap(attacker, defender);
-  }
-  auto dd = geometry::squareDistance(attacker->position, defender->position);
-  auto d = attacker->radius - 0.6 * defender->radius;
-  if (attacker->player == defender->player) {
-    if (!attacker->isRecombined() || !defender->isRecombined()) {
-      return;
-    }
-    auto d2 = 0.25 * attacker->radius;
-    if ((dd > d * d) && (dd > d2 * d2)) {
-      return;
-    }
-    attacker->recombination(m_config.avatarRecombineTime);
-  } else {
-    if (attacker->mass < 1.25 * defender->mass || dd > d * d) {
-      return;
-    }
-    attacker->player->wakeUp();
-  }
-  modifyMass(*attacker, defender->mass);
-  m_zombieAvatars.push_back(defender);
-  defender->zombie = true;
-  Player& player = *defender->player;
-  player.removeAvatar(defender);
-  if (player.isDead()) {
-    player.killer = attacker->player;
-  }
-  m_updateLeaderboard = true;
-}
-
-void Room::interact(Avatar& avatar, Food& food)
-{
-  auto distance = avatar.radius + food.radius;
-  if (geometry::squareDistance(avatar.position, food.position) < distance * distance) {
-    avatar.player->wakeUp();
-    modifyMass(avatar, food.mass);
-    m_zombieFoods.push_back(&food);
-    food.zombie = true;
-    m_updateLeaderboard = true;
-  }
-}
-
-void Room::interact(Avatar& avatar, Mass& mass)
-{
-  if (avatar.mass < 1.25 * mass.mass) {
-    return;
-  }
-  if (avatar.player == mass.player && mass.velocity) {
-    return;
-  }
-  auto d = avatar.radius - 0.6 * mass.radius;
-  if (geometry::squareDistance(avatar.position, mass.position) < d * d) {
-    if (avatar.player != mass.player) {
-      avatar.player->wakeUp();
-    }
-    modifyMass(avatar, mass.mass);
-    m_zombieMasses.push_back(&mass);
-    mass.zombie = true;
-    m_updateLeaderboard = true;
-  }
-}
-
-void Room::interact(Avatar& avatar, Virus& virus)
-{
-  if (avatar.mass < 1.25 * virus.mass) {
-    return;
-  }
-  auto distance = avatar.radius - 0.6 * virus.radius;
-  if (geometry::squareDistance(avatar.position, virus.position) < distance * distance) {
-    explode(avatar);
-    m_zombieViruses.push_back(&virus);
-    virus.zombie = true;
-  }
-}
-
-void Room::interact(Avatar& avatar, Phage& phage)
-{
-  if (avatar.mass <= m_config.cellMinMass || avatar.mass < 1.25 * phage.mass) { // TODO: move the constant to the config
-    return;
-  }
-  auto distance = avatar.radius + phage.radius;
-  if (geometry::squareDistance(avatar.position, phage.position) < distance * distance) {
-    auto m = std::min(static_cast<float>(m_simulationInterval * phage.mass), avatar.mass - m_config.cellMinMass);
-    modifyMass(avatar, -m);
-    m_modifiedCells.insert(&avatar);
-  }
-}
-
-void Room::interact(Avatar& avatar, Mother& mother)
-{
-  auto dist = geometry::distance(avatar.position, mother.position);
-  if (mother.mass >= 1.25 * avatar.mass && dist < mother.radius - 0.25 * avatar.radius) {
-    modifyMass(mother, avatar.mass);
-    m_activatedCells.insert(&mother);
-    avatar.player->removeAvatar(&avatar);
-    m_zombieAvatars.push_back(&avatar);
-    avatar.zombie = true;
-    m_updateLeaderboard = true;
-  } else if (avatar.mass > 1.25 * mother.mass && dist < avatar.radius - 0.25 * mother.radius) {
-    explode(avatar);
-    m_zombieMothers.push_back(&mother);
-    mother.zombie = true;
-  }
-}
-
-void Room::interact(Mother& mother, Food& food)
-{
-  if (food.creator == &mother && food.velocity) {
-    return;
-  }
-  auto d = mother.radius;
-  if (geometry::squareDistance(mother.position, food.position) < d * d) {
-    m_zombieFoods.push_back(&food);
-    food.zombie = true;
-  }
-}
-
-void Room::interact(Mother& mother, Mass& mass)
-{
-  auto distance = mother.radius - 0.25 * mass.radius;
-  if (geometry::squareDistance(mother.position, mass.position) < distance * distance) {
-    modifyMass(mother, mass.mass);
-    m_activatedCells.insert(&mother);
-    m_zombieMasses.push_back(&mass);
-    mass.zombie = true;
-  }
-}
-
-void Room::interact(Mother& mother, Virus& virus)
-{
-  auto distance = mother.radius + virus.radius;
-  if (geometry::squareDistance(mother.position, virus.position) < distance * distance) {
-    modifyMass(mother, virus.mass);
-    m_activatedCells.insert(&mother);
-    m_zombieViruses.push_back(&virus);
-    virus.zombie = true;
-  }
-}
-
-void Room::interact(Mother& mother, Phage& phage)
-{
-  auto distance = mother.radius + phage.radius;
-  if (geometry::squareDistance(mother.position, phage.position) < distance * distance) {
-    modifyMass(mother, phage.mass);
-    m_activatedCells.insert(&mother);
-    m_zombiePhages.push_back(&phage);
-    phage.zombie = true;
-  }
-}
-
-void Room::interact(Virus& virus, Food& food)
-{
-  auto distance = virus.radius + food.radius;
-  if (geometry::squareDistance(virus.position, food.position) < distance * distance) {
-    m_zombieFoods.push_back(&food);
-    food.zombie = true;
-  }
-}
-
-void Room::interact(Virus& virus, Mass& mass)
-{
-  auto distance = virus.radius + mass.radius;
-  if (geometry::squareDistance(virus.position, mass.position) < distance * distance) {
-    auto relativeVelocity = virus.velocity - mass.velocity;
-    auto normal = (virus.position - mass.position).direction();
-    auto impulse = relativeVelocity * normal * (2.0f * virus.mass * mass.mass / (virus.mass + mass.mass));
-    virus.velocity -= normal * impulse / virus.mass;
-    m_modifiedCells.insert(&virus);
-    m_activatedCells.insert(&virus);
-    m_zombieMasses.push_back(&mass);
-    mass.zombie = true;
-  }
-}
-
-void Room::interact(Virus& virus1, Virus& virus2)
-{
-  auto distance = virus1.radius + virus2.radius;
-  if (geometry::squareDistance(virus1.position, virus2.position) < distance * distance) {
-    auto& obj = createVirus();
-    modifyMass(obj, virus1.mass + virus2.mass);
-    obj.position = (virus1.position + virus2.position) * 0.5;
-    m_zombieViruses.push_back(&virus1);
-    m_zombieViruses.push_back(&virus2);
-    virus1.zombie = true;
-    virus2.zombie = true;
-  }
-}
-
-void Room::interact(Virus& virus, Phage& phage)
-{
-  auto distance = virus.radius + phage.radius;
-  if (geometry::squareDistance(virus.position, phage.position) < distance * distance) {
-    auto& obj = createMother();
-    modifyMass(obj, virus.mass + phage.mass);
-    obj.position = (virus.position + phage.position) * 0.5;
-    m_zombieViruses.push_back(&virus);
-    m_zombiePhages.push_back(&phage);
-    virus.zombie = true;
-    phage.zombie = true;
-  }
-}
-
-void Room::interact(Phage& phage, Food& food)
-{
-  auto distance = phage.radius + food.radius;
-  if (geometry::squareDistance(phage.position, food.position) < distance * distance) {
-    m_zombieFoods.push_back(&food);
-    food.zombie = true;
-  }
-}
-
-void Room::interact(Phage& phage, Mass& mass)
-{
-  auto distance = phage.radius + mass.radius;
-  if (geometry::squareDistance(phage.position, mass.position) < distance * distance) {
-    auto relativeVelocity = phage.velocity - mass.velocity;
-    auto normal = (phage.position - mass.position).direction();
-    auto impulse = relativeVelocity * normal * (2.0f * phage.mass * mass.mass / (phage.mass + mass.mass));
-    phage.velocity -= normal * impulse / phage.mass;
-    m_modifiedCells.insert(&phage);
-    m_activatedCells.insert(&phage);
-    m_zombieMasses.push_back(&mass);
-    mass.zombie = true;
-  }
-}
-
-void Room::interact(Phage& phage1, Phage& phage2)
-{
-  auto distance = phage1.radius + phage2.radius;
-  if (geometry::squareDistance(phage1.position, phage2.position) < distance * distance) {
-    auto& obj = createPhage();
-    modifyMass(obj, phage1.mass + phage2.mass);
-    obj.position = (phage1.position + phage2.position) * 0.5;
-    m_zombiePhages.push_back(&phage1);
-    m_zombiePhages.push_back(&phage2);
-    phage1.zombie = true;
-    phage2.zombie = true;
   }
 }
 
@@ -823,44 +586,44 @@ void Room::update()
   auto dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
 
   handlePlayerRequests();
+  simulate(dt);
 
-  for (auto i = m_config.simulationsPerUpdate; i > 0; --i) {
-    simulate(dt / m_config.simulationsPerUpdate);
-  }
-
-  auto deflationTime = now - m_config.playerDeflationInterval;
-  auto annihilationTime = now - m_config.playerAnnihilationInterval;
-  for (auto* avatar : m_avatarContainer) {
-    const auto& lastActivity = avatar->player->getLastActivity();
-    if (lastActivity < deflationTime) {
-      float mass = avatar->mass * m_config.playerDeflationRatio * dt;
-      if (avatar->mass - mass >= m_config.cellMinMass) {
-        modifyMass(*avatar, -mass);
-        m_updateLeaderboard = true;
-      }
-    }
-    if (lastActivity < annihilationTime) {
-      avatar->player->removeAvatar(avatar);
-      m_zombieAvatars.push_back(avatar);
-      avatar->zombie = true;
-      m_updateLeaderboard = true;
-      if (m_mass < m_config.maxMass) {
-        auto& obj = createVirus();
-        modifyMass(obj, avatar->mass > m_config.virusStartMass ? avatar->mass : m_config.virusStartMass);
-        obj.position = avatar->position;
-        obj.color = avatar->color;
-      }
-    }
-  }
+// TODO: implement
+//  auto deflationTime = now - m_config.playerDeflationInterval;
+//  auto annihilationTime = now - m_config.playerAnnihilationInterval;
+//  for (auto* avatar : m_avatarContainer) {
+//    const auto& lastActivity = avatar->player->getLastActivity();
+//    if (lastActivity < deflationTime) {
+//      float mass = avatar->mass * m_config.playerDeflationRatio * dt;
+//      if (avatar->mass - mass >= m_config.cellMinMass) {
+//        modifyMass(*avatar, -mass);
+//        m_updateLeaderboard = true;
+//      }
+//    }
+//    if (lastActivity < annihilationTime) {
+//      avatar->player->removeAvatar(avatar);
+//      m_zombieAvatars.push_back(avatar);
+//      avatar->zombie = true;
+//      avatar->kill();
+//      m_updateLeaderboard = true;
+//      if (m_mass < m_config.maxMass) {
+//        auto& obj = createVirus();
+//        modifyMass(obj, avatar->mass > m_config.virusStartMass ? avatar->mass : m_config.virusStartMass);
+//        obj.position = avatar->position;
+//        obj.color = avatar->color;
+//      }
+//    }
+//  }
 
   // TODO: optimize amount of containers
   auto removeZombieCells = [&](auto& source, auto& target)
     {
+      using TargetValueType = typename std::remove_reference<decltype(target)>::type::value_type;
       if (source.empty()) {
         return;
       }
       for (auto* cell : source) {
-        target.erase(cell);
+        target.erase(dynamic_cast<TargetValueType>(cell));
         removeCell(cell);
       }
       source.clear();
@@ -910,6 +673,8 @@ Vec2D Room::getRandomPosition(uint32_t radius) const
 Avatar& Room::createAvatar()
 {
   auto* cell = new Avatar(*this, m_cellNextId.pop());
+  cell->subscribeToDeathEvent(this, std::bind(&Room::onAvatarDeath, this, _1));
+  cell->subscribeToMassChangeEvent(this, std::bind(&Room::onAvatarMassChange, this, _1, _2));
   m_avatarContainer.insert(cell);
   updateNewCellRegistries(cell);
   return *cell;
@@ -918,6 +683,7 @@ Avatar& Room::createAvatar()
 Food& Room::createFood()
 {
   auto* cell = new Food(*this, m_cellNextId.pop());
+  cell->subscribeToDeathEvent(this, std::bind(&Room::onFoodDeath, this, _1));
   m_foodContainer.insert(cell);
   updateNewCellRegistries(cell, false);
   return *cell;
@@ -926,6 +692,7 @@ Food& Room::createFood()
 Mass& Room::createMass()
 {
   auto* cell = new Mass(*this, m_cellNextId.pop());
+  cell->subscribeToDeathEvent(this, std::bind(&Room::onMassDeath, this, _1));
   m_massContainer.insert(cell);
   updateNewCellRegistries(cell, false);
   return *cell;
@@ -934,6 +701,9 @@ Mass& Room::createMass()
 Virus& Room::createVirus()
 {
   auto* cell = new Virus(*this, m_cellNextId.pop());
+  cell->subscribeToDeathEvent(this, std::bind(&Room::onVirusDeath, this, _1));
+  cell->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, _1, _2));
+  cell->subscribeToMotionStartedEvent(this, std::bind(&Room::onMotionStarted, this, _1));
   m_virusContainer.insert(cell);
   updateNewCellRegistries(cell);
   return *cell;
@@ -942,6 +712,9 @@ Virus& Room::createVirus()
 Phage& Room::createPhage()
 {
   auto* cell = new Phage(*this, m_cellNextId.pop());
+  cell->subscribeToDeathEvent(this, std::bind(&Room::onPhageDeath, this, _1));
+  cell->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, _1, _2));
+  cell->subscribeToMotionStartedEvent(this, std::bind(&Room::onMotionStarted, this, _1));
   m_phageContainer.insert(cell);
   updateNewCellRegistries(cell);
   return *cell;
@@ -950,6 +723,8 @@ Phage& Room::createPhage()
 Mother& Room::createMother()
 {
   auto* cell = new Mother(*this, m_cellNextId.pop());
+  cell->subscribeToDeathEvent(this, std::bind(&Room::onMotherDeath, this, _1));
+  cell->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, _1, _2));
   m_motherContainer.insert(cell);
   updateNewCellRegistries(cell);
   return *cell;
@@ -964,7 +739,7 @@ void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
 {
   m_createdCells.push_back(cell);
   m_modifiedCells.insert(cell);
-  m_activatedCells.insert(cell);
+  m_activatedCells.insert(cell); // TODO: looks kike it's not needed
   if (checkRandomPos) {
     m_forCheckRandomPos.insert(cell);
   }
@@ -972,6 +747,7 @@ void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
 
 void Room::removeCell(Cell* cell)
 {
+  spdlog::debug("removeCell {}", cell->id);
   m_mass -= cell->mass;
   m_forCheckRandomPos.erase(cell);
   m_processingCells.erase(cell);
@@ -1083,20 +859,12 @@ void Room::explode(Mother& mother)
 
 void Room::modifyMass(Cell& cell, float value)
 {
-  cell.mass += value;
-  m_mass += value;
-  if (cell.mass < m_config.cellMinMass) {
-    spdlog::warn("Bad cell mass. type={}, mass={}, value={}", cell.type, cell.mass, value);
-    cell.mass = m_config.cellMinMass;
-  }
-  cell.radius = m_config.cellRadiusRatio * sqrt(cell.mass / M_PI);
-  m_modifiedCells.insert(&cell);
+  cell.modifyMass(value);
 }
 
 void Room::modifyMass(Avatar& avatar, float value)
 {
-  modifyMass(static_cast<Cell&>(avatar), value);
-  avatar.maxSpeed = m_config.avatarMaxSpeed - m_avatarSpeedDiff * (avatar.radius - m_cellMinRadius) / (m_cellRadiusDiff);
+  avatar.modifyMass(value);
 }
 
 void Room::solveCellLocation(Cell& cell)
@@ -1212,7 +980,7 @@ void Room::handlePlayerRequests()
   m_splitRequests.clear();
 }
 
-void Room::simulate(float dt)
+void Room::simulate(double dt)
 {
   m_processingCells.insert(m_avatarContainer.begin(), m_avatarContainer.end()); // TODO: for bots, replace to signals
 
@@ -1551,4 +1319,59 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
   serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerDead));
   serialize(*buffer, playerId);
   send(buffer);
+}
+
+void Room::onAvatarDeath(Cell* cell)
+{
+  m_mass -= cell->mass;
+  m_updateLeaderboard = true;
+  m_zombieAvatars.push_back(cell);
+}
+
+void Room::onFoodDeath(Cell* cell)
+{
+  m_mass -= cell->mass;
+  m_zombieFoods.push_back(cell);
+}
+
+void Room::onMassDeath(Cell* cell)
+{
+  m_mass -= cell->mass;
+  m_zombieMasses.push_back(cell);
+}
+
+void Room::onVirusDeath(Cell* cell)
+{
+  m_mass -= cell->mass;
+  m_zombieViruses.push_back(cell);
+}
+
+void Room::onPhageDeath(Cell* cell)
+{
+  m_mass -= cell->mass;
+  m_zombiePhages.push_back(cell);
+}
+
+void Room::onMotherDeath(Cell* cell)
+{
+  m_mass -= cell->mass;
+  m_zombieMothers.push_back(cell);
+}
+
+void Room::onMotionStarted(Cell* cell)
+{
+  m_activatedCells.insert(cell);
+  m_modifiedCells.insert(cell);
+}
+
+void Room::onCellMassChange(Cell* cell, float deltaMass)
+{
+  m_mass += deltaMass;
+  m_modifiedCells.insert(cell);
+}
+
+void Room::onAvatarMassChange(Cell* cell, float deltaMass)
+{
+  onCellMassChange(cell, deltaMass);
+  m_updateLeaderboard = true;
 }
