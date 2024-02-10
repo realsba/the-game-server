@@ -23,6 +23,18 @@ struct MySQLConfig {
 };
 
 struct RoomConfig {
+  struct Generator {
+    struct Item {
+      Duration interval;
+      uint32_t quantity;
+    };
+
+    Item food;
+    Item virus;
+    Item phage;
+    Item mother;
+  };
+
   using BotNames = std::vector<std::string>;
 
   float eps {0.01};
@@ -113,10 +125,7 @@ struct RoomConfig {
   uint32_t  motherColor {0};
   uint32_t  motherCheckRadius {0};
 
-  float     spawnFoodMass {0};
-  float     spawnVirusMass {0};
-  float     spawnPhageMass {0};
-  float     spawnMotherMass {0};
+  Generator generator;
 };
 
 class Config {

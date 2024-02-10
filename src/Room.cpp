@@ -37,6 +37,10 @@ Room::Room(asio::any_io_executor executor, uint32_t id)
   , m_destroyOutdatedCellsTimer(m_executor, std::bind_front(&Room::destroyOutdatedCells, this))
   , m_checkMothersTimer(m_executor, std::bind_front(&Room::checkMothers, this))
   , m_produceMothersTimer(m_executor, std::bind_front(&Room::produceMothers, this))
+  , m_foodGeneratorTimer(m_executor, std::bind_front(&Room::generateFood, this))
+  , m_virusGeneratorTimer(m_executor, std::bind_front(&Room::generateViruses, this))
+  , m_phageGeneratorTimer(m_executor, std::bind_front(&Room::generatePhages, this))
+  , m_motherGeneratorTimer(m_executor, std::bind_front(&Room::generateMothers, this))
   , m_id(id)
 {
 }
@@ -76,6 +80,10 @@ void Room::init(const RoomConfig& config)
   m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
   m_checkMothersTimer.setInterval(m_config.checkMothersInterval);
   m_produceMothersTimer.setInterval(m_config.produceMothersInterval);
+  m_foodGeneratorTimer.setInterval(m_config.generator.food.interval);
+  m_virusGeneratorTimer.setInterval(m_config.generator.virus.interval);
+  m_phageGeneratorTimer.setInterval(m_config.generator.phage.interval);
+  m_motherGeneratorTimer.setInterval(m_config.generator.mother.interval);
 
   m_simulationInterval = std::chrono::duration_cast<std::chrono::duration<double>>(m_config.updateInterval).count();
   m_simulationInterval /= m_config.simulationsPerUpdate;
@@ -105,6 +113,10 @@ void Room::start()
   m_destroyOutdatedCellsTimer.start();
   m_checkMothersTimer.start();
   m_produceMothersTimer.start();
+  m_foodGeneratorTimer.start();
+  m_virusGeneratorTimer.start();
+  m_phageGeneratorTimer.start();
+  m_motherGeneratorTimer.start();
 }
 
 void Room::stop()
@@ -115,6 +127,10 @@ void Room::stop()
   m_destroyOutdatedCellsTimer.stop();
   m_checkMothersTimer.stop();
   m_produceMothersTimer.stop();
+  m_foodGeneratorTimer.stop();
+  m_virusGeneratorTimer.stop();
+  m_phageGeneratorTimer.stop();
+  m_motherGeneratorTimer.stop();
 }
 
 uint32_t Room::getId() const
@@ -803,7 +819,6 @@ void Room::update()
   ++m_tick;
   auto dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
 
-  generate(dt);
   handlePlayerRequests();
 
   for (auto i = m_config.simulationsPerUpdate; i > 0; --i) {
@@ -1135,53 +1150,6 @@ void Room::destroyOutdatedCells()
   std::erase_if(m_motherContainer, expired);
 }
 
-void Room::generate(float dt)
-{
-  if (m_mass >= m_config.maxMass) {
-    return;
-  }
-
-  auto avail = m_config.foodMaxAmount - m_foodContainer.size();
-  if (avail > 0 && m_mass + m_accumulatedFoodMass < m_config.maxMass) {
-    m_accumulatedFoodMass += m_config.spawnFoodMass * dt;
-    auto count = std::min(static_cast<size_t>(m_accumulatedFoodMass / m_config.foodMass), avail);
-    if (count > 0) {
-      m_accumulatedFoodMass -= m_config.foodMass * count;
-      spawnFood(count);
-    }
-  }
-
-  avail = m_config.virusMaxAmount - m_virusContainer.size();
-  if (avail > 0 && m_mass + m_accumulatedVirusMass < m_config.maxMass) {
-    m_accumulatedVirusMass += m_config.spawnVirusMass * dt;
-    auto count = std::min(static_cast<size_t>(m_accumulatedVirusMass / m_config.virusStartMass), avail);
-    if (count > 0) {
-      m_accumulatedVirusMass -= m_config.virusStartMass * count;
-      spawnViruses(count);
-    }
-  }
-
-  avail = m_config.phageMaxAmount - m_phageContainer.size();
-  if (avail > 0 && m_mass + m_accumulatedPhageMass < m_config.maxMass) {
-    m_accumulatedPhageMass += m_config.spawnPhageMass * dt;
-    auto count = std::min(static_cast<size_t>(m_accumulatedPhageMass / m_config.phageStartMass), avail);
-    if (count > 0) {
-      m_accumulatedPhageMass -= m_config.phageStartMass * count;
-      spawnPhages(count);
-    }
-  }
-
-  avail = m_config.motherMaxAmount - m_motherContainer.size();
-  if (avail > 0 && m_mass + m_accumulatedMotherMass < m_config.maxMass) {
-    m_accumulatedMotherMass += m_config.spawnMotherMass * dt;
-    auto count = std::min(static_cast<size_t>(m_accumulatedMotherMass / m_config.motherStartMass), avail);
-    if (count > 0) {
-      m_accumulatedMotherMass -= m_config.motherStartMass * count;
-      spawnMothers(count);
-    }
-  }
-}
-
 void Room::checkMothers()
 {
   for (auto* mother : m_motherContainer) {
@@ -1413,6 +1381,42 @@ void Room::checkPlayers()
   );
 
   recalculateFreeSpace();
+}
+
+void Room::generateFood()
+{
+  if (m_mass >= m_config.maxMass || m_foodContainer.size() > m_config.foodMaxAmount) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.foodMaxAmount - m_foodContainer.size());
+  spawnFood(std::min(m_config.generator.food.quantity, availableSpace));
+}
+
+void Room::generateViruses()
+{
+  if (m_mass >= m_config.maxMass || m_virusContainer.size() > m_config.virusMaxAmount) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.virusMaxAmount - m_virusContainer.size());
+  spawnViruses(std::min(m_config.generator.virus.quantity, availableSpace));
+}
+
+void Room::generatePhages()
+{
+  if (m_mass >= m_config.maxMass || m_phageContainer.size() > m_config.phageMaxAmount) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.phageMaxAmount - m_phageContainer.size());
+  spawnPhages(std::min(m_config.generator.phage.quantity, availableSpace));
+}
+
+void Room::generateMothers()
+{
+  if (m_mass >= m_config.maxMass || m_motherContainer.size() > m_config.motherMaxAmount) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.motherMaxAmount - m_motherContainer.size());
+  spawnMothers(std::min(m_config.generator.mother.quantity, availableSpace));
 }
 
 void Room::spawnFood(uint32_t count)

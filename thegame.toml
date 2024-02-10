@@ -54,8 +54,8 @@ playerDeflationRatio = 0.10
 playerAnnihilationInterval = '5m'
 playerForceRatio = 2.5
 
-botNames = ["Nebula", "Solaris", "Celestia", "Quasar", "Zenith", "Lunar", "Stardust", "Nova", "Galaxia", "Cosmos"]
-botStartMass = 150
+botNames = ['Nebula', 'Solaris', 'Celestia', 'Quasar', 'Zenith', 'Lunar', 'Stardust', 'Nova', 'Galaxia', 'Cosmos']
+botStartMass = 300
 botForceCornerRatio = 25000.0
 botForceFoodRatio = 3000.0
 botForceHungerRatio = 10000.0
@@ -113,3 +113,19 @@ spawnFoodMass = 15.0
 spawnVirusMass = 25.0
 spawnPhageMass = 25.0
 spawnMotherMass = 25.0
+
+[room.generator.food]
+interval = '1s'
+quantity = 3
+
+[room.generator.virus]
+interval = '7s'
+quantity = 1
+
+[room.generator.phage]
+interval = '7s'
+quantity = 1
+
+[room.generator.mother]
+interval = '10s'
+quantity = 1

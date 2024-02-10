@@ -64,6 +64,32 @@ namespace toml
   };
 
   template <>
+  struct from<RoomConfig::Generator::Item>
+  {
+    static auto from_toml(value& v)
+    {
+      RoomConfig::Generator::Item result{};
+      result.interval = toml::find<Duration>(v, "interval");
+      result.quantity = toml::find<uint32_t >(v, "quantity");
+      return result;
+    }
+  };
+
+  template <>
+  struct from<RoomConfig::Generator>
+  {
+    static auto from_toml(value& v)
+    {
+      RoomConfig::Generator result{};
+      result.food = toml::find<RoomConfig::Generator::Item>(v, "food");
+      result.virus = toml::find<RoomConfig::Generator::Item>(v, "virus");
+      result.phage = toml::find<RoomConfig::Generator::Item>(v, "phage");
+      result.mother = toml::find<RoomConfig::Generator::Item>(v, "mother");
+      return result;
+    }
+  };
+
+  template <>
   struct from<RoomConfig>
   {
     static auto from_toml(value& v)
@@ -165,14 +191,12 @@ namespace toml
       result.motherColor          = find<uint32_t>(v, "motherColor");
       result.motherCheckRadius    = find<uint32_t>(v, "motherCheckRadius");
 
-      result.spawnFoodMass        = find<float>(v, "spawnFoodMass");
-      result.spawnVirusMass       = find<float>(v, "spawnVirusMass");
-      result.spawnPhageMass       = find<float>(v, "spawnPhageMass");
-      result.spawnMotherMass      = find<float>(v, "spawnMotherMass");
+      result.generator            = find<RoomConfig::Generator>(v, "generator");
 
       return result;
     }
   };
+
 } // namespace toml
 
 void Config::load(const std::string& filename)

@@ -127,7 +127,6 @@ private:
   void modifyMass(Avatar& avatar, float value);
   void solveCellLocation(Cell& cell);
   void destroyOutdatedCells();
-  void generate(float dt);
   void handlePlayerRequests();
   void simulate(float dt);
   void synchronize();
@@ -135,6 +134,11 @@ private:
   void checkMothers();
   void produceMothers();
   void checkPlayers();
+
+  void generateFood();
+  void generateViruses();
+  void generatePhages();
+  void generateMothers();
 
   void spawnFood(uint32_t count);
   void spawnViruses(uint32_t count);
@@ -167,6 +171,10 @@ private:
   Timer                       m_destroyOutdatedCellsTimer;
   Timer                       m_checkMothersTimer;
   Timer                       m_produceMothersTimer;
+  Timer                       m_foodGeneratorTimer;
+  Timer                       m_virusGeneratorTimer;
+  Timer                       m_phageGeneratorTimer;
+  Timer                       m_motherGeneratorTimer;
 
   mutable std::random_device  m_generator;
 
@@ -208,10 +216,6 @@ private:
   uint32_t  m_tick {0};                        // TODO: stop using and remove
   double    m_mass {0};
   double    m_simulationInterval {0};
-  double    m_accumulatedFoodMass {0};
-  double    m_accumulatedVirusMass {0};
-  double    m_accumulatedPhageMass {0};
-  double    m_accumulatedMotherMass {0};
   double    m_cellMinRadius {0};
   double    m_cellMaxRadius {0};
   double    m_cellRadiusDiff {0};
