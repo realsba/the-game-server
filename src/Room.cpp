@@ -335,7 +335,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
   sendPacketPlayerBorn(player->getId());
 
   auto& obj = createAvatar();
-  modifyMass(obj, m_config.avatarStartMass);
+  obj.modifyMass(m_config.avatarStartMass);
   int radius = obj.radius;
   obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
   obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
@@ -747,7 +747,6 @@ void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
 
 void Room::removeCell(Cell* cell)
 {
-  spdlog::debug("removeCell {}", cell->id);
   m_mass -= cell->mass;
   m_forCheckRandomPos.erase(cell);
   m_processingCells.erase(cell);
@@ -765,14 +764,14 @@ bool Room::eject(Avatar& avatar, const Vec2D& point)
   if (avatar.mass < m_config.avatarEjectMinMass || avatar.mass - massLoss < m_config.cellMinMass) {
     return false;
   }
-  modifyMass(avatar, -massLoss);
+  avatar.modifyMass(-massLoss);
   auto& obj = createMass();
   obj.player = avatar.player;
   obj.creator = &avatar;
   obj.color = avatar.color;
   obj.position = avatar.position;
   obj.velocity = avatar.velocity;
-  modifyMass(obj, m_config.avatarEjectMass);
+  obj.modifyMass(m_config.avatarEjectMass);
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
@@ -794,8 +793,8 @@ bool Room::split(Avatar& avatar, const Vec2D& point)
   obj.position = avatar.position;
   obj.velocity = avatar.velocity;
   obj.protection = m_tick + 40;
-  modifyMass(obj, mass);
-  modifyMass(avatar, -mass);
+  obj.modifyMass(mass);
+  avatar.modifyMass(-mass);
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
@@ -825,7 +824,7 @@ void Room::explode(Avatar& avatar)
     }
     explodedMass += mass;
     auto& obj = createAvatar();
-    modifyMass(obj, mass);
+    obj.modifyMass(mass);
     float angle = (m_generator() % 3600) * M_PI / 1800;
     Vec2D direction(sin(angle), cos(angle));
     obj.position = avatar.position + direction * (avatar.radius + obj.radius);
@@ -839,7 +838,7 @@ void Room::explode(Avatar& avatar)
   }
   if (explodedMass) {
     avatar.recombination(m_config.avatarRecombineTime);
-    modifyMass(avatar, -explodedMass);
+    avatar.modifyMass(-explodedMass);
   }
 }
 
@@ -848,23 +847,13 @@ void Room::explode(Mother& mother)
   float doubleMass = m_config.motherStartMass * 2;
   while (mother.mass >= doubleMass) {
     auto& obj = createMother();
-    modifyMass(obj, m_config.motherStartMass);
+    obj.modifyMass(m_config.motherStartMass);
     float angle = (m_generator() % 3600) * M_PI / 1800;
     Vec2D direction(sin(angle), cos(angle));
     obj.position = mother.position;
     obj.applyVelocity(direction * m_config.explodeVelocity);
-    modifyMass(mother, -static_cast<float>(m_config.motherStartMass));
+    mother.modifyMass(-static_cast<float>(m_config.motherStartMass));
   }
-}
-
-void Room::modifyMass(Cell& cell, float value)
-{
-  cell.modifyMass(value);
-}
-
-void Room::modifyMass(Avatar& avatar, float value)
-{
-  avatar.modifyMass(value);
 }
 
 void Room::solveCellLocation(Cell& cell)
@@ -1105,7 +1094,7 @@ void Room::produceMothers()
     int bonus = mother->mass - m_config.motherStartMass;
     if (bonus > 0) {
       cnt = bonus > 100 ? 20 : bonus > 25 ? 5 : 1;
-      modifyMass(*mother, -cnt);
+      mother->modifyMass(-cnt);
     } else {
       cnt = mother->foodCount < 20 ? 5 : 1;
     }
@@ -1208,7 +1197,7 @@ void Room::spawnViruses(uint32_t count)
 {
   for (; count>0; --count) {
     auto& obj = createVirus();
-    modifyMass(obj, m_config.virusStartMass);
+    obj.modifyMass(m_config.virusStartMass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
@@ -1217,7 +1206,7 @@ void Room::spawnPhages(uint32_t count)
 {
   for (; count>0; --count) {
     auto& obj = createPhage();
-    modifyMass(obj, m_config.phageStartMass);
+    obj.modifyMass(m_config.phageStartMass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
@@ -1226,7 +1215,7 @@ void Room::spawnMothers(uint32_t count)
 {
   for (; count>0; --count) {
     auto& obj = createMother();
-    modifyMass(obj, m_config.motherStartMass);
+    obj.modifyMass(m_config.motherStartMass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
@@ -1249,7 +1238,7 @@ void Room::spawnBot(uint32_t id, const std::string& name)
   }
   if (bot->isDead()) {
     auto& obj = createAvatar();
-    modifyMass(obj, m_config.botStartMass);
+    obj.modifyMass(m_config.botStartMass);
     int radius = obj.radius;
     obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
     obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
@@ -1362,6 +1351,7 @@ void Room::onMotionStarted(Cell* cell)
 {
   m_activatedCells.insert(cell);
   m_modifiedCells.insert(cell);
+  spdlog::info("onMotionStarted {}", cell->id);
 }
 
 void Room::onCellMassChange(Cell* cell, float deltaMass)

@@ -105,8 +105,6 @@ private:
   void explode(Avatar& avatar);
   void explode(Mother& mother);
 
-  void modifyMass(Cell& cell, float value);
-  void modifyMass(Avatar& avatar, float value);
   void solveCellLocation(Cell& cell);
   void destroyOutdatedCells();
   void handlePlayerRequests();
