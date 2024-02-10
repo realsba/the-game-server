@@ -197,8 +197,6 @@ private:
   std::vector<Phage*>         m_zombiePhages;
   std::vector<Mother*>        m_zombieMothers;
   std::vector<uint32_t>       m_removedCellIds;
-  std::vector<Avatar*>        m_createdAvatars;
-  std::set<Avatar*>           m_processingAvatars;
   std::vector<Cell*>          m_createdCells;
   std::set<Cell*>             m_modifiedCells;
   std::set<Cell*>             m_activatedCells;

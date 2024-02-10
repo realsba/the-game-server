@@ -849,7 +849,6 @@ void Room::update()
 
   // TODO: optimize amount of containers
   for (Avatar* avatar : m_zombieAvatars) {
-    m_processingAvatars.erase(avatar);
     m_avatarContainer.erase(avatar);
     removeCell(avatar);
   }
@@ -919,10 +918,7 @@ Avatar& Room::createAvatar()
 {
   auto* cell = new Avatar(*this, m_cellNextId.pop());
   m_avatarContainer.insert(cell);
-  m_createdAvatars.push_back(cell);
-  m_createdCells.push_back(cell);
-  m_modifiedCells.insert(cell);
-  m_forCheckRandomPos.insert(cell);
+  updateNewCellRegistries(cell);
   return *cell;
 }
 
@@ -1232,6 +1228,7 @@ void Room::handlePlayerRequests()
       player->setPointer(it.second);
       const auto& avatars = player->getAvatars();
       m_modifiedCells.insert(avatars.begin(), avatars.end());
+      m_processingCells.insert(avatars.begin(), avatars.end());
     }
   }
   m_pointerRequests.clear();
@@ -1278,15 +1275,6 @@ void Room::simulate(float dt)
     player->applyDestinationAttractionForce(m_tick);
     player->recombine(m_tick);
   }
-  for (auto* avatar : m_processingAvatars) {
-    avatar->applyResistanceForce();
-    if (avatar->force) {
-      m_modifiedCells.insert(avatar);
-    }
-    avatar->simulate(dt);
-    solveCellLocation(*avatar);
-    m_gridmap.update(avatar);
-  }
   for (auto* cell : m_processingCells) {
     cell->applyResistanceForce();
     if (cell->force) {
@@ -1296,17 +1284,7 @@ void Room::simulate(float dt)
     solveCellLocation(*cell);
     m_gridmap.update(cell);
   }
-  for (Avatar* avatar : m_processingAvatars) {
-    if (!avatar->zombie) {
-      m_gridmap.query(avatar->getAABB(), [avatar](Cell& target) -> bool {
-        if (avatar != &target && !avatar->zombie && !target.zombie) {
-          avatar->interact(target);
-        }
-        return !avatar->zombie;
-      });
-    }
-  }
-  for (Cell* cell : m_processingCells) {
+  for (auto* cell : m_processingCells) {
     if (!cell->zombie) {
       m_gridmap.query(cell->getAABB(), [cell](Cell& target) -> bool {
         if (cell != &target && !cell->zombie && !target.zombie) {
@@ -1377,10 +1355,6 @@ void Room::synchronize()
   m_leaderboard.erase(last, m_leaderboard.end());
   m_modifiedCells.clear();
   m_removedCellIds.clear();
-  if (!m_createdAvatars.empty()) {
-    m_processingAvatars.insert(m_createdAvatars.begin(), m_createdAvatars.end());
-    m_createdAvatars.clear();
-  }
   if (!m_createdCells.empty()) {
     for (Cell* cell : m_createdCells) {
       m_gridmap.insert(cell);
