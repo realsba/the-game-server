@@ -29,8 +29,6 @@
 #include <spdlog/spdlog.h>
 #include <chrono>
 
-using namespace std::chrono;
-
 Room::Room(asio::any_io_executor executor, uint32_t id)
   : m_executor(std::move(executor))
   , m_updateTimer(m_executor, std::bind_front(&Room::update, this))
@@ -79,7 +77,7 @@ void Room::init(const RoomConfig& config)
   m_checkMothersTimer.setInterval(m_config.checkMothersInterval);
   m_produceMothersTimer.setInterval(m_config.produceMothersInterval);
 
-  m_simulationInterval = duration_cast<duration<double>>(m_config.updateInterval).count();
+  m_simulationInterval = std::chrono::duration_cast<std::chrono::duration<double>>(m_config.updateInterval).count();
   m_simulationInterval /= m_config.simulationsPerUpdate;
 
   m_cellMinRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI);
@@ -797,23 +795,13 @@ void Room::attract(Avatar& initiator, const Vec2D& point)
   initiator.force += (velocity - initiator.velocity) * (initiator.mass * m_config.botForceCornerRatio / dist);
 }
 
-void Room::integrate(Avatar& initiator, const Vec2D& point)
-{
-  float dist(geometry::squareDistance(point, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((initiator.position - point).direction() * initiator.maxSpeed);
-  initiator.force += (velocity - initiator.velocity) * (initiator.mass * m_config.botForceCornerRatio / dist);
-}
-
 void Room::update()
 {
   auto now{TimePoint::clock::now()};
   auto deltaTime{now - m_lastUpdate};
   m_lastUpdate = now;
   ++m_tick;
-  auto dt = duration_cast<duration<double>>(deltaTime).count(); // TODO: replace to deltaTime
+  auto dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
 
   generate(dt);
   handlePlayerRequests();
@@ -848,36 +836,20 @@ void Room::update()
   }
 
   // TODO: optimize amount of containers
-  for (Avatar* avatar : m_zombieAvatars) {
-    m_avatarContainer.erase(avatar);
-    removeCell(avatar);
-  }
-  m_zombieAvatars.clear();
-  for (Food* food : m_zombieFoods) {
-    m_foodContainer.erase(food);
-    removeCell(food);
-  }
-  m_zombieFoods.clear();
-  for (Mass* mass : m_zombieMasses) {
-    m_massContainer.erase(mass);
-    removeCell(mass);
-  }
-  m_zombieMasses.clear();
-  for (Virus* virus : m_zombieViruses) {
-    m_virusContainer.erase(virus);
-    removeCell(virus);
-  }
-  m_zombieViruses.clear();
-  for (Phage* phage : m_zombiePhages) {
-    m_phageContainer.erase(phage);
-    removeCell(phage);
-  }
-  m_zombiePhages.clear();
-  for (Mother* mother : m_zombieMothers) {
-    m_motherContainer.erase(mother);
-    removeCell(mother);
-  }
-  m_zombieMothers.clear();
+  auto removeZombieCells = [&](auto& source, auto& target)
+    {
+      for (auto* cell : source) {
+        target.erase(cell);
+        removeCell(cell);
+      }
+      source.clear();
+    };
+  removeZombieCells(m_zombieAvatars, m_avatarContainer);
+  removeZombieCells(m_zombieFoods, m_foodContainer);
+  removeZombieCells(m_zombieMasses, m_massContainer);
+  removeZombieCells(m_zombieViruses, m_virusContainer);
+  removeZombieCells(m_zombiePhages, m_phageContainer);
+  removeZombieCells(m_zombieMothers, m_motherContainer);
 
   std::vector<Mother*> mothers;
   mothers.reserve(m_motherContainer.size());

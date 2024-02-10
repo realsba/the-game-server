@@ -103,7 +103,6 @@ private:
   void attract(Avatar& initiator, Phage& target);
   void attract(Avatar& initiator, Mother& target);
   void attract(Avatar& initiator, const Vec2D& point);
-  void integrate(Avatar& initiator, const Vec2D& point); // * TODO: it is never used
 
   void update();
 
@@ -145,7 +144,7 @@ private:
 
   void send(const BufferPtr& buffer);
   void sendPacketPlayer(const Player& player);
-  void sendPacketPlayerRemove(uint32_t playerId); // * TODO: it is never used
+  void sendPacketPlayerRemove(uint32_t playerId);
   void sendPacketPlayerJoin(uint32_t playerId);
   void sendPacketPlayerLeave(uint32_t playerId);
   void sendPacketPlayerBorn(uint32_t playerId);

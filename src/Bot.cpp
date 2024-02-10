@@ -30,19 +30,19 @@ void Bot::choseTarget()
     return;
   }
 
-  Cell* eatTarget = nullptr;
-  m_gridmap.query(getViewBox(), [&](Cell& target) -> bool {
-    if (target.player != this && !target.zombie && target.isAttractiveFor(*mainAvatar)) {
-      if (!eatTarget || eatTarget->mass < target.mass) {
-        eatTarget = &target;
+  Cell* target = nullptr;
+  m_gridmap.query(getViewBox(), [&](Cell& cell) -> bool {
+    if (cell.player != this && !cell.zombie && cell.isAttractiveFor(*mainAvatar)) {
+      if (!target || target->mass < cell.mass) {
+        target = &cell;
       }
     }
     return true;
   });
 
-  if (eatTarget) {
-    m_pointer = eatTarget->position - m_position;
+  if (target) {
+    m_pointer = target->position - m_position;
   }
 
-  m_target = eatTarget;
+  m_target = target;
 }
