@@ -25,6 +25,7 @@ public:
 protected:
   void navigate();
   void choseTarget();
+  void startMotion();
 
 private:
   Timer m_navigationTimer;
