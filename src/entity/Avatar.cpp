@@ -90,7 +90,7 @@ void Avatar::attract(Avatar& avatar)
 
 bool Avatar::isAttractiveFor(const Avatar& avatar)
 {
-  return mass < 1.25 * avatar.mass;
+  return mass * 1.25 < avatar.mass;
 }
 
 void Avatar::recombination(float t)

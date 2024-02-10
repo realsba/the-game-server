@@ -5,6 +5,7 @@
 #define THEGAME_ENTITY_CELL_HPP
 
 #include "src/geometry/Circle.hpp"
+#include "src/Event.hpp"
 #include "src/TimePoint.hpp"
 #include "src/types.hpp"
 
@@ -26,8 +27,7 @@ class Mother;
 class Cell : public Circle {
 public:
   explicit Cell(Room& room, uint32_t id = 0);
-
-  virtual ~Cell() = default;
+  virtual ~Cell();
 
   [[nodiscard]] AABB getAABB() const;
 
@@ -51,6 +51,9 @@ public:
 
   virtual void attract(Avatar& avatar);
   virtual bool isAttractiveFor(const Avatar& avatar);
+
+  void subscribeToDestroyEvent(void* tag, Event<Cell*>::Handler&& handler);
+  void unsubscribeFromDestroyEvent(void* tag);
 
   enum Type {
     typeAvatar = 1,
@@ -81,6 +84,9 @@ public:
   bool              newly {true};
   bool              zombie {false};
   bool              materialPoint {false};
+
+private:
+  Event<Cell*>      m_destroyEvent;
 };
 
 #endif /* THEGAME_ENTITY_CELL_HPP */

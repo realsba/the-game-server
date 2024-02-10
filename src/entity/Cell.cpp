@@ -17,6 +17,11 @@ Cell::Cell(Room& room, uint32_t id)
   resistanceRatio = config.resistanceRatio;
 }
 
+Cell::~Cell()
+{
+  m_destroyEvent.notify(this);
+}
+
 AABB Cell::getAABB() const
 {
   Vec2D delta(radius, radius);
@@ -96,4 +101,14 @@ void Cell::attract(Avatar& avatar) { }
 bool Cell::isAttractiveFor(const Avatar& avatar)
 {
   return false;
+}
+
+void Cell::subscribeToDestroyEvent(void* tag, Event<Cell*>::Handler&& handler)
+{
+  m_destroyEvent.subscribe(tag, std::move(handler));
+}
+
+void Cell::unsubscribeFromDestroyEvent(void* tag)
+{
+  m_destroyEvent.unsubscribe(tag);
 }

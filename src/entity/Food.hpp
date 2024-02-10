@@ -19,6 +19,7 @@ public:
   void interact(Mother& mother) override;
 
   void attract(Avatar& avatar) override;
+  bool isAttractiveFor(const Avatar& avatar) override;
 };
 
 #endif /* THEGAME_ENTITY_FOOD_HPP */

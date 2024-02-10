@@ -109,11 +109,6 @@ motherExplodeMass = 3000
 motherColor = 12
 motherCheckRadius = 60
 
-spawnFoodMass = 15.0
-spawnVirusMass = 25.0
-spawnPhageMass = 25.0
-spawnMotherMass = 25.0
-
 [room.generator.food]
 interval = '1s'
 quantity = 3

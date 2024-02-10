@@ -131,6 +131,9 @@ void Room::stop()
   m_virusGeneratorTimer.stop();
   m_phageGeneratorTimer.stop();
   m_motherGeneratorTimer.stop();
+  for (auto* bot : m_bots) {
+    bot->stop();
+  }
 }
 
 uint32_t Room::getId() const
@@ -853,6 +856,9 @@ void Room::update()
   // TODO: optimize amount of containers
   auto removeZombieCells = [&](auto& source, auto& target)
     {
+      if (source.empty()) {
+        return;
+      }
       for (auto* cell : source) {
         target.erase(cell);
         removeCell(cell);
@@ -1208,9 +1214,8 @@ void Room::handlePlayerRequests()
 
 void Room::simulate(float dt)
 {
-  for (auto* bot : m_bots) {
-    bot->choseTarget();
-  }
+  m_processingCells.insert(m_avatarContainer.begin(), m_avatarContainer.end()); // TODO: for bots, replace to signals
+
   for (auto* player : m_fighters) {
     player->applyDestinationAttractionForce(m_tick);
     player->recombine(m_tick);
@@ -1465,9 +1470,10 @@ void Room::spawnBot(uint32_t id, const std::string& name)
   if (it != m_players.end()) {
     bot = dynamic_cast<Bot*>(it->second);
   } else {
-    bot = new Bot(id, *this, m_gridmap);
+    bot = new Bot(m_executor, id, *this, m_gridmap);
     bot->name = name.empty() ? "Bot " + std::to_string(id) : name;
     bot->online = true;
+    bot->start();
     m_players.emplace(bot->getId(), bot);
     recalculateFreeSpace();
     m_bots.emplace(bot);

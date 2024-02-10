@@ -49,3 +49,8 @@ void Food::attract(Avatar& avatar)
 {
   room.attract(avatar, *this);
 }
+
+bool Food::isAttractiveFor(const Avatar& avatar)
+{
+  return true;
+}
