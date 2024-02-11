@@ -3,7 +3,7 @@
 
 #include "Food.hpp"
 
-#include "Mass.hpp"
+#include "Bullet.hpp"
 #include "Virus.hpp"
 #include "Phage.hpp"
 #include "Mother.hpp"

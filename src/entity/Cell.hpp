@@ -20,7 +20,7 @@ class AABB;
 
 class Avatar;
 class Food;
-class Mass;
+class Bullet;
 class Virus;
 class Phage;
 class Mother;
@@ -46,7 +46,7 @@ public:
   virtual void interact(Cell&);
   virtual void interact(Avatar&);
   virtual void interact(Food&);
-  virtual void interact(Mass&);
+  virtual void interact(Bullet&);
   virtual void interact(Virus&);
   virtual void interact(Phage&);
   virtual void interact(Mother&);

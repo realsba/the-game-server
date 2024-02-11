@@ -4,7 +4,7 @@
 #include "Avatar.hpp"
 
 #include "Food.hpp"
-#include "Mass.hpp"
+#include "Bullet.hpp"
 #include "Virus.hpp"
 #include "Phage.hpp"
 #include "Mother.hpp"
@@ -108,18 +108,18 @@ void Avatar::interact(Food& food)
   }
 }
 
-void Avatar::interact(Mass& target)
+void Avatar::interact(Bullet& bullet)
 {
-  if (mass < 1.25 * target.mass || player == target.player && target.velocity) {
+  if (mass < 1.25 * bullet.mass || player == bullet.player && bullet.velocity) {
     return;
   }
-  auto d = radius - 0.6 * target.radius;
-  if (geometry::squareDistance(position, target.position) < d * d) {
-    if (player != target.player) {
+  auto d = radius - 0.6 * bullet.radius;
+  if (geometry::squareDistance(position, bullet.position) < d * d) {
+    if (player != bullet.player) {
       player->wakeUp();
     }
-    modifyMass(target.mass);
-    target.kill();
+    modifyMass(bullet.mass);
+    bullet.kill();
   }
 }
 

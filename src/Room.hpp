@@ -25,7 +25,7 @@ class Player;
 class Bot;
 class Avatar;
 class Food;
-class Mass;
+class Bullet;
 class Virus;
 class Phage;
 class Mother;
@@ -80,7 +80,7 @@ private:
 
   void attract(Avatar& initiator, Avatar& target);
   void attract(Avatar& initiator, Food& target);
-  void attract(Avatar& initiator, Mass& target);
+  void attract(Avatar& initiator, Bullet& target);
   void attract(Avatar& initiator, Virus& target);
   void attract(Avatar& initiator, Phage& target);
   void attract(Avatar& initiator, Mother& target);
@@ -91,7 +91,7 @@ private:
   Vec2D getRandomPosition(uint32_t radius) const;
   Avatar& createAvatar();
   Food& createFood();
-  Mass& createMass();
+  Bullet& createBullet();
   Virus& createVirus();
   Phage& createPhage();
   Mother& createMother();
@@ -136,7 +136,7 @@ private:
 
   void onAvatarDeath(Cell* cell);
   void onFoodDeath(Cell* cell);
-  void onMassDeath(Cell* cell);
+  void onBulletDeath(Cell* cell);
   void onVirusDeath(Cell* cell);
   void onPhageDeath(Cell* cell);
   void onMotherDeath(Cell* cell);
@@ -147,7 +147,7 @@ private:
 private:
   friend class Avatar;
   friend class Food;
-  friend class Mass;
+  friend class Bullet;
   friend class Virus;
   friend class Phage;
   friend class Mother;
@@ -183,14 +183,14 @@ private:
   NextId                      m_cellNextId;
   std::set<Avatar*>           m_avatarContainer;
   std::set<Food*>             m_foodContainer;
-  std::set<Mass*>             m_massContainer;
+  std::set<Bullet*>           m_bulletContainer;
   std::set<Virus*>            m_virusContainer;
   std::set<Phage*>            m_phageContainer;
   std::set<Mother*>           m_motherContainer;
   std::set<Cell*>             m_cells;
   std::vector<Cell*>          m_zombieAvatars;
   std::vector<Cell*>          m_zombieFoods;
-  std::vector<Cell*>          m_zombieMasses;
+  std::vector<Cell*>          m_zombieBullets;
   std::vector<Cell*>          m_zombieViruses;
   std::vector<Cell*>          m_zombiePhages;
   std::vector<Cell*>          m_zombieMothers;

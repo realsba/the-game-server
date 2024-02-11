@@ -1,7 +1,7 @@
-// file   : src/entity/Mass.cpp
+// file   : src/entity/Bullet.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#include "Mass.hpp"
+#include "Bullet.hpp"
 
 #include "Avatar.hpp"
 #include "Virus.hpp"
@@ -10,43 +10,43 @@
 
 #include "src/Room.hpp"
 
-Mass::Mass(Room& room, uint32_t id)
+Bullet::Bullet(Room& room, uint32_t id)
   : Cell(room, id)
 {
   type = typeMass;
 }
 
-void Mass::interact(Cell& cell)
+void Bullet::interact(Cell& cell)
 {
   cell.interact(*this);
 }
 
-void Mass::interact(Avatar& avatar)
+void Bullet::interact(Avatar& avatar)
 {
   avatar.interact(*this);
 }
 
-void Mass::interact(Virus& virus)
+void Bullet::interact(Virus& virus)
 {
   virus.interact(*this);
 }
 
-void Mass::interact(Phage& phage)
+void Bullet::interact(Phage& phage)
 {
   phage.interact(*this);
 }
 
-void Mass::interact(Mother& mother)
+void Bullet::interact(Mother& mother)
 {
   mother.interact(*this);
 }
 
-void Mass::attract(Avatar& avatar)
+void Bullet::attract(Avatar& avatar)
 {
   room.attract(avatar, *this);
 }
 
-bool Mass::isAttractiveFor(const Avatar& avatar)
+bool Bullet::isAttractiveFor(const Avatar& avatar)
 {
   return true;
 }

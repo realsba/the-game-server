@@ -10,7 +10,7 @@
 
 #include "entity/Avatar.hpp"
 #include "entity/Food.hpp"
-#include "entity/Mass.hpp"
+#include "entity/Bullet.hpp"
 #include "entity/Virus.hpp"
 #include "entity/Phage.hpp"
 #include "entity/Mother.hpp"
@@ -58,7 +58,7 @@ Room::~Room()
   for (auto* it : m_foodContainer) {
     delete it;
   }
-  for (auto* it : m_massContainer) {
+  for (auto* it : m_bulletContainer) {
     delete it;
   }
   for (auto* it : m_virusContainer) {
@@ -460,7 +460,7 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
 //      for (auto* item : m_foodContainer) {
 //        mass += item->mass;
 //      }
-//      for (auto* item : m_massContainer) {
+//      for (auto* item : m_bulletContainer) {
 //        mass += item->mass;
 //      }
 //      for (auto* item : m_virusContainer) {
@@ -480,7 +480,7 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
 //        << "; totalMass=" << m_mass << ":" << mass
 //        << "; avatars=" << m_avatarContainer.size()
 //        << "; food=" << m_foodContainer.size()
-//        << "; masses=" << m_massContainer.size()
+//        << "; masses=" << m_bulletContainer.size()
 //        << "; viruses=" << m_virusContainer.size()
 //        << "; phages=" << m_phageContainer.size()
 //        << "; mothers=" << m_motherContainer.size();
@@ -527,7 +527,7 @@ void Room::attract(Avatar& initiator, Food& target)
   initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceFoodRatio / dist);
 }
 
-void Room::attract(Avatar& initiator, Mass& target)
+void Room::attract(Avatar& initiator, Bullet& target)
 {
   float dist(geometry::squareDistance(target.position, initiator.position));
   if (dist < m_config.eps) {
@@ -630,7 +630,7 @@ void Room::update()
     };
   removeZombieCells(m_zombieAvatars, m_avatarContainer);
   removeZombieCells(m_zombieFoods, m_foodContainer);
-  removeZombieCells(m_zombieMasses, m_massContainer);
+  removeZombieCells(m_zombieBullets, m_bulletContainer);
   removeZombieCells(m_zombieViruses, m_virusContainer);
   removeZombieCells(m_zombiePhages, m_phageContainer);
   removeZombieCells(m_zombieMothers, m_motherContainer);
@@ -675,6 +675,7 @@ Avatar& Room::createAvatar()
   auto* cell = new Avatar(*this, m_cellNextId.pop());
   cell->subscribeToDeathEvent(this, std::bind(&Room::onAvatarDeath, this, _1));
   cell->subscribeToMassChangeEvent(this, std::bind(&Room::onAvatarMassChange, this, _1, _2));
+  cell->subscribeToMotionStartedEvent(this, std::bind(&Room::onMotionStarted, this, _1));
   m_avatarContainer.insert(cell);
   updateNewCellRegistries(cell);
   return *cell;
@@ -689,11 +690,11 @@ Food& Room::createFood()
   return *cell;
 }
 
-Mass& Room::createMass()
+Bullet& Room::createBullet()
 {
-  auto* cell = new Mass(*this, m_cellNextId.pop());
-  cell->subscribeToDeathEvent(this, std::bind(&Room::onMassDeath, this, _1));
-  m_massContainer.insert(cell);
+  auto* cell = new Bullet(*this, m_cellNextId.pop());
+  cell->subscribeToDeathEvent(this, std::bind(&Room::onBulletDeath, this, _1));
+  m_bulletContainer.insert(cell);
   updateNewCellRegistries(cell, false);
   return *cell;
 }
@@ -765,7 +766,7 @@ bool Room::eject(Avatar& avatar, const Vec2D& point)
     return false;
   }
   avatar.modifyMass(-massLoss);
-  auto& obj = createMass();
+  auto& obj = createBullet();
   obj.player = avatar.player;
   obj.creator = &avatar;
   obj.color = avatar.color;
@@ -971,7 +972,7 @@ void Room::handlePlayerRequests()
 
 void Room::simulate(double dt)
 {
-  m_processingCells.insert(m_avatarContainer.begin(), m_avatarContainer.end()); // TODO: for bots, replace to signals
+  //m_processingCells.insert(m_avatarContainer.begin(), m_avatarContainer.end()); // TODO: for bots, replace to signals
 
   for (auto* player : m_fighters) {
     player->applyDestinationAttractionForce(m_tick);
@@ -1323,10 +1324,10 @@ void Room::onFoodDeath(Cell* cell)
   m_zombieFoods.push_back(cell);
 }
 
-void Room::onMassDeath(Cell* cell)
+void Room::onBulletDeath(Cell* cell)
 {
   m_mass -= cell->mass;
-  m_zombieMasses.push_back(cell);
+  m_zombieBullets.push_back(cell);
 }
 
 void Room::onVirusDeath(Cell* cell)

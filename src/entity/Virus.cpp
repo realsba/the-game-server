@@ -5,7 +5,7 @@
 
 #include "Avatar.hpp"
 #include "Food.hpp"
-#include "Mass.hpp"
+#include "Bullet.hpp"
 #include "Phage.hpp"
 #include "Mother.hpp"
 
@@ -38,16 +38,16 @@ void Virus::interact(Food& food)
   }
 }
 
-void Virus::interact(Mass& target)
+void Virus::interact(Bullet& bullet)
 {
-  auto distance = radius + target.radius;
-  if (geometry::squareDistance(position, target.position) < distance * distance) {
-    auto relativeVelocity = velocity - target.velocity;
-    auto normal = (position - target.position).direction();
-    auto impulse = relativeVelocity * normal * (2.0f * mass * target.mass / (mass + target.mass));
+  auto distance = radius + bullet.radius;
+  if (geometry::squareDistance(position, bullet.position) < distance * distance) {
+    auto relativeVelocity = velocity - bullet.velocity;
+    auto normal = (position - bullet.position).direction();
+    auto impulse = relativeVelocity * normal * (2.0f * mass * bullet.mass / (mass + bullet.mass));
     velocity -= normal * impulse / mass;
     startMotion();
-    target.kill();
+    bullet.kill();
   }
 }
 

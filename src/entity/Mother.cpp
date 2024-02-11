@@ -4,7 +4,7 @@
 #include "Mother.hpp"
 
 #include "Food.hpp"
-#include "Mass.hpp"
+#include "Bullet.hpp"
 #include "Virus.hpp"
 #include "Phage.hpp"
 
@@ -40,12 +40,12 @@ void Mother::interact(Food& food)
   }
 }
 
-void Mother::interact(Mass& target)
+void Mother::interact(Bullet& bullet)
 {
-  auto distance = radius - 0.25 * target.radius;
-  if (geometry::squareDistance(position, target.position) < distance * distance) {
-    modifyMass(target.mass);
-    target.kill();
+  auto distance = radius - 0.25 * bullet.radius;
+  if (geometry::squareDistance(position, bullet.position) < distance * distance) {
+    modifyMass(bullet.mass);
+    bullet.kill();
   }
 }
 

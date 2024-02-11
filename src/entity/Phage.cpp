@@ -4,7 +4,7 @@
 #include "Phage.hpp"
 
 #include "Food.hpp"
-#include "Mass.hpp"
+#include "Bullet.hpp"
 #include "Virus.hpp"
 #include "Mother.hpp"
 
@@ -37,7 +37,7 @@ void Phage::interact(Food& food)
   }
 }
 
-void Phage::interact(Mass& target)
+void Phage::interact(Bullet& target)
 {
   auto distance = radius + target.radius;
   if (geometry::squareDistance(position, target.position) < distance * distance) {

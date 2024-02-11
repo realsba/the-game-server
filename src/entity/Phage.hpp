@@ -13,7 +13,7 @@ public:
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;
   void interact(Food& food) override;
-  void interact(Mass& mass) override;
+  void interact(Bullet& mass) override;
   void interact(Virus& virus) override;
   void interact(Phage& other) override;
   void interact(Mother& mother) override;

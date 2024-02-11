@@ -97,7 +97,7 @@ void Cell::interact(Avatar&) { }
 
 void Cell::interact(Food&) { }
 
-void Cell::interact(Mass&) { }
+void Cell::interact(Bullet&) { }
 
 void Cell::interact(Virus&) { }
 

@@ -18,12 +18,12 @@ add_executable(${PROJECT_NAME}
     src/boost_mysql.cpp
     src/entity/Avatar.cpp
     src/entity/Avatar.hpp
+    src/entity/Bullet.cpp
+    src/entity/Bullet.hpp
     src/entity/Cell.cpp
     src/entity/Cell.hpp
     src/entity/Food.cpp
     src/entity/Food.hpp
-    src/entity/Mass.cpp
-    src/entity/Mass.hpp
     src/entity/Mother.cpp
     src/entity/Mother.hpp
     src/entity/Phage.cpp
