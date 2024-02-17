@@ -1012,46 +1012,10 @@ void Room::synchronize()
     m_activatedCells.clear();
   }
 
-  Player* topPlayer = nullptr;
-  for (Player* player : m_leaderboard) {
-    if (!player->isDead()) {
-      topPlayer = player;
-      break;
-    }
-  }
-
-  auto last = m_leaderboard.end();
   for (Player* player : m_fighters) {
     player->calcParams();
     player->synchronize(m_tick, m_modifiedCells, m_removedCellIds);
-    if (player->isDead()) {
-      last = std::remove(m_leaderboard.begin(), last, player);
-      m_updateLeaderboard = true;
-      sendPacketPlayerDead(player->getId());
-      Player* observable = player->killer;
-      if (!observable || observable->isDead()) {
-        observable = topPlayer;
-      }
-      const auto& buffer = std::make_shared<Buffer>();
-      if (observable) {
-        PacketSpectate packet(*observable);
-        packet.format(*buffer);
-        for (const auto& sess : player->getSessions()) {
-          sess->send(buffer);
-          observable->addSession(sess);
-          sess->observable(observable);
-        }
-      } else {
-        EmptyPacket packet(OutputPacketTypes::Finish);
-        packet.format(*buffer);
-        for (const auto& sess : player->getSessions()) {
-          sess->send(buffer);
-        }
-      }
-      player->clearSessions();
-    }
   }
-  m_leaderboard.erase(last, m_leaderboard.end());
   m_modifiedCells.clear();
   m_removedCellIds.clear();
 
@@ -1312,6 +1276,39 @@ void Room::onAvatarDeath(Cell* cell)
   m_mass -= cell->mass;
   m_updateLeaderboard = true;
   m_zombieAvatars.push_back(cell);
+
+  auto* player = cell->player;
+  if (player->isDead()) {
+    sendPacketPlayerDead(player->getId());
+
+    auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), player);
+    if (it != m_leaderboard.end()) {
+      m_leaderboard.erase(it);
+    }
+    m_updateLeaderboard = true;
+
+    auto* observable = player->killer;
+    if (!observable || observable->isDead()) {
+      observable = m_leaderboard.empty() ? nullptr : *m_leaderboard.begin();
+    }
+    const auto& buffer = std::make_shared<Buffer>();
+    if (observable) {
+      PacketSpectate packet(*observable);
+      packet.format(*buffer);
+      for (const auto& sess : player->getSessions()) {
+        sess->send(buffer);
+        observable->addSession(sess);
+        sess->observable(observable);
+      }
+    } else {
+      EmptyPacket packet(OutputPacketTypes::Finish);
+      packet.format(*buffer);
+      for (const auto& sess : player->getSessions()) {
+        sess->send(buffer);
+      }
+    }
+    player->clearSessions();
+  }
 }
 
 void Room::onFoodDeath(Cell* cell)
