@@ -53,7 +53,11 @@ public:
   void recombine(uint32_t tick);
   void recombine(Avatar& initiator, Avatar& target);
 
+protected:
+  void startMotion();
+
 // * TODO: make private
+public:
   std::string name;
   Player*     arrowPlayer {nullptr};
   Player*     killer {nullptr};

@@ -105,7 +105,7 @@ private:
   void explode(Avatar& avatar);
   void explode(Mother& mother);
 
-  void solveCellLocation(Cell& cell);
+  void resolveCellPosition(Cell& cell);
   void destroyOutdatedCells();
   void handlePlayerRequests();
   void simulate(double dt);

@@ -37,9 +37,10 @@ void Cell::modifyMass(float value)
   m_massChangeEvent.notify(this, value);
 }
 
-void Cell::applyVelocity(const Vec2D& value)
+void Cell::modifyVelocity(const Vec2D& value)
 {
   velocity += value;
+  m_motionStartedEvent.notify(this);
 }
 
 void Cell::applyImpulse(const Vec2D& value)

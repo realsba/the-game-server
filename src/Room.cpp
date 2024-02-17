@@ -776,10 +776,9 @@ bool Room::eject(Avatar& avatar, const Vec2D& point)
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.applyVelocity(direction * m_config.avatarEjectVelocity);
+    obj.modifyVelocity(direction * m_config.avatarEjectVelocity);
     obj.position += direction * avatar.radius;
   }
-  m_updateLeaderboard = true;
   return true;
 }
 
@@ -799,7 +798,7 @@ bool Room::split(Avatar& avatar, const Vec2D& point)
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.applyVelocity(direction * m_config.avatarSplitVelocity);
+    obj.modifyVelocity(direction * m_config.avatarSplitVelocity);
   }
   obj.recombination(m_config.avatarRecombineTime);
   avatar.recombination(m_config.avatarRecombineTime);
@@ -830,7 +829,7 @@ void Room::explode(Avatar& avatar)
     Vec2D direction(sin(angle), cos(angle));
     obj.position = avatar.position + direction * (avatar.radius + obj.radius);
     obj.color = avatar.color;
-    obj.applyVelocity(direction * m_config.explodeVelocity);
+    obj.modifyVelocity(direction * m_config.explodeVelocity);
     obj.recombination(m_config.avatarRecombineTime);
     avatar.player->addAvatar(&obj);
     if (avatars.size() >= m_config.playerMaxCells) {
@@ -852,12 +851,12 @@ void Room::explode(Mother& mother)
     float angle = (m_generator() % 3600) * M_PI / 1800;
     Vec2D direction(sin(angle), cos(angle));
     obj.position = mother.position;
-    obj.applyVelocity(direction * m_config.explodeVelocity);
+    obj.modifyVelocity(direction * m_config.explodeVelocity);
     mother.modifyMass(-static_cast<float>(m_config.motherStartMass));
   }
 }
 
-void Room::solveCellLocation(Cell& cell)
+void Room::resolveCellPosition(Cell& cell)
 {
   AABB box;
   box.b.x = m_config.width;
@@ -928,11 +927,8 @@ void Room::handlePlayerRequests()
   for (const auto& it : m_pointerRequests) {
     const auto& sess = it.first;
     auto* player = sess->player();
-    if (player && !player->isDead()) {
+    if (player) {
       player->setPointer(it.second);
-      const auto& avatars = player->getAvatars();
-      m_modifiedCells.insert(avatars.begin(), avatars.end());
-      m_processingCells.insert(avatars.begin(), avatars.end());
     }
   }
   m_pointerRequests.clear();
@@ -984,7 +980,7 @@ void Room::simulate(double dt)
       m_modifiedCells.insert(cell);
     }
     cell->simulate(dt);
-    solveCellLocation(*cell);
+    resolveCellPosition(*cell);
     m_gridmap.update(cell);
   }
   for (auto* cell : m_processingCells) {
@@ -1058,6 +1054,7 @@ void Room::synchronize()
   m_leaderboard.erase(last, m_leaderboard.end());
   m_modifiedCells.clear();
   m_removedCellIds.clear();
+
   if (!m_createdCells.empty()) {
     for (Cell* cell : m_createdCells) {
       m_gridmap.insert(cell);
@@ -1066,7 +1063,7 @@ void Room::synchronize()
     m_createdCells.clear();
   }
 
-  std::erase_if(m_fighters, [&](auto* player) { return player->isDead(); });
+  std::erase_if(m_fighters, [&](Player* player) { return player->isDead(); });
 }
 
 void Room::updateLeaderboard()
@@ -1114,7 +1111,7 @@ void Room::produceMothers()
       obj.mass = m_config.foodMass;
       obj.radius = m_config.foodRadius;
       float magnitude = m_config.foodMinVelocity + (m_generator() % impulse);
-      obj.applyVelocity(direction * magnitude);
+      obj.modifyVelocity(direction * magnitude);
       m_mass += obj.mass;
     }
   }
@@ -1248,7 +1245,6 @@ void Room::spawnBot(uint32_t id, const std::string& name)
     bot->calcParams();
     bot->wakeUp();
     m_leaderboard.emplace_back(bot);
-    m_updateLeaderboard = true;
     m_fighters.insert(bot);
     sendPacketPlayerBorn(bot->getId());
   }

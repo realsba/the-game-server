@@ -33,7 +33,7 @@ public:
   [[nodiscard]] AABB getAABB() const;
 
   virtual void modifyMass(float value);
-  void applyVelocity(const Vec2D& value);
+  void modifyVelocity(const Vec2D& value);
   void applyImpulse(const Vec2D& value);
   void applyResistanceForce();
 
@@ -43,13 +43,13 @@ public:
   virtual void simulate(float dt);
   virtual void format(Buffer& buffer);
 
-  virtual void interact(Cell&);
-  virtual void interact(Avatar&);
-  virtual void interact(Food&);
-  virtual void interact(Bullet&);
-  virtual void interact(Virus&);
-  virtual void interact(Phage&);
-  virtual void interact(Mother&);
+  virtual void interact(Cell& cell);
+  virtual void interact(Avatar& avatar);
+  virtual void interact(Food& food);
+  virtual void interact(Bullet& bullet);
+  virtual void interact(Virus& virus);
+  virtual void interact(Phage& phage);
+  virtual void interact(Mother& mother);
 
   virtual void attract(Avatar& avatar);
   virtual bool isAttractiveFor(const Avatar& avatar);

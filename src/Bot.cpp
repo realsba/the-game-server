@@ -71,10 +71,3 @@ void Bot::choseTarget()
     startMotion();
   }
 }
-
-void Bot::startMotion()
-{
-  for (auto* avatar : m_avatars) {
-    avatar->startMotion();
-  }
-}

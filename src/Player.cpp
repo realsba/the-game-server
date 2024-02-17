@@ -96,7 +96,12 @@ void Player::init()
 
 void Player::setPointer(const Vec2D& value)
 {
+  if (isDead() || !value) {
+    m_pointer.zero();
+    return;
+  }
   m_pointer = value;
+  startMotion();
 }
 
 void Player::addSession(const SessionPtr& sess)
@@ -328,6 +333,13 @@ void Player::recombine(Avatar& initiator, Avatar& target)
       initiator.force += force;
       target.force -= force;
     }
+  }
+}
+
+void Player::startMotion()
+{
+  for (auto* avatar : m_avatars) {
+    avatar->startMotion();
   }
 }
 
