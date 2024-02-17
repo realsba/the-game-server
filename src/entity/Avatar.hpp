@@ -13,7 +13,7 @@ public:
   void modifyMass(float value) override;
   [[nodiscard]] bool shouldBeProcessed() const override;
 
-  void simulate(float dt) override;
+  void simulate(double dt) override;
   void format(Buffer& buffer) override;
 
   void interact(Cell& cell) override;

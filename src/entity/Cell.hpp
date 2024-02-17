@@ -34,13 +34,13 @@ public:
 
   virtual void modifyMass(float value);
   void modifyVelocity(const Vec2D& value);
-  void applyImpulse(const Vec2D& value);
+
   void applyResistanceForce();
 
   [[nodiscard]] virtual bool shouldBeProcessed() const;
 
   virtual bool intersects(const AABB& box);
-  virtual void simulate(float dt);
+  virtual void simulate(double dt);
   virtual void format(Buffer& buffer);
 
   virtual void interact(Cell& cell);

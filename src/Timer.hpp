@@ -30,9 +30,9 @@ private:
 
 private:
   asio::steady_timer          m_timer;
-  TimePoint                   m_expirationTime;
-  Duration                    m_interval {1s};
   Handler                     m_handler;
+  Duration                    m_interval {1s};
+  TimePoint                   m_expirationTime;
 };
 
 #endif /* THEGAME_TIMER_HPP */

@@ -7,6 +7,8 @@
 
 #include "entity/Cell.hpp"
 
+#include "geometry/geometry.hpp"
+
 Bot::Bot(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
   : Player(executor, id, room, gridmap)
   , m_navigationTimer(executor, std::bind_front(&Bot::navigate, this), 200ms)
@@ -36,14 +38,26 @@ void Bot::init()
   m_target = nullptr;
 }
 
+void Bot::addAvatar(Avatar* avatar)
+{
+  Player::addAvatar(avatar);
+  m_mainAvatar = findTheBiggestAvatar();
+}
+
+void Bot::removeAvatar(Avatar* avatar)
+{
+  Player::removeAvatar(avatar);
+  m_mainAvatar = findTheBiggestAvatar();
+}
+
 void Bot::navigate()
 {
-  auto* mainAvatar = getTheBiggestAvatar();
-  if (mainAvatar == nullptr || mainAvatar->zombie) { // TODO: revise
+  m_mainAvatar = findTheBiggestAvatar();
+  if (m_mainAvatar == nullptr || m_mainAvatar->zombie) { // TODO: revise
     return;
   }
 
-  if (m_target && m_target->isAttractiveFor(*mainAvatar)) {
+  if (m_target && m_target->isAttractiveFor(*m_mainAvatar)) {
     m_pointer = m_target->position - m_position;
     return;
   }
@@ -54,10 +68,9 @@ void Bot::navigate()
 
 void Bot::choseTarget()
 {
-  auto* mainAvatar = getTheBiggestAvatar();
   Cell* target = nullptr;
   m_gridmap.query(getViewBox(), [&](Cell& cell) -> bool {
-    if (cell.player != this && !cell.zombie && cell.isAttractiveFor(*mainAvatar)) {
+    if (cell.player != this && !cell.zombie && cell.isAttractiveFor(*m_mainAvatar)) {
       if (!target || target->mass < cell.mass) {
         target = &cell;
       }

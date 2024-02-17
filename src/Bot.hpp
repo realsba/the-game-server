@@ -22,13 +22,17 @@ public:
 
   void init() override;
 
+  void addAvatar(Avatar* avatar) override;
+  void removeAvatar(Avatar* avatar) override;
+
 protected:
   void navigate();
   void choseTarget();
 
 private:
-  Timer m_navigationTimer;
-  Cell* m_target {nullptr};
+  Timer             m_navigationTimer;
+  Avatar*           m_mainAvatar {nullptr};
+  Cell*             m_target {nullptr};
 };
 
 #endif /* THEGAME_BOT_HPP */

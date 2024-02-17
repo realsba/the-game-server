@@ -31,7 +31,7 @@ bool Avatar::shouldBeProcessed() const
   return player->getAvatars().size() > 1 || Cell::shouldBeProcessed();
 }
 
-void Avatar::simulate(float dt)
+void Avatar::simulate(double dt)
 {
   Cell::simulate(dt);
   if (m_recombinationTime > 0) {

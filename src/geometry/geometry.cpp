@@ -72,4 +72,13 @@ float squareDistance(const Vec2D& p1, const Vec2D& p2)
   return a * a + b * b;
 }
 
+bool doCirclesOverlapWithinDistance(const Circle& c1, const Circle& c2, double inclusionDistance)
+{
+  double minDistance = c1.radius + c2.radius - inclusionDistance;
+  if (minDistance < 0) {
+    return false;
+  }
+  return squareDistance(c1.position, c2.position) < minDistance * minDistance;
+}
+
 } // namespace geometry

@@ -33,9 +33,8 @@ public:
   [[nodiscard]] uint32_t getMaxMass() const;
   [[nodiscard]] const AABB& getViewBox() const;
   [[nodiscard]] Vec2D getPosition() const;
-  [[nodiscard]] Vec2D getDestination() const;
   [[nodiscard]] const Avatars& getAvatars() const;
-  [[nodiscard]] Avatar* getTheBiggestAvatar() const;
+  [[nodiscard]] Avatar* findTheBiggestAvatar() const;
   [[nodiscard]] bool isDead() const;
   [[nodiscard]] TimePoint getLastActivity() const;
   [[nodiscard]] uint8_t getStatus() const;
@@ -47,17 +46,17 @@ public:
   void addSession(const SessionPtr& sess);
   void removeSession(const SessionPtr& sess);
   void clearSessions();
-  void addAvatar(Avatar* avatar);
-  void removeAvatar(Avatar* avatar);
+  virtual void addAvatar(Avatar* avatar);
+  virtual void removeAvatar(Avatar* avatar);
   void synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
   void wakeUp();
   void calcParams();
   void removePlayer(Player* player);
   void applyDestinationAttractionForce(uint32_t tick);
   void recombine(uint32_t tick);
-  void recombine(Avatar& initiator, Avatar& target);
 
 protected:
+  void recombine(Avatar& initiator, Avatar& target);
   void scheduleDeflation();
   void scheduleAnnihilation();
   void handleDeflation();
@@ -86,7 +85,7 @@ protected:
   AABB                  m_viewport;
   AABB                  m_viewbox;
   Vec2D                 m_position;
-  Vec2D                 m_pointer;
+  Vec2D                 m_pointer; // TODO: rename to m_cursorOffset
   TimePoint             m_lastActivity {TimePoint::clock::now()};
   Sector*               m_leftTopSector {nullptr};
   Sector*               m_rightBottomSector {nullptr};

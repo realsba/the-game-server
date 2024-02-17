@@ -18,8 +18,8 @@ Timer::Timer(const asio::any_io_executor& executor, Handler handler)
 
 Timer::Timer(const asio::any_io_executor& executor, Handler handler, Duration interval)
   : m_timer(executor)
-  , m_interval(interval)
   , m_handler(std::move(handler))
+  , m_interval(interval)
 {
 }
 

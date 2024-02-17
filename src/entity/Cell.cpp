@@ -47,11 +47,6 @@ void Cell::modifyVelocity(const Vec2D& value)
   m_motionStartedEvent.notify();
 }
 
-void Cell::applyImpulse(const Vec2D& value)
-{
-  velocity += value / mass;
-}
-
 void Cell::applyResistanceForce()
 {
   force -= velocity.direction() * (radius * resistanceRatio);
@@ -67,7 +62,7 @@ bool Cell::intersects(const AABB& box)
   return geometry::intersects(box, *this);
 }
 
-void Cell::simulate(float dt)
+void Cell::simulate(double dt)
 {
   auto acceleration = force / mass;
   auto prevVelocity = velocity;

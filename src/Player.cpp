@@ -49,17 +49,12 @@ Vec2D Player::getPosition() const
   return m_position;
 }
 
-Vec2D Player::getDestination() const
-{
-  return m_position + m_pointer;
-}
-
 const Avatars& Player::getAvatars() const
 {
   return m_avatars;
 }
 
-Avatar* Player::getTheBiggestAvatar() const
+Avatar* Player::findTheBiggestAvatar() const
 {
   if (m_avatars.empty()) {
     return nullptr;
@@ -291,8 +286,11 @@ void Player::removePlayer(Player* player)
 
 void Player::applyDestinationAttractionForce(uint32_t tick)
 {
+  if (!m_pointer) {
+    return;
+  }
+  auto destination = m_position + m_pointer;
   auto forceRatio = m_room.getConfig().playerForceRatio;
-  const auto& destination = getDestination();
   for (auto* avatar : m_avatars) {
     if (avatar->protection <= tick) {
       Vec2D direction(destination - avatar->position);

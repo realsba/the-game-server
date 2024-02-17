@@ -18,6 +18,8 @@ bool intersects(const AABB& box, const Circle& circle);
 float distance(const Vec2D& a, const Vec2D& b);
 float squareDistance(const Vec2D& a, const Vec2D& b);
 
+bool doCirclesOverlapWithinDistance(const Circle& c1, const Circle& c2, double inclusionDistance = 0);
+
 } // namespace geometry
 
 #endif /* THEGAME_GEOMETRY_GEOMETRY_HPP */

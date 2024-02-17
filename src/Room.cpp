@@ -492,89 +492,6 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
   }
 }
 
-void Room::attract(Avatar& initiator, Avatar& target)
-{
-  if (initiator.player == target.player) {
-    return;
-  }
-  float dist(geometry::squareDistance(target.position, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((target.position - initiator.position).direction() * initiator.maxSpeed);
-  float forceRatio = 0;
-  float ratio = initiator.mass / target.mass;
-  if (ratio >= 1.25) {
-    forceRatio = m_config.botForceHungerRatio * ratio;
-  } else if (ratio <= 0.8) {
-    velocity *= -1;
-    forceRatio = m_config.botForceDangerRatio;
-  } else {
-    return;
-  }
-  initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * forceRatio / dist);
-}
-
-void Room::attract(Avatar& initiator, Food& target)
-{
-  float dist(geometry::squareDistance(target.position, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((target.position - initiator.position).direction() * initiator.maxSpeed);
-  initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceFoodRatio / dist);
-}
-
-void Room::attract(Avatar& initiator, Bullet& target)
-{
-  float dist(geometry::squareDistance(target.position, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((target.position - initiator.position).direction() * initiator.maxSpeed);
-  initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceHungerRatio / dist);
-}
-
-void Room::attract(Avatar& initiator, Virus& target)
-{
-  float dist(geometry::squareDistance(target.position, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((initiator.position - target.position).direction() * initiator.maxSpeed);
-  initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceStarRatio / dist);
-}
-
-void Room::attract(Avatar& initiator, Phage& target)
-{
-  float dist(geometry::squareDistance(target.position, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((initiator.position - target.position).direction() * initiator.maxSpeed);
-  initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceStarRatio / dist);
-}
-
-void Room::attract(Avatar& initiator, Mother& target)
-{
-  float dist(geometry::squareDistance(target.position, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((initiator.position - target.position).direction() * initiator.maxSpeed);
-  initiator.force += (velocity - initiator.velocity) * ((initiator.mass + target.mass) * m_config.botForceStarRatio / dist);
-}
-
-void Room::attract(Avatar& initiator, const Vec2D& point)
-{
-  float dist(geometry::squareDistance(point, initiator.position));
-  if (dist < m_config.eps) {
-    return;
-  }
-  Vec2D velocity((initiator.position - point).direction() * initiator.maxSpeed);
-  initiator.force += (velocity - initiator.velocity) * (initiator.mass * m_config.botForceCornerRatio / dist);
-}
-
 Avatar& Room::createAvatar()
 {
   auto* avatar = new Avatar(*this, m_cellNextId.pop());
@@ -762,8 +679,8 @@ void Room::recalculateFreeSpace()
 void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
 {
   m_createdCells.push_back(cell);
+  m_activatedCells.insert(cell);
   m_modifiedCells.insert(cell);
-  m_activatedCells.insert(cell); // TODO: looks kike it's not needed
   if (checkRandomPos) {
     m_forCheckRandomPos.insert(cell);
   }
@@ -899,20 +816,22 @@ void Room::update()
   auto deltaTime{now - m_lastUpdate};
   m_lastUpdate = now;
   ++m_tick;
-  auto dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
-  handlePlayerRequests();
-  simulate(dt);
-  synchronize();
-}
 
-void Room::simulate(double dt)
-{
-  //m_processingCells.insert(m_avatarContainer.begin(), m_avatarContainer.end()); // TODO: for bots, replace to signals
+  handlePlayerRequests();
+
+  double dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
 
   for (auto* player : m_fighters) {
     player->applyDestinationAttractionForce(m_tick);
     player->recombine(m_tick);
   }
+
+  for (auto* cell : m_createdCells) {
+    m_gridmap.insert(cell);
+  }
+
+  m_processingCells.insert(m_activatedCells.begin(), m_activatedCells.end());
+
   for (auto* cell : m_processingCells) {
     cell->applyResistanceForce();
     if (cell->force) {
@@ -922,6 +841,7 @@ void Room::simulate(double dt)
     resolveCellPosition(*cell);
     m_gridmap.update(cell);
   }
+
   for (auto* cell : m_processingCells) {
     if (!cell->zombie) {
       m_gridmap.query(cell->getAABB(), [cell](Cell& target) -> bool {
@@ -932,11 +852,13 @@ void Room::simulate(double dt)
       });
     }
   }
+
+  synchronize(); // TODO: move to different timer
 }
 
 void Room::synchronize()
 {
-  std::erase_if(m_processingCells,
+  std::erase_if(m_processingCells, // TODO: revise
     [this](Cell* cell)
     {
       if (cell->shouldBeProcessed()) {
@@ -946,27 +868,22 @@ void Room::synchronize()
       return true;
     }
   );
-  if (!m_activatedCells.empty()) {
-    m_processingCells.insert(m_activatedCells.begin(), m_activatedCells.end());
-    m_activatedCells.clear();
-  }
 
-  for (Player* player : m_fighters) {
+  for (auto* player : m_fighters) {
     player->calcParams();
     player->synchronize(m_tick, m_modifiedCells, m_removedCellIds);
   }
   m_modifiedCells.clear();
   m_removedCellIds.clear();
 
+  std::erase_if(m_fighters, [&](Player* player) { return player->isDead(); });
+
   if (!m_createdCells.empty()) {
-    for (Cell* cell : m_createdCells) {
-      m_gridmap.insert(cell);
+    for (auto* cell : m_createdCells) {
       cell->newly = false;
     }
     m_createdCells.clear();
   }
-
-  std::erase_if(m_fighters, [&](Player* player) { return player->isDead(); });
 }
 
 void Room::updateLeaderboard()
@@ -1290,8 +1207,8 @@ void Room::onMotherDeath(Mother* mother)
 void Room::onMotionStarted(Cell* cell)
 {
   spdlog::debug("ACTIVATED {}", cell->id);
-  m_activatedCells.insert(cell);
-  m_modifiedCells.insert(cell);
+  //m_processingCells.insert(cell);
+  //m_modifiedCells.insert(cell);
 }
 
 void Room::onCellMassChange(Cell* cell, float deltaMass)

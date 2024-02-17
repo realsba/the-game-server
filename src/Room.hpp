@@ -79,14 +79,6 @@ private:
   void doWatch(const SessionPtr& sess, uint32_t playerId);
   void doChatMessage(const SessionPtr& sess, const std::string& text);
 
-  void attract(Avatar& initiator, Avatar& target);
-  void attract(Avatar& initiator, Food& target);
-  void attract(Avatar& initiator, Bullet& target);
-  void attract(Avatar& initiator, Virus& target);
-  void attract(Avatar& initiator, Phage& target);
-  void attract(Avatar& initiator, Mother& target);
-  void attract(Avatar& initiator, const Vec2D& point);
-
   Avatar& createAvatar();
   Food& createFood();
   Bullet& createBullet();
@@ -107,7 +99,6 @@ private:
   void destroyOutdatedCells();
   void handlePlayerRequests();
   void update();
-  void simulate(double dt);
   void synchronize();
   void updateLeaderboard();
   void checkMothers();
@@ -174,7 +165,7 @@ private:
   Sessions                    m_sessions;
   std::map<uint32_t, Player*> m_players;
   std::set<Player*>           m_fighters;
-  std::set<Player*>           m_zombiePlayers;
+  std::set<Player*>           m_zombiePlayers; // TODO: revise
   std::vector<Player*>        m_leaderboard;
   std::set<Bot*>              m_bots;
   RequestsMap                 m_pointerRequests;
@@ -187,7 +178,6 @@ private:
   std::set<Virus*>            m_virusContainer;
   std::set<Phage*>            m_phageContainer;
   std::set<Mother*>           m_motherContainer;
-  std::set<Cell*>             m_cells;
   std::vector<uint32_t>       m_removedCellIds;
   std::vector<Cell*>          m_createdCells;
   std::set<Cell*>             m_modifiedCells;
