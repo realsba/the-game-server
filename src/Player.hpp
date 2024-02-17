@@ -10,9 +10,13 @@
 #include "Gridmap.hpp"
 #include "types.hpp"
 
+#include <boost/asio/steady_timer.hpp>
+
 #include <string>
 #include <vector>
 #include <set>
+
+namespace asio = boost::asio;
 
 class Avatar;
 class Room;
@@ -21,7 +25,7 @@ using Avatars = std::set<Avatar*>;
 
 class Player {
 public:
-  Player(uint32_t id, Room& room, Gridmap& gridmap);
+  Player(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap);
   virtual ~Player() = default;
 
   [[nodiscard]] uint32_t getId() const;
@@ -54,6 +58,10 @@ public:
   void recombine(Avatar& initiator, Avatar& target);
 
 protected:
+  void scheduleDeflation();
+  void scheduleAnnihilation();
+  void handleDeflation();
+  void handleAnnihilation();
   void startMotion();
 
 // * TODO: make private
@@ -64,6 +72,9 @@ public:
   bool        online {false};
 
 protected:
+  asio::steady_timer    m_deflationTimer;
+  asio::steady_timer    m_annihilationTimer;
+
   const uint32_t        m_id {0};
   const Room&           m_room;
   const Gridmap&        m_gridmap;

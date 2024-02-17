@@ -48,6 +48,7 @@ public:
   Room(asio::any_io_executor executor, uint32_t id);
   ~Room();
 
+  const asio::any_io_executor& getExecutor() const;
   void init(const RoomConfig& config);
 
   void start();

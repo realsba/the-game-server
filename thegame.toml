@@ -48,9 +48,10 @@ scaleRatio = 0.75
 explodeVelocity = 500
 
 playerMaxCells = 16
-playerDeflationInterval = '2m'
-playerDeflationRatio = 0.10
-playerAnnihilationInterval = '5m'
+playerDeflationThreshold = '30s'
+playerDeflationInterval = '5s'
+playerDeflationRatio = 0.5
+playerAnnihilationThreshold = '1m'
 playerForceRatio = 2.5
 
 botNames = ['Nebula', 'Solaris', 'Celestia', 'Quasar', 'Zenith', 'Lunar', 'Stardust', 'Nova', 'Galaxia', 'Cosmos']
@@ -76,7 +77,7 @@ avatarSplitMinMass = 100
 avatarSplitVelocity = 600
 avatarEjectMinMass = 82
 avatarEjectVelocity = 550
-avatarEjectMass = 250
+avatarEjectMass = 25
 avatarEjectMassLoss = 47
 avatarRecombineTime = 8
 

@@ -64,9 +64,10 @@ struct RoomConfig {
   uint32_t  explodeVelocity {0};
 
   uint32_t  playerMaxCells {0};
+  Duration  playerDeflationThreshold {};
   Duration  playerDeflationInterval {};
   float     playerDeflationRatio {0};
-  Duration  playerAnnihilationInterval {};
+  Duration  playerAnnihilationThreshold {};
   float     playerForceRatio {0};
 
   BotNames  botNames;

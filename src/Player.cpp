@@ -8,17 +8,20 @@
 
 #include "entity/Cell.hpp"
 #include "entity/Avatar.hpp"
-#include "src/packet/serialization.hpp"
 #include "packet/OutputPacketTypes.hpp"
+#include "packet/serialization.hpp"
 #include "geometry/geometry.hpp"
 
-#include <tuple>
+#include <spdlog/spdlog.h>
 
-Player::Player(uint32_t id, Room& room, Gridmap& gridmap)
-  : m_id(id)
+Player::Player(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
+  : m_deflationTimer(executor)
+  , m_annihilationTimer(executor)
+  , m_id(id)
   , m_room(room)
   , m_gridmap(gridmap)
 {
+  wakeUp();
 }
 
 uint32_t Player::getId() const
@@ -129,6 +132,7 @@ void Player::clearSessions()
 
 void Player::addAvatar(Avatar* avatar)
 {
+  spdlog::debug("ADD AVATAR {}", avatar->id);
   avatar->player = this;
   m_avatars.emplace(avatar);
 }
@@ -235,6 +239,8 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
 void Player::wakeUp()
 {
   m_lastActivity = TimePoint::clock::now();
+  scheduleDeflation();
+  scheduleAnnihilation();
 }
 
 void Player::calcParams()
@@ -333,6 +339,46 @@ void Player::recombine(Avatar& initiator, Avatar& target)
       initiator.force += force;
       target.force -= force;
     }
+  }
+}
+
+void Player::scheduleDeflation()
+{
+  m_deflationTimer.expires_after(m_room.getConfig().playerDeflationThreshold);
+  m_deflationTimer.async_wait([this](const boost::system::error_code &error) {
+    if (!error) {
+      handleDeflation();
+    }
+  });
+}
+
+void Player::scheduleAnnihilation()
+{
+  m_annihilationTimer.expires_after(m_room.getConfig().playerAnnihilationThreshold);
+  m_annihilationTimer.async_wait([this](const boost::system::error_code& error) {
+    if (!error) {
+      handleAnnihilation();
+    }
+  });
+}
+
+void Player::handleDeflation()
+{
+  m_deflationTimer.expires_after(m_room.getConfig().playerDeflationInterval);
+  m_deflationTimer.async_wait([this](const boost::system::error_code& error) {
+    if (!error) {
+      for (auto* avatar : m_avatars) {
+        avatar->deflate();
+      }
+      handleDeflation();
+    }
+  });
+}
+
+void Player::handleAnnihilation()
+{
+  for (auto* avatar : m_avatars) {
+    avatar->annihilate();
   }
 }
 

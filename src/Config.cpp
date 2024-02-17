@@ -127,9 +127,10 @@ namespace toml
       result.explodeVelocity              = find<uint32_t>(v, "explodeVelocity");
 
       result.playerMaxCells               = find<uint32_t>(v, "playerMaxCells");
+      result.playerDeflationThreshold    = find<Duration>(v, "playerDeflationThreshold");
       result.playerDeflationInterval      = find<Duration>(v, "playerDeflationInterval");
       result.playerDeflationRatio         = find<float>(v, "playerDeflationRatio");
-      result.playerAnnihilationInterval   = find<Duration>(v, "playerAnnihilationInterval");
+      result.playerAnnihilationThreshold   = find<Duration>(v, "playerAnnihilationThreshold");
       result.playerForceRatio             = find<float>(v, "playerForceRatio");
 
       result.botNames                     = toml::find<RoomConfig::BotNames>(v, "botNames");

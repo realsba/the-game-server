@@ -72,6 +72,11 @@ Room::~Room()
   }
 }
 
+const asio::any_io_executor& Room::getExecutor() const
+{
+  return m_executor;
+}
+
 void Room::init(const RoomConfig& config)
 {
   m_config = config;
@@ -305,7 +310,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(playerId, *this, m_gridmap);
+      player = new Player(m_executor, playerId, *this, m_gridmap);
       player->name = name;
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
@@ -366,7 +371,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(playerId, *this, m_gridmap);
+      player = new Player(m_executor, playerId, *this, m_gridmap);
       player->name = "Player " + std::to_string(user->getId());
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
@@ -587,33 +592,6 @@ void Room::update()
 
   handlePlayerRequests();
   simulate(dt);
-
-// TODO: implement
-//  auto deflationTime = now - m_config.playerDeflationInterval;
-//  auto annihilationTime = now - m_config.playerAnnihilationInterval;
-//  for (auto* avatar : m_avatarContainer) {
-//    const auto& lastActivity = avatar->player->getLastActivity();
-//    if (lastActivity < deflationTime) {
-//      float mass = avatar->mass * m_config.playerDeflationRatio * dt;
-//      if (avatar->mass - mass >= m_config.cellMinMass) {
-//        modifyMass(*avatar, -mass);
-//        m_updateLeaderboard = true;
-//      }
-//    }
-//    if (lastActivity < annihilationTime) {
-//      avatar->player->removeAvatar(avatar);
-//      m_zombieAvatars.push_back(avatar);
-//      avatar->zombie = true;
-//      avatar->kill();
-//      m_updateLeaderboard = true;
-//      if (m_mass < m_config.maxMass) {
-//        auto& obj = createVirus();
-//        modifyMass(obj, avatar->mass > m_config.virusStartMass ? avatar->mass : m_config.virusStartMass);
-//        obj.position = avatar->position;
-//        obj.color = avatar->color;
-//      }
-//    }
-//  }
 
   // TODO: optimize amount of containers
   auto removeZombieCells = [&](auto& source, auto& target)
@@ -1089,7 +1067,7 @@ void Room::checkPlayers()
     }
   }
 
-  auto expirationTime = TimePoint::clock::now() - m_config.playerAnnihilationInterval;
+  auto expirationTime = TimePoint::clock::now() - m_config.playerAnnihilationThreshold;
   std::erase_if(m_zombiePlayers,
     [&](auto* player)
     {
@@ -1345,7 +1323,6 @@ void Room::onMotionStarted(Cell* cell)
 {
   m_activatedCells.insert(cell);
   m_modifiedCells.insert(cell);
-  spdlog::info("onMotionStarted {}", cell->id);
 }
 
 void Room::onCellMassChange(Cell* cell, float deltaMass)

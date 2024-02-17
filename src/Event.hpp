@@ -7,10 +7,19 @@
 #include <functional>
 #include <map>
 
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/post.hpp>
+
+namespace asio = boost::asio;
+
 template<typename... Args>
 class Event {
 public:
   using Handler = std::function<void(Args...)>;
+
+  explicit Event(const asio::any_io_executor& executor)
+    : m_executor(executor)
+  {}
 
   void subscribe(void* tag, Handler&& handler)
   {
@@ -22,17 +31,12 @@ public:
     m_subscribers.erase(tag);
   }
 
-  void notify(const Args&... args)
-  {
-    for (const auto& it : m_subscribers) {
-      it.second(args...);
-    }
-  }
-
   void notify(Args&&... args)
   {
     for (const auto& it : m_subscribers) {
-      it.second(std::forward<Args>(args)...);
+      asio::post(m_executor,
+        [func = it.second, ...args = std::forward<Args>(args)]() mutable { func(std::forward<Args>(args)...); }
+      );
     }
   }
 
@@ -42,7 +46,8 @@ public:
   }
 
 private:
-  std::map<void*, Handler> m_subscribers;
+  const asio::any_io_executor&  m_executor;
+  std::map<void*, Handler>      m_subscribers;
 };
 
 #endif /* THEGAME_EVENT_HPP */

@@ -15,6 +15,9 @@ Cell::Cell(Room& room, uint32_t id)
   : room(room)
   , m_config(room.getConfig())
   , id(id)
+  , m_deathEvent(room.getExecutor())
+  , m_massChangeEvent(room.getExecutor())
+  , m_motionStartedEvent(room.getExecutor())
 {
   const auto& config = room.getConfig();
   resistanceRatio = config.resistanceRatio;
@@ -28,13 +31,14 @@ AABB Cell::getAABB() const
 
 void Cell::modifyMass(float value)
 {
+  const auto& config = room.getConfig();
+  auto old = mass;
   mass += value;
-  if (mass < room.getConfig().cellMinMass) {
-    spdlog::warn("Bad cell mass. type={}, mass={}, value={}", type, mass, value);
-    mass = room.getConfig().cellMinMass;
+  if (mass < config.cellMinMass) {
+    mass = config.cellMinMass;
   }
-  radius = room.getConfig().cellRadiusRatio * sqrt(mass / M_PI);
-  m_massChangeEvent.notify(this, value);
+  radius = config.cellRadiusRatio * sqrt(mass / M_PI);
+  m_massChangeEvent.notify(this, mass - old);
 }
 
 void Cell::modifyVelocity(const Vec2D& value)

@@ -8,7 +8,7 @@
 #include "entity/Cell.hpp"
 
 Bot::Bot(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
-  : Player(id, room, gridmap)
+  : Player(executor, id, room, gridmap)
   , m_navigationTimer(executor, std::bind_front(&Bot::navigate, this), 200ms)
 {
 }

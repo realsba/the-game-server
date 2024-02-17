@@ -92,8 +92,7 @@ void Avatar::interact(Avatar& other)
   attacker->modifyMass(defender->mass);
   defender->kill();
   Player& player = *defender->player;
-  player.removeAvatar(defender);
-  if (player.isDead()) {
+  if (player.isDead()) { // TODO: does not work
     player.killer = attacker->player;
   }
 }
@@ -152,7 +151,6 @@ void Avatar::interact(Mother& mother)
   auto dist = geometry::distance(position, mother.position);
   if (mother.mass >= 1.25 * mass && dist < mother.radius - 0.25 * radius) {
     mother.modifyMass(mass);
-    player->removeAvatar(this); // TODO: player can subscribe to event
     kill();
   } else if (mass > 1.25 * mother.mass && dist < radius - 0.25 * mother.radius) {
     room.explode(*this);
@@ -179,4 +177,18 @@ void Avatar::recombination(float t)
 bool Avatar::isRecombined() const
 {
   return m_recombined;
+}
+
+void Avatar::deflate()
+{
+  modifyMass(-mass * room.getConfig().playerDeflationRatio);
+}
+
+void Avatar::annihilate()
+{
+  auto& cell = room.createVirus();
+  cell.modifyMass(mass);
+  cell.position = position;
+  cell.color = color;
+  kill();
 }

@@ -30,6 +30,9 @@ public:
   void recombination(float t);
   [[nodiscard]] bool isRecombined() const;
 
+  void deflate();
+  void annihilate();
+
   uint32_t          protection {0};
   float             maxSpeed {0};
 
