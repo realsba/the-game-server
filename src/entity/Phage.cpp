@@ -71,8 +71,3 @@ void Phage::interact(Mother& mother)
 {
   mother.interact(*this);
 }
-
-void Phage::attract(Avatar& avatar)
-{
-  room.attract(avatar, *this);
-}

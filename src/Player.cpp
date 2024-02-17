@@ -132,13 +132,14 @@ void Player::clearSessions()
 
 void Player::addAvatar(Avatar* avatar)
 {
-  spdlog::debug("ADD AVATAR {}", avatar->id);
+  spdlog::debug("Player::addAvatar {}", avatar->id);
   avatar->player = this;
   m_avatars.emplace(avatar);
 }
 
 void Player::removeAvatar(Avatar* avatar)
 {
+  spdlog::debug("Player::removeAvatar {}", avatar->id);
   m_avatars.erase(avatar);
 }
 

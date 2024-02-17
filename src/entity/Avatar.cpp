@@ -158,11 +158,6 @@ void Avatar::interact(Mother& mother)
   }
 }
 
-void Avatar::attract(Avatar& avatar)
-{
-  room.attract(avatar, *this);
-}
-
 bool Avatar::isAttractiveFor(const Avatar& avatar)
 {
   return mass * 1.25 < avatar.mass;

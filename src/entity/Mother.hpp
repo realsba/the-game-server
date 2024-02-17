@@ -17,8 +17,6 @@ public:
   void interact(Virus& virus) override;
   void interact(Phage& phage) override;
 
-  void attract(Avatar& avatar) override;
-
   uint32_t          foodCount {0};
   float             startRadius {0};
 };

@@ -51,7 +51,6 @@ public:
   virtual void interact(Phage& phage);
   virtual void interact(Mother& mother);
 
-  virtual void attract(Avatar& avatar);
   virtual bool isAttractiveFor(const Avatar& avatar);
 
   void kill();

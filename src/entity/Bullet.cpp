@@ -41,11 +41,6 @@ void Bullet::interact(Mother& mother)
   mother.interact(*this);
 }
 
-void Bullet::attract(Avatar& avatar)
-{
-  room.attract(avatar, *this);
-}
-
 bool Bullet::isAttractiveFor(const Avatar& avatar)
 {
   return true;

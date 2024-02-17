@@ -17,8 +17,6 @@ public:
   void interact(Virus& other) override;
   void interact(Phage& phage) override;
   void interact(Mother& mother) override;
-
-  void attract(Avatar& avatar) override;
 };
 
 #endif /* THEGAME_ENTITY_VIRUS_HPP */

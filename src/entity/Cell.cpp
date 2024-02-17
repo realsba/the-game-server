@@ -110,8 +110,6 @@ void Cell::interact(Phage&) { }
 
 void Cell::interact(Mother&) { }
 
-void Cell::attract(Avatar& avatar) { }
-
 bool Cell::isAttractiveFor(const Avatar& avatar)
 {
   return false;

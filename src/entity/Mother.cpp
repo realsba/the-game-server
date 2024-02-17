@@ -66,8 +66,3 @@ void Mother::interact(Phage& phage)
     phage.kill();
   }
 }
-
-void Mother::attract(Avatar& avatar)
-{
-  room.attract(avatar, *this);
-}

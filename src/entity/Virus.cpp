@@ -79,8 +79,3 @@ void Virus::interact(Mother& mother)
 {
   mother.interact(*this);
 }
-
-void Virus::attract(Avatar& avatar)
-{
-  room.attract(avatar, *this);
-}

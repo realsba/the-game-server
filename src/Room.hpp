@@ -87,9 +87,6 @@ private:
   void attract(Avatar& initiator, Mother& target);
   void attract(Avatar& initiator, const Vec2D& point);
 
-  void update();
-
-  Vec2D getRandomPosition(uint32_t radius) const;
   Avatar& createAvatar();
   Food& createFood();
   Bullet& createBullet();
@@ -97,18 +94,19 @@ private:
   Phage& createPhage();
   Mother& createMother();
 
-  void recalculateFreeSpace();
-  void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
-  void removeCell(Cell* cell);
-
   bool eject(Avatar& avatar, const Vec2D& point);
   bool split(Avatar& avatar, const Vec2D& point);
   void explode(Avatar& avatar);
   void explode(Mother& mother);
 
+  Vec2D getRandomPosition(uint32_t radius) const;
+  void recalculateFreeSpace();
+  void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
+  void removeCell(Cell* cell);
   void resolveCellPosition(Cell& cell);
   void destroyOutdatedCells();
   void handlePlayerRequests();
+  void update();
   void simulate(double dt);
   void synchronize();
   void updateLeaderboard();
@@ -144,6 +142,7 @@ private:
   void onMotionStarted(Cell* cell);
   void onCellMassChange(Cell* cell, float deltaMass);
   void onAvatarMassChange(Avatar* avatar, float deltaMass);
+  void onMotherMassChange(Mother* mother, float deltaMass);
 
 private:
   friend class Avatar;

@@ -24,7 +24,6 @@ public:
   void interact(Phage& phage) override;
   void interact(Mother& mother) override;
 
-  void attract(Avatar& avatar) override;
   bool isAttractiveFor(const Avatar& avatar) override;
 
   void recombination(float t);

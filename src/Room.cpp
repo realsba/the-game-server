@@ -575,52 +575,6 @@ void Room::attract(Avatar& initiator, const Vec2D& point)
   initiator.force += (velocity - initiator.velocity) * (initiator.mass * m_config.botForceCornerRatio / dist);
 }
 
-void Room::update()
-{
-  auto now{TimePoint::clock::now()};
-  auto deltaTime{now - m_lastUpdate};
-  m_lastUpdate = now;
-  ++m_tick;
-  auto dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
-
-  handlePlayerRequests();
-  simulate(dt);
-
-  std::vector<Mother*> mothers;
-  mothers.reserve(m_motherContainer.size());
-  for (auto* mother : m_motherContainer) {
-    if (mother->mass >= m_config.motherExplodeMass) {
-      mothers.emplace_back(mother);
-    }
-  }
-  for (Mother* mother : mothers) {
-    explode(*mother);
-  }
-
-  synchronize();
-}
-
-Vec2D Room::getRandomPosition(uint32_t radius) const
-{
-  Circle c;
-  c.radius = radius;
-  for (uint32_t n = m_config.spawnPosTryCount; n > 0; --n) {
-    bool intersect = false;
-    c.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
-    c.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
-    for (const auto& cell : m_forCheckRandomPos) {
-      if (geometry::intersects(*cell, c)) {
-        intersect = true;
-        break;
-      }
-    }
-    if (!intersect) {
-      break;
-    }
-  }
-  return c.position;
-}
-
 Avatar& Room::createAvatar()
 {
   auto* avatar = new Avatar(*this, m_cellNextId.pop());
@@ -676,38 +630,10 @@ Mother& Room::createMother()
 {
   auto* mother = new Mother(*this, m_cellNextId.pop());
   mother->subscribeToDeathEvent(this, std::bind(&Room::onMotherDeath, this, mother));
-  mother->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, mother, _1));
+  mother->subscribeToMassChangeEvent(this, std::bind(&Room::onMotherMassChange, this, mother, _1));
   m_motherContainer.insert(mother);
   updateNewCellRegistries(mother);
   return *mother;
-}
-
-void Room::recalculateFreeSpace()
-{
-  m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
-}
-
-void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
-{
-  m_createdCells.push_back(cell);
-  m_modifiedCells.insert(cell);
-  m_activatedCells.insert(cell); // TODO: looks kike it's not needed
-  if (checkRandomPos) {
-    m_forCheckRandomPos.insert(cell);
-  }
-}
-
-void Room::removeCell(Cell* cell)
-{
-  m_mass -= cell->mass;
-  m_forCheckRandomPos.erase(cell);
-  m_processingCells.erase(cell);
-  m_modifiedCells.erase(cell);
-  m_activatedCells.erase(cell);
-  m_gridmap.erase(cell);
-  m_removedCellIds.push_back(cell->id);
-  m_cellNextId.push(cell->id);
-  delete cell;
 }
 
 bool Room::eject(Avatar& avatar, const Vec2D& point)
@@ -805,6 +731,56 @@ void Room::explode(Mother& mother)
     obj.modifyVelocity(direction * m_config.explodeVelocity);
     mother.modifyMass(-static_cast<float>(m_config.motherStartMass));
   }
+}
+
+Vec2D Room::getRandomPosition(uint32_t radius) const
+{
+  Circle c;
+  c.radius = radius;
+  for (uint32_t n = m_config.spawnPosTryCount; n > 0; --n) {
+    bool intersect = false;
+    c.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
+    c.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
+    for (const auto& cell : m_forCheckRandomPos) {
+      if (geometry::intersects(*cell, c)) {
+        intersect = true;
+        break;
+      }
+    }
+    if (!intersect) {
+      break;
+    }
+  }
+  return c.position;
+}
+
+void Room::recalculateFreeSpace()
+{
+  m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
+}
+
+void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
+{
+  m_createdCells.push_back(cell);
+  m_modifiedCells.insert(cell);
+  m_activatedCells.insert(cell); // TODO: looks kike it's not needed
+  if (checkRandomPos) {
+    m_forCheckRandomPos.insert(cell);
+  }
+}
+
+void Room::removeCell(Cell* cell)
+{
+  spdlog::debug("Room::removeCell {}", cell->id);
+  m_mass -= cell->mass;
+  m_forCheckRandomPos.erase(cell);
+  m_processingCells.erase(cell);
+  m_modifiedCells.erase(cell);
+  m_activatedCells.erase(cell);
+  m_gridmap.erase(cell);
+  m_removedCellIds.push_back(cell->id);
+  m_cellNextId.push(cell->id);
+  delete cell;
 }
 
 void Room::resolveCellPosition(Cell& cell)
@@ -915,6 +891,18 @@ void Room::handlePlayerRequests()
     }
   }
   m_splitRequests.clear();
+}
+
+void Room::update()
+{
+  auto now{TimePoint::clock::now()};
+  auto deltaTime{now - m_lastUpdate};
+  m_lastUpdate = now;
+  ++m_tick;
+  auto dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
+  handlePlayerRequests();
+  simulate(dt);
+  synchronize();
 }
 
 void Room::simulate(double dt)
@@ -1301,6 +1289,7 @@ void Room::onMotherDeath(Mother* mother)
 
 void Room::onMotionStarted(Cell* cell)
 {
+  spdlog::debug("ACTIVATED {}", cell->id);
   m_activatedCells.insert(cell);
   m_modifiedCells.insert(cell);
 }
@@ -1315,4 +1304,13 @@ void Room::onAvatarMassChange(Avatar* avatar, float deltaMass)
 {
   onCellMassChange(avatar, deltaMass);
   m_updateLeaderboard = true;
+}
+
+void Room::onMotherMassChange(Mother* mother, float deltaMass)
+{
+  onCellMassChange(mother, deltaMass);
+
+  if (mother->mass >= m_config.motherExplodeMass) {
+    explode(*mother);
+  }
 }
