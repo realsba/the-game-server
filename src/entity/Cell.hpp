@@ -56,11 +56,11 @@ public:
 
   void kill();
   void startMotion();
-  void subscribeToDeathEvent(void* tag, Event<Cell*>::Handler&& handler);
+  void subscribeToDeathEvent(void* tag, Event<>::Handler&& handler);
   void unsubscribeFromDeathEvent(void* tag);
-  void subscribeToMassChangeEvent(void* tag, Event<Cell*, float>::Handler&& handler);
+  void subscribeToMassChangeEvent(void* tag, Event<float>::Handler&& handler);
   void unsubscribeFromMassChangeEvent(void* tag);
-  void subscribeToMotionStartedEvent(void* tag, Event<Cell*>::Handler&& handler);
+  void subscribeToMotionStartedEvent(void* tag, Event<>::Handler&& handler);
   void unsubscribeFromMotionStartedEvent(void* tag);
 
   enum Type {
@@ -95,9 +95,9 @@ public:
   bool              materialPoint {false};
 
 private:
-  Event<Cell*>          m_deathEvent;
-  Event<Cell*, float>   m_massChangeEvent;
-  Event<Cell*>          m_motionStartedEvent;
+  Event<>          m_deathEvent;
+  Event<float>     m_massChangeEvent;
+  Event<>          m_motionStartedEvent;
 };
 
 #endif /* THEGAME_ENTITY_CELL_HPP */

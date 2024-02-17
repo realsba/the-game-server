@@ -135,15 +135,15 @@ private:
   void sendPacketPlayerBorn(uint32_t playerId);
   void sendPacketPlayerDead(uint32_t playerId);
 
-  void onAvatarDeath(Cell* cell);
-  void onFoodDeath(Cell* cell);
-  void onBulletDeath(Cell* cell);
-  void onVirusDeath(Cell* cell);
-  void onPhageDeath(Cell* cell);
-  void onMotherDeath(Cell* cell);
+  void onAvatarDeath(Avatar* avatar);
+  void onFoodDeath(Food* food);
+  void onBulletDeath(Bullet* bullet);
+  void onVirusDeath(Virus* virus);
+  void onPhageDeath(Phage* phage);
+  void onMotherDeath(Mother* mother);
   void onMotionStarted(Cell* cell);
   void onCellMassChange(Cell* cell, float deltaMass);
-  void onAvatarMassChange(Cell* cell, float deltaMass);
+  void onAvatarMassChange(Avatar* avatar, float deltaMass);
 
 private:
   friend class Avatar;
@@ -189,12 +189,6 @@ private:
   std::set<Phage*>            m_phageContainer;
   std::set<Mother*>           m_motherContainer;
   std::set<Cell*>             m_cells;
-  std::vector<Cell*>          m_zombieAvatars;
-  std::vector<Cell*>          m_zombieFoods;
-  std::vector<Cell*>          m_zombieBullets;
-  std::vector<Cell*>          m_zombieViruses;
-  std::vector<Cell*>          m_zombiePhages;
-  std::vector<Cell*>          m_zombieMothers;
   std::vector<uint32_t>       m_removedCellIds;
   std::vector<Cell*>          m_createdCells;
   std::set<Cell*>             m_modifiedCells;
@@ -207,10 +201,6 @@ private:
 
   uint32_t  m_tick {0};                        // TODO: stop using and remove
   double    m_mass {0};
-  double    m_cellMinRadius {0};
-  double    m_cellMaxRadius {0};
-  double    m_cellRadiusDiff {0};
-  double    m_avatarSpeedDiff {0};
   bool      m_updateLeaderboard {false};
   bool      m_hasFreeSpace {true};
 };

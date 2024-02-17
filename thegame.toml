@@ -49,8 +49,8 @@ explodeVelocity = 500
 
 playerMaxCells = 16
 playerDeflationThreshold = '30s'
-playerDeflationInterval = '5s'
-playerDeflationRatio = 0.5
+playerDeflationInterval = '500ms'
+playerDeflationRatio = 0.1
 playerAnnihilationThreshold = '1m'
 playerForceRatio = 2.5
 

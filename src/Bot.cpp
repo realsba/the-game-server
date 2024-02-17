@@ -67,7 +67,7 @@ void Bot::choseTarget()
 
   if (target) {
     m_target = target;
-    m_target->subscribeToDeathEvent(this, [&](auto *cell) { m_target = nullptr; });
+    m_target->subscribeToDeathEvent(this, [&] { m_target = nullptr; });
     startMotion();
   }
 }

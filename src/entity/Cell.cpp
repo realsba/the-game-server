@@ -38,13 +38,13 @@ void Cell::modifyMass(float value)
     mass = config.cellMinMass;
   }
   radius = config.cellRadiusRatio * sqrt(mass / M_PI);
-  m_massChangeEvent.notify(this, mass - old);
+  m_massChangeEvent.notify(mass - old);
 }
 
 void Cell::modifyVelocity(const Vec2D& value)
 {
   velocity += value;
-  m_motionStartedEvent.notify(this);
+  m_motionStartedEvent.notify();
 }
 
 void Cell::applyImpulse(const Vec2D& value)
@@ -120,15 +120,15 @@ bool Cell::isAttractiveFor(const Avatar& avatar)
 void Cell::kill()
 {
   zombie = true;
-  m_deathEvent.notify(this);
+  m_deathEvent.notify();
 }
 
 void Cell::startMotion()
 {
-  m_motionStartedEvent.notify(this);
+  m_motionStartedEvent.notify();
 }
 
-void Cell::subscribeToDeathEvent(void* tag, Event<Cell*>::Handler&& handler)
+void Cell::subscribeToDeathEvent(void* tag, Event<>::Handler&& handler)
 {
   m_deathEvent.subscribe(tag, std::move(handler));
 }
@@ -138,7 +138,7 @@ void Cell::unsubscribeFromDeathEvent(void* tag)
   m_deathEvent.unsubscribe(tag);
 }
 
-void Cell::subscribeToMassChangeEvent(void* tag, Event<Cell*, float>::Handler&& handler)
+void Cell::subscribeToMassChangeEvent(void* tag, Event<float>::Handler&& handler)
 {
   m_massChangeEvent.subscribe(tag, std::move(handler));
 }
@@ -148,7 +148,7 @@ void Cell::unsubscribeFromMassChangeEvent(void* tag)
   m_massChangeEvent.unsubscribe(tag);
 }
 
-void Cell::subscribeToMotionStartedEvent(void* tag, Event<Cell*>::Handler&& handler)
+void Cell::subscribeToMotionStartedEvent(void* tag, Event<>::Handler&& handler)
 {
   m_motionStartedEvent.subscribe(tag, std::move(handler));
 }
