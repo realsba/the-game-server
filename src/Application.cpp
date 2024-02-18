@@ -40,21 +40,20 @@ void Application::start()
   m_config.load(m_configFileName);
 
   m_mysqlConnectionPool.init(m_config.mysql);
-  m_influxdb.open(asio::ip::udp::v4());
-  m_influxdb.connect(
-    asio::ip::udp::endpoint(asio::ip::address::from_string(m_config.influxdbServer), m_config.influxdbPort)
-  );
+  // TODO: implement
+  //m_influxdb.open(asio::ip::udp::v4());
+  //m_influxdb.connect(asio::ip::udp::endpoint(m_config.influxdb.address));
 
   m_listener->run();
 
-  m_statisticTimer.setInterval(m_config.statisticInterval);
+  m_statisticTimer.setInterval(m_config.influxdb.interval);
   m_statisticTimer.start();
 
-  spdlog::info("Server started. address={}", m_config.address);
+  spdlog::info("Server started. address={}", m_config.server.address);
 
   m_roomManager.start(m_config.room);
 
-  for (uint i = 0; i < m_config.numThreads; ++i) {
+  for (uint i = 0; i < m_config.server.numThreads; ++i) {
     m_threads.emplace_back(
       [this]
       {

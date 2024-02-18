@@ -17,7 +17,7 @@ Food::Food(Room& room, uint32_t id)
   const auto& config = room.getConfig();
   type = typeFood;
   materialPoint = true;
-  resistanceRatio = config.foodResistanceRatio;
+  resistanceRatio = config.food.resistanceRatio;
 }
 
 bool Food::intersects(const AABB& box)

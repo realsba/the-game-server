@@ -3,9 +3,7 @@
 
 #include "Config.hpp"
 
-#include <spdlog/spdlog.h>
 #include <toml.hpp>
-#include <iostream>
 
 using namespace boost;
 using namespace std::chrono;
@@ -45,18 +43,50 @@ namespace toml
   };
 
   template <>
-  struct from<MySQLConfig>
+  struct from<config::Server>
   {
     static auto from_toml(const value& v)
     {
-      MySQLConfig result{};
+      config::Server result{};
+
+      const auto host = find<std::string>(v, "host");
+      const auto port = find<uint16_t>(v, "port");
+      result.address = asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port);
+      result.numThreads = find<uint32_t>(v, "numThreads");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::InfluxDb>
+  {
+    static auto from_toml(value& v)
+    {
+      config::InfluxDb result{};
+
+      const auto host = toml::find<std::string>(v, "host");
+      const auto port = toml::find<uint16_t>(v, "port");
+      result.address = asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port);
+      result.interval = find<Duration>(v, "interval");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::MySql>
+  {
+    static auto from_toml(const value& v)
+    {
+      config::MySql result{};
 
       result.database     = find<std::string>(v, "database");
-      result.server       = find<std::string>(v, "server");
+      result.host         = find<std::string>(v, "host");
+      result.port         = find<uint>(v, "port");
       result.user         = find<std::string>(v, "user");
       result.password     = find<std::string>(v, "password");
       result.charset      = find<std::string>(v, "charset");
-      result.port         = find<uint>(v, "port");
       result.maxIdleTime  = find<uint>(v, "maxIdleTime");
 
       return result;
@@ -64,37 +94,151 @@ namespace toml
   };
 
   template <>
-  struct from<RoomConfig::Generator::Item>
+  struct from<config::Player>
   {
     static auto from_toml(value& v)
     {
-      RoomConfig::Generator::Item result{};
-      result.interval = toml::find<Duration>(v, "interval");
-      result.quantity = toml::find<uint32_t >(v, "quantity");
+      config::Player result{};
+
+      result.mass                   = find<uint32_t>(v, "mass");
+      result.maxCells               = find<uint32_t>(v, "maxCells");
+      result.deflationThreshold     = find<Duration>(v, "deflationThreshold");
+      result.deflationInterval      = find<Duration>(v, "deflationInterval");
+      result.deflationRatio         = find<float>(v, "deflationRatio");
+      result.annihilationThreshold  = find<Duration>(v, "annihilationThreshold");
+      result.pointerForceRatio      = find<float>(v, "pointerForceRatio");
+
       return result;
     }
   };
 
   template <>
-  struct from<RoomConfig::Generator>
+  struct from<config::Bot>
   {
     static auto from_toml(value& v)
     {
-      RoomConfig::Generator result{};
-      result.food = toml::find<RoomConfig::Generator::Item>(v, "food");
-      result.virus = toml::find<RoomConfig::Generator::Item>(v, "virus");
-      result.phage = toml::find<RoomConfig::Generator::Item>(v, "phage");
-      result.mother = toml::find<RoomConfig::Generator::Item>(v, "mother");
+      config::Bot result{};
+
+      result.mass = find<uint32_t>(v, "mass");
+
       return result;
     }
   };
 
   template <>
-  struct from<RoomConfig>
+  struct from<config::Avatar>
   {
     static auto from_toml(value& v)
     {
-      RoomConfig result{};
+      config::Avatar result{};
+
+      result.minVelocity        = find<uint32_t>(v, "minVelocity");
+      result.maxVelocity        = find<uint32_t>(v, "maxVelocity");
+      result.explosionMinMass   = find<uint32_t>(v, "explosionMinMass");
+      result.explosionParts     = find<uint32_t>(v, "explosionParts");
+      result.splitMinMass       = find<uint32_t>(v, "splitMinMass");
+      result.splitVelocity      = find<uint32_t>(v, "splitVelocity");
+      result.ejectionMinMass    = find<uint32_t>(v, "ejectionMinMass");
+      result.ejectionVelocity   = find<uint32_t>(v, "ejectionVelocity");
+      result.ejectionMass       = find<uint32_t>(v, "ejectionMass");
+      result.ejectionMassLoss   = find<uint32_t>(v, "ejectionMassLoss");
+      result.recombinationTime  = find<uint32_t>(v, "recombinationTime");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::Food>
+  {
+    static auto from_toml(value& v)
+    {
+      config::Food result{};
+
+      result.mass             = find<uint32_t>(v, "mass");
+      result.radius           = find<uint32_t>(v, "radius");
+      result.quantity         = find<uint32_t>(v, "quantity");
+      result.maxQuantity      = find<uint32_t>(v, "maxQuantity");
+      result.minVelocity      = find<uint32_t>(v, "minVelocity");
+      result.maxVelocity      = find<uint32_t>(v, "maxVelocity");
+      result.resistanceRatio  = find<float>(v, "resistanceRatio");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::Virus>
+  {
+    static auto from_toml(value& v)
+    {
+      config::Virus result{};
+
+      result.mass         = find<uint32_t>(v, "mass");
+      result.quantity     = find<uint32_t>(v, "quantity");
+      result.maxQuantity  = find<uint32_t>(v, "maxQuantity");
+      result.lifeTime     = find<Duration>(v, "lifeTime");
+      result.color        = find<uint32_t>(v, "color");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::Mother>
+  {
+    static auto from_toml(value& v)
+    {
+      config::Mother result{};
+
+      result.mass         = find<uint32_t>(v, "mass");
+      result.quantity     = find<uint32_t>(v, "quantity");
+      result.maxMass      = find<uint32_t>(v, "maxMass");
+      result.maxQuantity  = find<uint32_t>(v, "maxQuantity");
+      result.lifeTime     = find<Duration>(v, "lifeTime");
+      result.color        = find<uint32_t>(v, "color");
+      result.checkRadius  = find<uint32_t>(v, "checkRadius");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::Generator::Item>
+  {
+    static auto from_toml(value& v)
+    {
+      config::Generator::Item result{};
+
+      result.interval = find<Duration>(v, "interval");
+      result.quantity = find<uint32_t >(v, "quantity");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::Generator>
+  {
+    static auto from_toml(value& v)
+    {
+      config::Generator result{};
+
+      result.food = find<config::Generator::Item>(v, "food");
+      result.virus = find<config::Generator::Item>(v, "virus");
+      result.phage = find<config::Generator::Item>(v, "phage");
+      result.mother = find<config::Generator::Item>(v, "mother");
+
+      return result;
+    }
+  };
+
+  template <>
+  struct from<config::Room>
+  {
+    static auto from_toml(value& v)
+    {
+      config::Room result{};
 
       result.numThreads = find<uint32_t>(v, "numThreads");
       if (result.numThreads < 1) {
@@ -125,73 +269,20 @@ namespace toml
       result.leaderboardVisibleItems      = find<uint32_t>(v, "leaderboardVisibleItems");
       result.scaleRatio                   = find<float>(v, "scaleRatio");
       result.explodeVelocity              = find<uint32_t>(v, "explodeVelocity");
-
-      result.playerMaxCells               = find<uint32_t>(v, "playerMaxCells");
-      result.playerDeflationThreshold    = find<Duration>(v, "playerDeflationThreshold");
-      result.playerDeflationInterval      = find<Duration>(v, "playerDeflationInterval");
-      result.playerDeflationRatio         = find<float>(v, "playerDeflationRatio");
-      result.playerAnnihilationThreshold   = find<Duration>(v, "playerAnnihilationThreshold");
-      result.playerForceRatio             = find<float>(v, "playerForceRatio");
-
-      result.botNames                     = toml::find<RoomConfig::BotNames>(v, "botNames");
-      result.botStartMass                 = find<uint32_t>(v, "botStartMass");
-      result.botForceCornerRatio          = find<float>(v, "botForceCornerRatio");
-      result.botForceFoodRatio            = find<float>(v, "botForceFoodRatio");
-      result.botForceHungerRatio          = find<float>(v, "botForceHungerRatio");
-      result.botForceDangerRatio          = find<float>(v, "botForceDangerRatio");
-      result.botForceStarRatio            = find<float>(v, "botForceStarRatio");
-
       result.resistanceRatio      = find<float>(v, "resistanceRatio");
       result.elasticityRatio      = find<float>(v, "elasticityRatio");
-
       result.cellMinMass          = find<uint32_t>(v, "cellMinMass");
       result.cellRadiusRatio      = find<float>(v, "cellRadiusRatio");
 
-      result.avatarStartMass      = find<uint32_t>(v, "avatarStartMass");
-      result.avatarMinSpeed       = find<uint32_t>(v, "avatarMinSpeed");
-      result.avatarMaxSpeed       = find<uint32_t>(v, "avatarMaxSpeed");
-      result.avatarExplodeMinMass = find<uint32_t>(v, "avatarExplodeMinMass");
-      result.avatarExplodeParts   = find<uint32_t>(v, "avatarExplodeParts");
-      result.avatarSplitMinMass   = find<uint32_t>(v, "avatarSplitMinMass");
-      result.avatarSplitVelocity  = find<uint32_t>(v, "avatarSplitVelocity");
-      result.avatarEjectMinMass   = find<uint32_t>(v, "avatarEjectMinMass");
-      result.avatarEjectVelocity  = find<uint32_t>(v, "avatarEjectVelocity");
-      result.avatarEjectMass      = find<uint32_t>(v, "avatarEjectMass");
-      result.avatarEjectMassLoss  = find<uint32_t>(v, "avatarEjectMassLoss");
-      result.avatarRecombineTime  = find<uint32_t>(v, "avatarRecombineTime");
 
-      result.foodStartAmount      = find<uint32_t>(v, "foodStartAmount");
-      result.foodMaxAmount        = find<uint32_t>(v, "foodMaxAmount");
-      result.foodMass             = find<uint32_t>(v, "foodMass");
-      result.foodRadius           = find<uint32_t>(v, "foodRadius");
-      result.foodMinVelocity      = find<uint32_t>(v, "foodMinVelocity");
-      result.foodMaxVelocity      = find<uint32_t>(v, "foodMaxVelocity");
-      result.foodResistanceRatio  = find<float>(v, "foodResistanceRatio");
-      if (result.foodMinVelocity > result.foodMaxVelocity) {
-        spdlog::warn("room.foodMinVelocity > room.foodMaxVelocity");
-      }
-
-      result.virusStartMass       = find<uint32_t>(v, "virusStartMass");
-      result.virusStartAmount     = find<uint32_t>(v, "virusStartAmount");
-      result.virusMaxAmount       = find<uint32_t>(v, "virusMaxAmount");
-      result.virusLifeTime        = find<Duration>(v, "virusLifeTime");
-      result.virusColor           = find<uint32_t>(v, "virusColor");
-
-      result.phageStartMass       = find<uint32_t>(v, "phageStartMass");
-      result.phageStartAmount     = find<uint32_t>(v, "phageStartAmount");
-      result.phageMaxAmount       = find<uint32_t>(v, "phageMaxAmount");
-      result.phageLifeTime        = find<Duration>(v, "phageLifeTime");
-      result.phageColor           = find<uint32_t>(v, "phageColor");
-
-      result.motherStartMass      = find<uint32_t>(v, "motherStartMass");
-      result.motherStartAmount    = find<uint32_t>(v, "motherStartAmount");
-      result.motherMaxAmount      = find<uint32_t>(v, "motherMaxAmount");
-      result.motherLifeTime       = find<Duration>(v, "motherLifeTime");
-      result.motherExplodeMass    = find<uint32_t>(v, "motherExplodeMass");
-      result.motherColor          = find<uint32_t>(v, "motherColor");
-      result.motherCheckRadius    = find<uint32_t>(v, "motherCheckRadius");
-
-      result.generator            = find<RoomConfig::Generator>(v, "generator");
+      result.player     = find<config::Player>(v, "player");
+      result.bot        = find<config::Bot>(v, "bot");
+      result.avatar     = find<config::Avatar>(v, "avatar");
+      result.food       = find<config::Food>(v, "food");
+      result.virus      = find<config::Virus>(v, "virus");
+      result.phage      = find<config::Phage>(v, "phage");
+      result.mother     = find<config::Mother>(v, "mother");
+      result.generator  = find<config::Generator>(v, "generator");
 
       return result;
     }
@@ -199,27 +290,16 @@ namespace toml
 
 } // namespace toml
 
-void Config::load(const std::string& filename)
+namespace config
 {
-  auto data = toml::parse("thegame.toml");
 
-  const auto host = toml::find<std::string>(data, "host");
-  const auto port = toml::find<uint16_t>(data, "port");
-  address = asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port);
+void Config::load(const std::string& filename) {
+  auto data = toml::parse(filename);
 
-  numThreads = toml::find<uint32_t >(data, "numThreads");
-  if (numThreads < 1) {
-    throw std::runtime_error("numThreads should be > 0");
-  }
-
-  statisticInterval = toml::find<Duration>(data, "statisticInterval");
-  if (statisticInterval == Duration::zero()) {
-    throw std::runtime_error("statisticInterval should be > 0");
-  }
-
-  influxdbServer = toml::find<std::string>(data, "influxdb", "server");
-  influxdbPort = toml::find<uint16_t>(data, "influxdb", "port");
-
-  mysql = toml::find<MySQLConfig>(data, "mysql");
-  room = toml::find<RoomConfig>(data, "room");
+  server    = toml::find<config::Server>(data, "server");
+  mysql     = toml::find<config::MySql>(data, "mysql");
+  influxdb  = toml::find<config::InfluxDb>(data, "influxdb");
+  room      = toml::find<config::Room>(data, "room");
 }
+
+} // namespace config

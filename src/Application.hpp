@@ -73,14 +73,14 @@ private:
 
   mutable std::mutex            m_mutex;
   asio::io_context              m_ioContext;
-  asio::ip::udp::socket         m_influxdb {m_ioContext};
+  asio::ip::tcp::socket         m_influxdb {m_ioContext};
   MySQLConnectionPool           m_mysqlConnectionPool;
   Sessions                      m_sessions;
   UsersCache                    m_users {m_mysqlConnectionPool};
   RoomManager                   m_roomManager;
   std::vector<std::thread>      m_threads;
   std::string                   m_configFileName;
-  Config                        m_config;
+  config::Config                m_config;
   Timer                         m_statisticTimer;
   std::size_t                   m_maxSessions {0};
   uint32_t                      m_registrations {0};

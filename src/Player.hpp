@@ -52,7 +52,7 @@ public:
   void wakeUp();
   void calcParams();
   void removePlayer(Player* player);
-  void applyDestinationAttractionForce(uint32_t tick);
+  void applyPointerForce(uint32_t tick);
   void recombine(uint32_t tick);
 
 protected:

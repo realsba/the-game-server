@@ -7,7 +7,7 @@
 
 #include <spdlog/spdlog.h>
 
-void RoomManager::start(const RoomConfig& config)
+void RoomManager::start(const config::Room& config)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 

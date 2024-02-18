@@ -17,7 +17,7 @@
 
 class RoomManager {
 public:
-  void start(const RoomConfig& config);
+  void start(const config::Room& config);
   void stop();
 
   Room* obtain();
@@ -31,7 +31,7 @@ private:
   asio::io_context            m_ioContext;
   WorkGuard                   m_workGuard {m_ioContext.get_executor()};
   std::vector<std::thread>    m_threads;
-  RoomConfig                  m_config;
+  config::Room                m_config;
   Items                       m_items;
   uint32_t                    m_nextId {1};
 };

@@ -17,7 +17,7 @@ Virus::Virus(Room& room, uint32_t id)
 {
   const auto& config = room.getConfig();
   type = typeVirus;
-  color = config.virusColor;
+  color = config.virus.color;
 }
 
 void Virus::interact(Cell& cell)

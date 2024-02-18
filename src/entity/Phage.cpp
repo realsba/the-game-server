@@ -16,7 +16,7 @@ Phage::Phage(Room& room, uint32_t id)
 {
   const auto& config = room.getConfig();
   type = typePhage;
-  color = config.phageColor;
+  color = config.phage.color;
 }
 
 void Phage::interact(Cell& cell)

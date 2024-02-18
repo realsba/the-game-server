@@ -13,7 +13,6 @@
 
 Cell::Cell(Room& room, uint32_t id)
   : room(room)
-  , m_config(room.getConfig())
   , id(id)
   , m_deathEvent(room.getExecutor())
   , m_massChangeEvent(room.getExecutor())

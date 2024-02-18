@@ -5,22 +5,26 @@
 #    m - minutes
 #    h - hours
 
-host                = '0.0.0.0'
-port                = 3333
-numThreads          = 2
-statisticInterval   = '1m'
+[server]
+host        = '0.0.0.0'
+port        = 3333
+numThreads  = 2
 
 [influxdb]
-server    = '127.0.0.1'
-port      = 8089
+host        = '127.0.0.1'
+port        = 8086
+org         = ''
+bucket      = ''
+token       = ''
+interval    = '1m'
 
 [mysql]
-charset   = 'utf8'
-database  = 'thegame'
-server    = '127.0.0.1'
-user      = ''
-password  = ''
-port      = 0
+charset     = 'utf8'
+database    = 'thegame'
+host        = '127.0.0.1'
+port        = 0
+user        = ''
+password    = ''
 maxIdleTime = 600
 
 [room]
@@ -47,20 +51,7 @@ leaderboardVisibleItems = 20
 scaleRatio = 0.75
 explodeVelocity = 500
 
-playerMaxCells = 16
-playerDeflationThreshold = '30s'
-playerDeflationInterval = '500ms'
-playerDeflationRatio = 0.1
-playerAnnihilationThreshold = '1m'
-playerForceRatio = 2.5
-
 botNames = ['Nebula', 'Solaris', 'Celestia', 'Quasar', 'Zenith', 'Lunar', 'Stardust', 'Nova', 'Galaxia', 'Cosmos']
-botStartMass = 300
-botForceCornerRatio = 25000.0
-botForceFoodRatio = 3000.0
-botForceHungerRatio = 10000.0
-botForceDangerRatio = 50000.0
-botForceStarRatio = 15000.0
 
 resistanceRatio = 750.0
 elasticityRatio = 30.0
@@ -68,46 +59,62 @@ elasticityRatio = 30.0
 cellMinMass = 35
 cellRadiusRatio = 6.0
 
-avatarStartMass = 250
-avatarMinSpeed = 200
-avatarMaxSpeed = 600
-avatarExplodeMinMass = 35
-avatarExplodeParts = 5
-avatarSplitMinMass = 100
-avatarSplitVelocity = 600
-avatarEjectMinMass = 82
-avatarEjectVelocity = 550
-avatarEjectMass = 25
-avatarEjectMassLoss = 47
-avatarRecombineTime = 8
+[room.player]
+mass = 250
+maxCells = 16
+deflationThreshold = '30s'
+deflationInterval = '500ms'
+deflationRatio = 0.1
+annihilationThreshold = '1m'
+pointerForceRatio = 2.5
 
-foodStartAmount = 2000
-foodMaxAmount = 5000
-foodMass = 5
-foodRadius = 8
-foodMinVelocity = 190
-foodMaxVelocity = 210
-foodResistanceRatio = 30.0
+[room.bot]
+mass = 500
 
-virusStartMass = 165
-virusStartAmount = 10
-virusMaxAmount = 20
-virusLifeTime = '5m'
-virusColor = 13
+[room.avatar]
+minVelocity = 200
+maxVelocity = 600
+explosionMinMass = 35
+explosionParts = 5
+splitMinMass = 100
+splitVelocity = 600
+ejectionMinMass = 82
+ejectionVelocity = 550
+ejectionMass = 50
+ejectionMassLoss = 100
+recombinationTime = 8
 
-phageStartMass = 165
-phageStartAmount = 10
-phageMaxAmount = 20
-phageLifeTime = '5m'
-phageColor = 14
+[room.food]
+mass = 5
+radius = 8
+quantity = 100
+maxQuantity = 200
+minVelocity = 190
+maxVelocity = 210
+resistanceRatio = 30.0
 
-motherStartMass = 240
-motherStartAmount = 10
-motherMaxAmount = 20
-motherLifeTime = '10m'
-motherExplodeMass = 3000
-motherColor = 12
-motherCheckRadius = 60
+[room.virus]
+mass = 165
+quantity = 1
+maxQuantity = 1
+lifeTime = '5m'
+color = 13
+
+[room.phage]
+mass = 165
+quantity = 1
+maxQuantity = 1
+lifeTime = '5m'
+color = 14
+
+[room.mother]
+mass = 240
+quantity = 1
+maxMass = 1200
+maxQuantity = 1
+lifeTime = '10m'
+color = 12
+checkRadius = 60
 
 [room.generator.food]
 interval = '1s'

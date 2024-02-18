@@ -33,7 +33,7 @@ public:
   void annihilate();
 
   uint32_t          protection {0};
-  float             maxSpeed {0};
+  float             maxVelocity {0};
 
 private:
   float             m_recombinationTime {0};

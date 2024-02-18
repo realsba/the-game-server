@@ -14,7 +14,6 @@
 
 class Sector;
 class Player;
-class RoomConfig;
 class Room;
 class AABB;
 
@@ -81,7 +80,6 @@ public:
   Vec2D             velocity;
   Vec2D             force;
   Room&             room;
-  const RoomConfig& m_config;
   Cell*             creator {nullptr};
   Player*           player {nullptr};
   float             mass {0};

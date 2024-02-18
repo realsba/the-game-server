@@ -77,7 +77,7 @@ const asio::any_io_executor& Room::getExecutor() const
   return m_executor;
 }
 
-void Room::init(const RoomConfig& config)
+void Room::init(const config::Room& config)
 {
   m_config = config;
 
@@ -97,13 +97,13 @@ void Room::init(const RoomConfig& config)
   m_config.cellMinRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI);
   m_config.cellMaxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);
   m_config.cellRadiusDiff = m_config.cellMaxRadius - m_config.cellMinRadius;
-  m_config.avatarSpeedDiff = m_config.avatarMaxSpeed - m_config.avatarMinSpeed;
+  m_config.avatarVelocityDiff = m_config.avatar.maxVelocity - m_config.avatar.minVelocity;
 
   m_gridmap.resize(m_config.width, m_config.height, 9);
-  spawnFood(m_config.foodStartAmount);
-  spawnViruses(m_config.virusStartAmount);
-  spawnPhages(m_config.phageStartAmount);
-  spawnMothers(m_config.motherStartAmount);
+  spawnFood(m_config.food.quantity);
+  spawnViruses(m_config.virus.quantity);
+  spawnPhages(m_config.phage.quantity);
+  spawnMothers(m_config.mother.quantity);
 
   uint32_t id = 100;
   for (const auto& name : m_config.botNames) {
@@ -152,7 +152,7 @@ bool Room::hasFreeSpace() const
   return m_hasFreeSpace;
 }
 
-const RoomConfig& Room::getConfig() const
+const config::Room& Room::getConfig() const
 {
   return m_config;
 }
@@ -222,7 +222,7 @@ void Room::doJoin(const SessionPtr& sess)
   serialize(*buffer, m_config.aspectRatio);
   serialize(*buffer, m_config.resistanceRatio);
   serialize(*buffer, m_config.elasticityRatio);
-  serialize(*buffer, m_config.foodResistanceRatio);
+  serialize(*buffer, m_config.food.resistanceRatio);
   auto count = m_players.size();
   if (count > 255) {
     spdlog::warn("The number of players exceeds the limit of 255");
@@ -334,7 +334,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
   sendPacketPlayerBorn(player->getId());
 
   auto& obj = createAvatar();
-  obj.modifyMass(m_config.avatarStartMass);
+  obj.modifyMass(m_config.player.mass);
   int radius = obj.radius;
   obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
   obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
@@ -555,8 +555,8 @@ Mother& Room::createMother()
 
 bool Room::eject(Avatar& avatar, const Vec2D& point)
 {
-  float massLoss = m_config.avatarEjectMassLoss;
-  if (avatar.mass < m_config.avatarEjectMinMass || avatar.mass - massLoss < m_config.cellMinMass) {
+  float massLoss = m_config.avatar.ejectionMassLoss;
+  if (avatar.mass < m_config.avatar.ejectionMinMass || avatar.mass - massLoss < m_config.cellMinMass) {
     return false;
   }
   avatar.modifyMass(-massLoss);
@@ -566,11 +566,11 @@ bool Room::eject(Avatar& avatar, const Vec2D& point)
   obj.color = avatar.color;
   obj.position = avatar.position;
   obj.velocity = avatar.velocity;
-  obj.modifyMass(m_config.avatarEjectMass);
+  obj.modifyMass(m_config.avatar.ejectionMass);
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.modifyVelocity(direction * m_config.avatarEjectVelocity);
+    obj.modifyVelocity(direction * m_config.avatar.ejectionVelocity);
     obj.position += direction * avatar.radius;
   }
   return true;
@@ -579,7 +579,7 @@ bool Room::eject(Avatar& avatar, const Vec2D& point)
 bool Room::split(Avatar& avatar, const Vec2D& point)
 {
   float mass = 0.5 * avatar.mass;
-  if (avatar.mass < m_config.avatarSplitMinMass || mass < m_config.cellMinMass) {
+  if (avatar.mass < m_config.avatar.splitMinMass || mass < m_config.cellMinMass) {
     return false;
   }
   auto& obj = createAvatar();
@@ -592,10 +592,10 @@ bool Room::split(Avatar& avatar, const Vec2D& point)
   auto direction = point - avatar.position;
   if (direction) {
     direction.normalize();
-    obj.modifyVelocity(direction * m_config.avatarSplitVelocity);
+    obj.modifyVelocity(direction * m_config.avatar.splitVelocity);
   }
-  obj.recombination(m_config.avatarRecombineTime);
-  avatar.recombination(m_config.avatarRecombineTime);
+  obj.recombination(m_config.avatar.recombinationTime);
+  avatar.recombination(m_config.avatar.recombinationTime);
   avatar.player->addAvatar(&obj);
   return true;
 }
@@ -603,12 +603,12 @@ bool Room::split(Avatar& avatar, const Vec2D& point)
 void Room::explode(Avatar& avatar)
 {
   const auto& avatars = avatar.player->getAvatars();
-  if (avatars.size() >= m_config.playerMaxCells) {
+  if (avatars.size() >= m_config.player.maxCells) {
     return;
   }
   float explodedMass = 0;
-  float minMass = std::max(m_config.avatarExplodeMinMass, m_config.cellMinMass);
-  for (auto n = m_config.avatarExplodeParts; n > 0; --n) {
+  float minMass = std::max(m_config.avatar.explosionMinMass, m_config.cellMinMass);
+  for (auto n = m_config.avatar.explosionParts; n > 0; --n) {
     float mass = 0.125 * avatar.mass;
     if (mass < minMass) {
       mass = minMass;
@@ -624,29 +624,29 @@ void Room::explode(Avatar& avatar)
     obj.position = avatar.position + direction * (avatar.radius + obj.radius);
     obj.color = avatar.color;
     obj.modifyVelocity(direction * m_config.explodeVelocity);
-    obj.recombination(m_config.avatarRecombineTime);
+    obj.recombination(m_config.avatar.recombinationTime);
     avatar.player->addAvatar(&obj);
-    if (avatars.size() >= m_config.playerMaxCells) {
+    if (avatars.size() >= m_config.player.maxCells) {
       break;
     }
   }
   if (explodedMass) {
-    avatar.recombination(m_config.avatarRecombineTime);
+    avatar.recombination(m_config.avatar.recombinationTime);
     avatar.modifyMass(-explodedMass);
   }
 }
 
 void Room::explode(Mother& mother)
 {
-  float doubleMass = m_config.motherStartMass * 2;
+  float doubleMass = m_config.mother.mass * 2;
   while (mother.mass >= doubleMass) {
     auto& obj = createMother();
-    obj.modifyMass(m_config.motherStartMass);
+    obj.modifyMass(m_config.mother.mass);
     float angle = (m_generator() % 3600) * M_PI / 1800;
     Vec2D direction(sin(angle), cos(angle));
     obj.position = mother.position;
     obj.modifyVelocity(direction * m_config.explodeVelocity);
-    mother.modifyMass(-static_cast<float>(m_config.motherStartMass));
+    mother.modifyMass(-static_cast<float>(m_config.mother.mass));
   }
 }
 
@@ -747,20 +747,20 @@ void Room::destroyOutdatedCells()
       return false;
     };
 
-  expirationTime = currentTime - m_config.virusLifeTime;
+  expirationTime = currentTime - m_config.virus.lifeTime;
   std::erase_if(m_virusContainer, expired);
 
-  expirationTime = currentTime - m_config.phageLifeTime;
+  expirationTime = currentTime - m_config.phage.lifeTime;
   std::erase_if(m_phageContainer, expired);
 
-  expirationTime = currentTime - m_config.motherLifeTime;
+  expirationTime = currentTime - m_config.mother.lifeTime;
   std::erase_if(m_motherContainer, expired);
 }
 
 void Room::checkMothers()
 {
   for (auto* mother : m_motherContainer) {
-    Vec2D radius(mother->radius + m_config.motherCheckRadius, mother->radius + m_config.motherCheckRadius);
+    Vec2D radius(mother->radius + m_config.mother.checkRadius, mother->radius + m_config.mother.checkRadius);
     AABB box(mother->position - radius, mother->position + radius);
     mother->foodCount = m_gridmap.count(box);
   }
@@ -794,13 +794,13 @@ void Room::handlePlayerRequests()
     if (player && !player->isDead()) {
       auto avatars = player->getAvatars();
       size_t count = avatars.size();
-      if (count >= m_config.playerMaxCells) {
+      if (count >= m_config.player.maxCells) {
         break;
       }
       for (Avatar* avatar : avatars) {
         if (split(*avatar, it.second)) {
           ++count;
-          if (count >= m_config.playerMaxCells) {
+          if (count >= m_config.player.maxCells) {
             break;
           }
         }
@@ -822,7 +822,7 @@ void Room::update()
   double dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
 
   for (auto* player : m_fighters) {
-    player->applyDestinationAttractionForce(m_tick);
+    player->applyPointerForce(m_tick);
     player->recombine(m_tick);
   }
 
@@ -900,7 +900,7 @@ void Room::updateLeaderboard()
 
 void Room::produceMothers()
 {
-  if (m_motherContainer.empty() || m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.foodMaxAmount) {
+  if (m_motherContainer.empty() || m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
     return;
   }
 
@@ -909,7 +909,7 @@ void Room::produceMothers()
       continue;
     }
     int cnt = 0;
-    int bonus = mother->mass - m_config.motherStartMass;
+    int bonus = mother->mass - m_config.mother.mass;
     if (bonus > 0) {
       cnt = bonus > 100 ? 20 : bonus > 25 ? 5 : 1;
       mother->modifyMass(-cnt);
@@ -917,7 +917,7 @@ void Room::produceMothers()
       cnt = mother->foodCount < 20 ? 5 : 1;
     }
     mother->foodCount += cnt;
-    uint32_t impulse = m_config.foodMaxVelocity - m_config.foodMinVelocity;
+    uint32_t impulse = m_config.food.maxVelocity - m_config.food.minVelocity;
     for (int i=0; i<cnt; ++i) {
       auto angle = M_PI * (m_generator() % 3600) / 1800;
       Vec2D direction(sin(angle), cos(angle));
@@ -928,9 +928,9 @@ void Room::produceMothers()
         obj.position += direction * (mother->radius - mother->startRadius);
       }
       obj.color = m_generator() % 16;
-      obj.mass = m_config.foodMass;
-      obj.radius = m_config.foodRadius;
-      float magnitude = m_config.foodMinVelocity + (m_generator() % impulse);
+      obj.mass = m_config.food.mass;
+      obj.radius = m_config.food.radius;
+      float magnitude = m_config.food.minVelocity + (m_generator() % impulse);
       obj.modifyVelocity(direction * magnitude);
       m_mass += obj.mass;
     }
@@ -945,7 +945,8 @@ void Room::checkPlayers()
     }
   }
 
-  auto expirationTime = TimePoint::clock::now() - m_config.playerAnnihilationThreshold;
+  // TODO: revise
+  auto expirationTime = TimePoint::clock::now() - m_config.player.annihilationThreshold;
   std::erase_if(m_zombiePlayers,
     [&](auto* player)
     {
@@ -965,37 +966,37 @@ void Room::checkPlayers()
 
 void Room::generateFood()
 {
-  if (m_mass >= m_config.maxMass || m_foodContainer.size() > m_config.foodMaxAmount) {
+  if (m_mass >= m_config.maxMass || m_foodContainer.size() > m_config.food.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.foodMaxAmount - m_foodContainer.size());
+  auto availableSpace = static_cast<uint32_t>(m_config.food.maxQuantity - m_foodContainer.size());
   spawnFood(std::min(m_config.generator.food.quantity, availableSpace));
 }
 
 void Room::generateViruses()
 {
-  if (m_mass >= m_config.maxMass || m_virusContainer.size() > m_config.virusMaxAmount) {
+  if (m_mass >= m_config.maxMass || m_virusContainer.size() > m_config.virus.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.virusMaxAmount - m_virusContainer.size());
+  auto availableSpace = static_cast<uint32_t>(m_config.virus.maxQuantity - m_virusContainer.size());
   spawnViruses(std::min(m_config.generator.virus.quantity, availableSpace));
 }
 
 void Room::generatePhages()
 {
-  if (m_mass >= m_config.maxMass || m_phageContainer.size() > m_config.phageMaxAmount) {
+  if (m_mass >= m_config.maxMass || m_phageContainer.size() > m_config.phage.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.phageMaxAmount - m_phageContainer.size());
+  auto availableSpace = static_cast<uint32_t>(m_config.phage.maxQuantity - m_phageContainer.size());
   spawnPhages(std::min(m_config.generator.phage.quantity, availableSpace));
 }
 
 void Room::generateMothers()
 {
-  if (m_mass >= m_config.maxMass || m_motherContainer.size() > m_config.motherMaxAmount) {
+  if (m_mass >= m_config.maxMass || m_motherContainer.size() > m_config.mother.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.motherMaxAmount - m_motherContainer.size());
+  auto availableSpace = static_cast<uint32_t>(m_config.mother.maxQuantity - m_motherContainer.size());
   spawnMothers(std::min(m_config.generator.mother.quantity, availableSpace));
 }
 
@@ -1003,10 +1004,10 @@ void Room::spawnFood(uint32_t count)
 {
   for (; count>0; --count) {
     auto& obj = createFood();
-    obj.position = getRandomPosition(m_config.foodRadius);
+    obj.position = getRandomPosition(m_config.food.radius);
     obj.color = m_generator() % 16;
-    obj.mass = m_config.foodMass;
-    obj.radius = m_config.foodRadius;
+    obj.mass = m_config.food.mass;
+    obj.radius = m_config.food.radius;
     m_mass += obj.mass;
   }
 }
@@ -1015,7 +1016,7 @@ void Room::spawnViruses(uint32_t count)
 {
   for (; count>0; --count) {
     auto& obj = createVirus();
-    obj.modifyMass(m_config.virusStartMass);
+    obj.modifyMass(m_config.virus.mass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
@@ -1024,7 +1025,7 @@ void Room::spawnPhages(uint32_t count)
 {
   for (; count>0; --count) {
     auto& obj = createPhage();
-    obj.modifyMass(m_config.phageStartMass);
+    obj.modifyMass(m_config.phage.mass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
@@ -1033,7 +1034,7 @@ void Room::spawnMothers(uint32_t count)
 {
   for (; count>0; --count) {
     auto& obj = createMother();
-    obj.modifyMass(m_config.motherStartMass);
+    obj.modifyMass(m_config.mother.mass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
@@ -1056,7 +1057,7 @@ void Room::spawnBot(uint32_t id, const std::string& name)
   }
   if (bot->isDead()) {
     auto& obj = createAvatar();
-    obj.modifyMass(m_config.botStartMass);
+    obj.modifyMass(m_config.bot.mass);
     int radius = obj.radius;
     obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
     obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
@@ -1227,7 +1228,7 @@ void Room::onMotherMassChange(Mother* mother, float deltaMass)
 {
   onCellMassChange(mother, deltaMass);
 
-  if (mother->mass >= m_config.motherExplodeMass) {
+  if (mother->mass >= m_config.mother.maxMass) {
     explode(*mother);
   }
 }

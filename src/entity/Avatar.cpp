@@ -23,7 +23,8 @@ Avatar::Avatar(Room& room, uint32_t id)
 void Avatar::modifyMass(float value)
 {
   Cell::modifyMass(value);
-  maxSpeed = m_config.avatarMaxSpeed - m_config.avatarSpeedDiff * (radius - m_config.cellMinRadius) / (m_config.cellRadiusDiff);
+  const auto& config = room.getConfig();
+  maxVelocity = config.avatar.maxVelocity - config.avatarVelocityDiff * (radius - config.cellMinRadius) / (config.cellRadiusDiff);
 }
 
 bool Avatar::shouldBeProcessed() const
@@ -82,7 +83,7 @@ void Avatar::interact(Avatar& other)
     if ((dd > d * d) && (dd > d2 * d2)) {
       return;
     }
-    attacker->recombination(m_config.avatarRecombineTime);
+    attacker->recombination(room.getConfig().avatar.recombinationTime);
   } else {
     if (attacker->mass < 1.25 * defender->mass || dd > d * d) {
       return;
@@ -136,12 +137,13 @@ void Avatar::interact(Virus& virus)
 
 void Avatar::interact(Phage& phage)
 {
-  if (mass <= m_config.cellMinMass || mass < 1.25 * phage.mass) { // TODO: move the constant to the config
+  const auto& config = room.getConfig();
+  if (mass <= config.cellMinMass || mass < 1.25 * phage.mass) { // TODO: move the constant to the config
     return;
   }
   auto distance = radius + phage.radius;
   if (geometry::squareDistance(position, phage.position) < distance * distance) {
-    auto m = std::min(static_cast<float>(m_config.simulationInterval * phage.mass), mass - m_config.cellMinMass);
+    auto m = std::min(static_cast<float>(config.simulationInterval * phage.mass), mass - config.cellMinMass);
     modifyMass(-m);
   }
 }
@@ -176,7 +178,7 @@ bool Avatar::isRecombined() const
 
 void Avatar::deflate()
 {
-  modifyMass(-mass * room.getConfig().playerDeflationRatio);
+  modifyMass(-mass * room.getConfig().player.deflationRatio);
 }
 
 void Avatar::annihilate()

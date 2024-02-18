@@ -11,10 +11,10 @@
 class MySQLConnectionPool : public mysqlpp::ConnectionPool {
 public:
 	MySQLConnectionPool();
-	MySQLConnectionPool(const MySQLConfig& config);
+	MySQLConnectionPool(const config::MySql& config);
 	~MySQLConnectionPool();
 
-  void init(const MySQLConfig& config);
+  void init(const config::MySql& config);
   size_t size() const;
 
 protected:
@@ -23,7 +23,7 @@ protected:
 	unsigned int max_idle_time() override;
 
 private:
-  MySQLConfig m_config;
+  config::MySql m_config;
 };
 
 #endif /* THEGAME_MYSQL_CONNECTION_POOL_HPP */

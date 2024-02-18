@@ -10,11 +10,16 @@
 #include <string>
 #include <chrono>
 
-namespace asio = boost::asio;
+namespace config {
 
-struct MySQLConfig {
+struct Server {
+  boost::asio::ip::tcp::endpoint address;
+  uint32_t numThreads {0};
+};
+
+struct MySql {
   std::string database;
-  std::string server;
+  std::string host;
   std::string user;
   std::string password;
   std::string charset;
@@ -22,25 +27,97 @@ struct MySQLConfig {
   uint        maxIdleTime {0};
 };
 
-struct RoomConfig {
-  struct Generator {
-    struct Item {
-      Duration interval;
-      uint32_t quantity;
-    };
+struct InfluxDb {
+  boost::asio::ip::tcp::endpoint address;
+  Duration interval {};
+};
 
-    Item food;
-    Item virus;
-    Item phage;
-    Item mother;
+struct Player {
+  uint32_t  mass {0};
+  uint32_t  maxCells {0};
+  Duration  deflationThreshold {};
+  Duration  deflationInterval {};
+  float     deflationRatio {0};
+  Duration  annihilationThreshold {};
+  float     pointerForceRatio {0};
+};
+
+struct Bot {
+  uint32_t mass {0};
+};
+
+struct Avatar {
+  uint32_t  minVelocity {0};
+  uint32_t  maxVelocity {0};
+  uint32_t  explosionMinMass {0};
+  uint32_t  explosionParts {0};
+  uint32_t  splitMinMass {0};
+  uint32_t  splitVelocity {0};
+  uint32_t  ejectionMinMass {0};
+  uint32_t  ejectionVelocity {0};
+  uint32_t  ejectionMass {0};
+  uint32_t  ejectionMassLoss {0};
+  uint32_t  recombinationTime {0}; // TODO: use Duration
+};
+
+struct Food {
+  uint32_t  mass {0};
+  uint32_t  radius {0};
+  uint32_t  quantity {0};
+  uint32_t  maxQuantity {0};
+  uint32_t  minVelocity {0};
+  uint32_t  maxVelocity {0};
+  float     resistanceRatio {0};
+};
+
+struct Virus {
+  uint32_t  mass {0};
+  uint32_t  quantity {0};
+  uint32_t  maxQuantity {0};
+  Duration  lifeTime {};
+  uint32_t  color {0};
+};
+
+using Phage = Virus;
+
+struct Mother {
+  uint32_t  mass {0};
+  uint32_t  quantity {0};
+  uint32_t  maxMass {0};
+  uint32_t  maxQuantity {0};
+  Duration  lifeTime {};
+  uint32_t  color {0};
+  uint32_t  checkRadius {0};
+};
+
+struct Generator {
+  struct Item {
+    Duration  interval {};
+    uint32_t  quantity {0};
   };
 
+  Item food;
+  Item virus;
+  Item phage;
+  Item mother;
+};
+
+struct Room {
   using BotNames = std::vector<std::string>;
 
-  float eps {0.01};
+  Player    player;
+  Bot       bot;
+  Avatar    avatar;
+  Food      food;
+  Virus     virus;
+  Phage     phage;
+  Mother    mother;
+  Generator generator;
+
+  float     eps {0.01};
 
   uint32_t  numThreads {0};
-  Duration  updateInterval;
+  Duration  updateInterval {};
 
   uint32_t  spawnPosTryCount {0};
 
@@ -50,8 +127,8 @@ struct RoomConfig {
   Duration  checkMothersInterval {};
   Duration  produceMothersInterval {};
 
-  uint32_t  viewportBase {0};           // коротша сторона (висота)
-  float     viewportBuffer {0};         // запас в кожну сторону
+  uint32_t  viewportBase {0};           // shorter side (height)
+  float     viewportBuffer {0};         // buffer on each side
   float     aspectRatio {0};
 
   uint32_t  width {0};
@@ -63,20 +140,7 @@ struct RoomConfig {
   float     scaleRatio {0};
   uint32_t  explodeVelocity {0};
 
-  uint32_t  playerMaxCells {0};
-  Duration  playerDeflationThreshold {};
-  Duration  playerDeflationInterval {};
-  float     playerDeflationRatio {0};
-  Duration  playerAnnihilationThreshold {};
-  float     playerForceRatio {0};
-
   BotNames  botNames;
-  uint32_t  botStartMass {0};
-  float     botForceCornerRatio {0};
-  float     botForceFoodRatio {0};
-  float     botForceHungerRatio {0};
-  float     botForceDangerRatio {0};
-  float     botForceStarRatio {0};
 
   float     resistanceRatio {0};
   float     elasticityRatio {0};
@@ -84,69 +148,23 @@ struct RoomConfig {
   uint32_t  cellMinMass {0};
   float     cellRadiusRatio {0};
 
-  uint32_t  avatarStartMass {0};
-  uint32_t  avatarMinSpeed {0};
-  uint32_t  avatarMaxSpeed {0};
-  uint32_t  avatarExplodeMinMass {0};
-  uint32_t  avatarExplodeParts {0};
-  uint32_t  avatarSplitMinMass {0};
-  uint32_t  avatarSplitVelocity {0};
-  uint32_t  avatarEjectMinMass {0};
-  uint32_t  avatarEjectVelocity {0};
-  uint32_t  avatarRecombineTime {0}; // TODO: use Duration
-  uint32_t  avatarEjectMass {0};
-  uint32_t  avatarEjectMassLoss {0};
-
-  uint32_t  foodStartAmount {0};
-  uint32_t  foodMaxAmount {0};
-  uint32_t  foodMass {0};
-  uint32_t  foodRadius {0};
-  uint32_t  foodMinVelocity {0};
-  uint32_t  foodMaxVelocity {0};
-  float     foodResistanceRatio {0};
-
-  uint32_t  virusStartMass {0};
-  uint32_t  virusStartAmount {0};
-  uint32_t  virusMaxAmount {0};
-  Duration  virusLifeTime {};
-  uint32_t  virusColor {0};
-
-  uint32_t  phageStartMass {0};
-  uint32_t  phageStartAmount {0};
-  uint32_t  phageMaxAmount {0};
-  Duration  phageLifeTime {};
-  uint32_t  phageColor {0};
-
-  uint32_t  motherStartMass {0};
-  uint32_t  motherStartAmount {0};
-  uint32_t  motherMaxAmount {0};
-  Duration  motherLifeTime {};
-  uint32_t  motherExplodeMass {0};
-  uint32_t  motherColor {0};
-  uint32_t  motherCheckRadius {0};
-
-  Generator generator;
-
   double    simulationInterval {0};
   double    cellMinRadius {0};
   double    cellMaxRadius {0};
   double    cellRadiusDiff {0};
-  double    avatarSpeedDiff {0};
+  double    avatarVelocityDiff {0};
 };
 
 class Config {
 public:
   void load(const std::string& filename);
 
-  asio::ip::tcp::endpoint     address;
-  Duration                    statisticInterval {1min};
-  uint32_t                    numThreads {0};
-
-  std::string                 influxdbServer;
-  uint                        influxdbPort {0};
-
-  MySQLConfig                 mysql;
-  RoomConfig                  room;
+  Server    server;
+  MySql     mysql;
+  InfluxDb  influxdb;
+  Room      room;
 };
+
+} // namespace config
 
 #endif /* THEGAME_CONFIG_HPP */

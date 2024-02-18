@@ -5,14 +5,14 @@
 
 MySQLConnectionPool::MySQLConnectionPool() { }
 
-MySQLConnectionPool::MySQLConnectionPool(const MySQLConfig& config) : m_config(config) { }
+MySQLConnectionPool::MySQLConnectionPool(const config::MySql& config) : m_config(config) { }
 
 MySQLConnectionPool::~MySQLConnectionPool()
 {
   clear();
 }
 
-void MySQLConnectionPool::init(const MySQLConfig& config)
+void MySQLConnectionPool::init(const config::MySql& config)
 {
   m_config = config;
 }
@@ -30,7 +30,7 @@ mysqlpp::Connection* MySQLConnectionPool::create()
   conn->set_option(new mysqlpp::ReconnectOption(true));
   conn->connect(
     m_config.database.empty() ? nullptr : m_config.database.c_str(),
-    m_config.server.empty() ? nullptr : m_config.server.c_str(),
+    m_config.host.empty() ? nullptr : m_config.host.c_str(),
     m_config.user.empty() ? nullptr : m_config.user.c_str(),
     m_config.password.empty() ? nullptr : m_config.password.c_str(),
     m_config.port

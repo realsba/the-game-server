@@ -49,14 +49,14 @@ public:
   ~Room();
 
   const asio::any_io_executor& getExecutor() const;
-  void init(const RoomConfig& config);
+  void init(const config::Room& config);
 
   void start();
   void stop();
 
   uint32_t getId() const;
   bool hasFreeSpace() const;
-  const RoomConfig& getConfig() const;
+  const config::Room& getConfig() const;
 
   void join(const SessionPtr& sess);
   void leave(const SessionPtr& sess);
@@ -160,7 +160,7 @@ private:
   mutable std::random_device  m_generator;
 
   const uint32_t              m_id {0};
-  RoomConfig                  m_config;
+  config::Room                m_config;
   Gridmap                     m_gridmap;
   Sessions                    m_sessions;
   std::map<uint32_t, Player*> m_players;

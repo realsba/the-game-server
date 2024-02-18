@@ -213,7 +213,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
   serialize(*buffer, static_cast<uint8_t>(m_avatars.size()));
   for (const Avatar* avatar : m_avatars) {
     serialize(*buffer, avatar->id);
-    serialize(*buffer, avatar->maxSpeed);
+    serialize(*buffer, avatar->maxVelocity);
     serialize(*buffer, avatar->protection);
   }
   if (arrowPlayer) {
@@ -284,19 +284,19 @@ void Player::removePlayer(Player* player)
   }
 }
 
-void Player::applyDestinationAttractionForce(uint32_t tick)
+void Player::applyPointerForce(uint32_t tick)
 {
   if (!m_pointer) {
     return;
   }
   auto destination = m_position + m_pointer;
-  auto forceRatio = m_room.getConfig().playerForceRatio;
+  auto forceRatio = m_room.getConfig().player.pointerForceRatio;
   for (auto* avatar : m_avatars) {
     if (avatar->protection <= tick) {
       Vec2D direction(destination - avatar->position);
       float distance = direction.length();
       float k = distance < avatar->radius ? distance / avatar->radius : 1;
-      Vec2D velocity = direction.direction() * (k * avatar->maxSpeed);
+      Vec2D velocity = direction.direction() * (k * avatar->maxVelocity);
       avatar->force += (velocity - avatar->velocity) * (avatar->mass * forceRatio);
     }
   }
@@ -343,7 +343,7 @@ void Player::recombine(Avatar& initiator, Avatar& target)
 
 void Player::scheduleDeflation()
 {
-  m_deflationTimer.expires_after(m_room.getConfig().playerDeflationThreshold);
+  m_deflationTimer.expires_after(m_room.getConfig().player.deflationThreshold);
   m_deflationTimer.async_wait([this](const boost::system::error_code &error) {
     if (!error) {
       handleDeflation();
@@ -353,7 +353,7 @@ void Player::scheduleDeflation()
 
 void Player::scheduleAnnihilation()
 {
-  m_annihilationTimer.expires_after(m_room.getConfig().playerAnnihilationThreshold);
+  m_annihilationTimer.expires_after(m_room.getConfig().player.annihilationThreshold);
   m_annihilationTimer.async_wait([this](const boost::system::error_code& error) {
     if (!error) {
       handleAnnihilation();
@@ -363,7 +363,7 @@ void Player::scheduleAnnihilation()
 
 void Player::handleDeflation()
 {
-  m_deflationTimer.expires_after(m_room.getConfig().playerDeflationInterval);
+  m_deflationTimer.expires_after(m_room.getConfig().player.deflationInterval);
   m_deflationTimer.async_wait([this](const boost::system::error_code& error) {
     if (!error) {
       for (auto* avatar : m_avatars) {
