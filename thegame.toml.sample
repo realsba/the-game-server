@@ -87,31 +87,31 @@ recombinationTime = 8
 [room.food]
 mass = 5
 radius = 8
-quantity = 100
-maxQuantity = 200
+quantity = 2000
+maxQuantity = 5000
 minVelocity = 190
 maxVelocity = 210
 resistanceRatio = 30.0
 
 [room.virus]
 mass = 165
-quantity = 1
-maxQuantity = 1
+quantity = 10
+maxQuantity = 20
 lifeTime = '5m'
 color = 13
 
 [room.phage]
 mass = 165
-quantity = 1
-maxQuantity = 1
+quantity = 10
+maxQuantity = 10
 lifeTime = '5m'
 color = 14
 
 [room.mother]
 mass = 240
-quantity = 1
 maxMass = 1200
-maxQuantity = 1
+quantity = 10
+maxQuantity = 20
 lifeTime = '10m'
 color = 12
 checkRadius = 60
