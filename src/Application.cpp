@@ -8,6 +8,7 @@
 #include "packet/PacketGreeting.hpp"
 
 #include "AsioFormatter.hpp"
+#include "HttpClient.hpp"
 #include "ScopeExit.hpp"
 #include "User.hpp"
 
@@ -40,15 +41,13 @@ void Application::start()
   m_config.load(m_configFileName);
 
   m_mysqlConnectionPool.init(m_config.mysql);
-  // TODO: implement
-  //m_influxdb.open(asio::ip::udp::v4());
-  //m_influxdb.connect(asio::ip::udp::endpoint(m_config.influxdb.address));
 
-  m_listener->run();
+  if (m_config.influxdb.enabled) {
+    m_statisticTimer.setInterval(m_config.influxdb.interval);
+    m_statisticTimer.start();
+  }
 
-  m_statisticTimer.setInterval(m_config.influxdb.interval);
-  m_statisticTimer.start();
-
+  m_listener->start();
   spdlog::info("Server started. address={}", m_config.server.address);
 
   m_roomManager.start(m_config.room);
@@ -318,6 +317,7 @@ void Application::actionChatMessage(const UserPtr& user, const SessionPtr& sess,
 void Application::statistic()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
+
   std::stringstream ss;
   if (m_maxSessions > 0) {
     ss << "connections value=" << m_maxSessions << "\n";
@@ -331,11 +331,19 @@ void Application::statistic()
   }
   const auto& data = ss.str();
   if (!data.empty()) {
-    try {
-      m_influxdb.send(asio::buffer(data));
-    } catch (const std::exception& e) {
-      spdlog::warn("Exception caught while sending data to InfluxDB: {}", e.what());
-    }
+    Request request;
+    request.version(11);
+    request.method(http::verb::post);
+    request.target(m_config.influxdb.path);
+    request.set(http::field::host, m_config.influxdb.host);
+    request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    request.set("Content-Type", "text/plain; charset=utf-8");
+    request.set("Accept", "application/json");
+    request.set("Authorization", "Token " + m_config.influxdb.token);
+    request.body() = data;
+    request.prepare_payload();
+
+    std::make_shared<HttpClient>(m_ioContext)->send(m_config.influxdb.host, m_config.influxdb.port, std::move(request));
   }
   m_maxSessions = m_sessions.size();
   m_registrations = 0;

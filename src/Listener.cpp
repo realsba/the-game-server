@@ -20,7 +20,7 @@ Listener::Listener(asio::io_context& ioc, tcp::endpoint&& endpoint, AcceptHandle
 {
 }
 
-void Listener::run()
+void Listener::start()
 {
   asio::post(m_strand, std::bind_front(&Listener::doRun, shared_from_this()));
 }

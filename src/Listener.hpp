@@ -14,14 +14,13 @@ namespace asio = boost::asio;
 
 using tcp = boost::asio::ip::tcp;
 
-class Listener : public std::enable_shared_from_this<Listener>
-{
+class Listener : public std::enable_shared_from_this<Listener> {
 public:
   using AcceptHandler = std::function<void(const SessionPtr&)>;
 
   Listener(asio::io_context& ioc, tcp::endpoint&& endpoint, AcceptHandler&& handler);
 
-  void run();
+  void start();
   void stop();
 
 private:

@@ -28,8 +28,12 @@ struct MySql {
 };
 
 struct InfluxDb {
-  boost::asio::ip::tcp::endpoint address;
-  Duration interval {};
+  std::string host;
+  std::string path;
+  std::string token;
+  Duration    interval {};
+  uint16_t    port {0};
+  bool        enabled {false};
 };
 
 struct Player {

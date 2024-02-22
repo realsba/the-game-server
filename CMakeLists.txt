@@ -53,6 +53,7 @@ add_executable(${PROJECT_NAME}
     src/packet/PacketSpectate.hpp
     src/Application.cpp
     src/Application.hpp
+    src/AsioFormatter.hpp
     src/Bot.cpp
     src/Bot.hpp
     src/Config.cpp
@@ -60,6 +61,11 @@ add_executable(${PROJECT_NAME}
     src/Event.hpp
     src/Gridmap.cpp
     src/Gridmap.hpp
+    src/HttpClient.cpp
+    src/HttpClient.hpp
+    src/Listener.cpp
+    src/Listener.hpp
+    src/ListenerFwd.hpp
     src/MySQLConnectionPool.cpp
     src/MySQLConnectionPool.hpp
     src/NextId.cpp
@@ -71,6 +77,8 @@ add_executable(${PROJECT_NAME}
     src/RoomManager.cpp
     src/RoomManager.hpp
     src/ScopeExit.hpp
+    src/Session.cpp
+    src/Session.hpp
     src/TimePoint.hpp
     src/Timer.cpp
     src/Timer.hpp
@@ -84,12 +92,6 @@ add_executable(${PROJECT_NAME}
     src/util.cpp
     src/util.hpp
     src/version.hpp
-    src/Listener.cpp
-    src/Listener.hpp
-    src/ListenerFwd.hpp
-    src/Session.cpp
-    src/Session.hpp
-    src/AsioFormatter.hpp
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Boost::headers Threads::Threads OpenSSL::Crypto OpenSSL::SSL spdlog::spdlog mysqlpp

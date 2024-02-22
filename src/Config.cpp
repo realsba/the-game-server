@@ -65,9 +65,11 @@ namespace toml
     {
       config::InfluxDb result{};
 
-      const auto host = toml::find<std::string>(v, "host");
-      const auto port = toml::find<uint16_t>(v, "port");
-      result.address = asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port);
+      result.enabled = find_or<bool>(v, "enabled", true);
+      result.host = find<std::string>(v, "host");
+      result.port = find<uint16_t>(v, "port");
+      result.path = find<std::string>(v, "path");
+      result.token = find<std::string>(v, "token");
       result.interval = find<Duration>(v, "interval");
 
       return result;
