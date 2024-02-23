@@ -455,44 +455,6 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
   serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::ChatMessage));
   serialize(*buffer, player->getId());
   serialize(*buffer, text);
-  if (text[0] == '#') {
-    serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::ChatMessage));
-    std::stringstream ss;
-    serialize(*buffer, 0);
-    if (text == "#id") {
-      ss << "id=" << player->getId();
-    } else if (text == "#info") {
-      float mass = 0;
-      for (auto* item : m_foodContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_bulletContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_virusContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_phageContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_motherContainer) {
-        mass += item->mass;
-      }
-      for (auto* item : m_avatarContainer) {
-        mass += item->mass;
-      }
-      ss << "roomId=" << m_id << "; connections=" << m_sessions.size()
-        << "; players=" << m_players.size()
-        << "; totalMass=" << m_mass << ":" << mass
-        << "; avatars=" << m_avatarContainer.size()
-        << "; food=" << m_foodContainer.size()
-        << "; masses=" << m_bulletContainer.size()
-        << "; viruses=" << m_virusContainer.size()
-        << "; phages=" << m_phageContainer.size()
-        << "; mothers=" << m_motherContainer.size();
-    }
-    serialize(*buffer, ss.str());
-  }
   send(buffer);
   m_chatHistory.emplace_front(player->getId(), player->name, text);
   while (m_chatHistory.size() > 128) {
