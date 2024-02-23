@@ -33,10 +33,12 @@ void Cell::modifyMass(float value)
   const auto& config = room.getConfig();
   auto old = mass;
   mass += value;
-  if (mass < config.cellMinMass) {
-    mass = config.cellMinMass;
+  if (mass < MIN_MASS) {
+    mass = MIN_MASS;
   }
-  radius = config.cellRadiusRatio * sqrt(mass / M_PI);
+  if (!materialPoint) {
+    radius = config.cellRadiusRatio * sqrt(mass / M_PI);
+  }
   m_massChangeEvent.notify(mass - old);
 }
 

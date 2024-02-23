@@ -26,6 +26,8 @@ class Mother;
 
 class Cell : public Circle {
 public:
+  static constexpr auto MIN_MASS = 1.0f;
+
   explicit Cell(Room& room, uint32_t id = 0);
   virtual ~Cell() = default;
 

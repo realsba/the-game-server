@@ -77,6 +77,8 @@ struct Food {
   uint32_t  minVelocity {0};
   uint32_t  maxVelocity {0};
   float     resistanceRatio {0};
+  int       minColorIndex {0};
+  int       maxColorIndex {0};
 };
 
 struct Virus {
@@ -97,6 +99,8 @@ struct Mother {
   Duration  lifeTime {};
   uint32_t  color {0};
   uint32_t  checkRadius {0};
+  float     baseFoodProduction {0};
+  uint32_t  nearbyFoodLimit {0};
 };
 
 struct Generator {

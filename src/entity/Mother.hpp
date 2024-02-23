@@ -18,7 +18,6 @@ public:
   void interact(Phage& phage) override;
 
   uint32_t          foodCount {0};
-  float             startRadius {0};
 };
 
 #endif /* THEGAME_ENTITY_MOTHER_HPP */

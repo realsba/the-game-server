@@ -16,7 +16,6 @@ Mother::Mother(Room& room, uint32_t id)
 {
   const auto& config = room.getConfig();
   type = typeMother;
-  startRadius = static_cast<float>(config.cellRadiusRatio * sqrt(config.mother.mass / M_PI));
   color = config.mother.color;
 }
 

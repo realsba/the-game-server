@@ -730,9 +730,10 @@ void Room::destroyOutdatedCells()
 void Room::checkMothers()
 {
   for (auto* mother : m_motherContainer) {
-    Vec2D radius(mother->radius + m_config.mother.checkRadius, mother->radius + m_config.mother.checkRadius);
-    AABB box(mother->position - radius, mother->position + radius);
-    mother->foodCount = m_gridmap.count(box);
+    auto radius = mother->radius + m_config.mother.checkRadius;
+    Vec2D size(radius, radius);
+    AABB boundingBox(mother->position - size, mother->position + size);
+    mother->foodCount = m_gridmap.count(boundingBox);
   }
 }
 
@@ -873,39 +874,36 @@ void Room::updateLeaderboard()
 
 void Room::produceMothers()
 {
-  if (m_motherContainer.empty() || m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
+  if (m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
     return;
   }
 
+  auto velocityRange = m_config.food.maxVelocity - m_config.food.minVelocity;
+  auto velocityDistribution = std::uniform_real_distribution<float>(
+    m_config.food.minVelocity, m_config.food.minVelocity + velocityRange
+  );
+  auto angleDistribution = std::uniform_real_distribution<float>(0, 2 * M_PI);
+  auto colorDistribution = std::uniform_int_distribution<int>(m_config.food.minColorIndex, m_config.food.maxColorIndex);
+
   for (auto* mother : m_motherContainer) {
-    if (mother->foodCount >= 100) {
+    if (mother->foodCount >= m_config.mother.nearbyFoodLimit) {
       continue;
     }
-    int cnt = 0;
-    int bonus = mother->mass - m_config.mother.mass;
-    if (bonus > 0) {
-      cnt = bonus > 100 ? 20 : bonus > 25 ? 5 : 1;
-      mother->modifyMass(-cnt);
-    } else {
-      cnt = mother->foodCount < 20 ? 5 : 1;
-    }
-    mother->foodCount += cnt;
-    uint32_t impulse = m_config.food.maxVelocity - m_config.food.minVelocity;
-    for (int i=0; i<cnt; ++i) {
-      auto angle = M_PI * (m_generator() % 3600) / 1800;
-      Vec2D direction(sin(angle), cos(angle));
+
+    auto extraMassFactor = std::max(1.0f, (mother->mass - m_config.mother.mass) / m_config.mother.mass);
+    auto foodToProduce = static_cast<int>(extraMassFactor * m_config.mother.baseFoodProduction);
+
+    mother->foodCount += foodToProduce;
+
+    for (int i = 0; i < foodToProduce; ++i) {
+      auto angle = angleDistribution(m_generator);
+      auto direction = Vec2D(sin(angle), cos(angle));
       auto& obj = createFood();
       obj.creator = mother;
-      obj.position = mother->position;
-      if (mother->radius > mother->startRadius) {
-        obj.position += direction * (mother->radius - mother->startRadius);
-      }
-      obj.color = m_generator() % 16;
-      obj.mass = m_config.food.mass;
-      obj.radius = m_config.food.radius;
-      float magnitude = m_config.food.minVelocity + (m_generator() % impulse);
-      obj.modifyVelocity(direction * magnitude);
-      m_mass += obj.mass;
+      obj.position = mother->position + direction * mother->radius;
+      obj.color = colorDistribution(m_generator);
+      obj.modifyMass(m_config.food.mass);
+      obj.modifyVelocity(direction * velocityDistribution(m_generator));
     }
   }
 }
@@ -975,19 +973,17 @@ void Room::generateMothers()
 
 void Room::spawnFood(uint32_t count)
 {
-  for (; count>0; --count) {
+  for (; count > 0; --count) {
     auto& obj = createFood();
-    obj.position = getRandomPosition(m_config.food.radius);
+    obj.position = getRandomPosition(obj.radius);
     obj.color = m_generator() % 16;
-    obj.mass = m_config.food.mass;
-    obj.radius = m_config.food.radius;
-    m_mass += obj.mass;
+    obj.modifyMass(m_config.food.mass);
   }
 }
 
 void Room::spawnViruses(uint32_t count)
 {
-  for (; count>0; --count) {
+  for (; count > 0; --count) {
     auto& obj = createVirus();
     obj.modifyMass(m_config.virus.mass);
     obj.position = getRandomPosition(obj.radius);
@@ -996,7 +992,7 @@ void Room::spawnViruses(uint32_t count)
 
 void Room::spawnPhages(uint32_t count)
 {
-  for (; count>0; --count) {
+  for (; count > 0; --count) {
     auto& obj = createPhage();
     obj.modifyMass(m_config.phage.mass);
     obj.position = getRandomPosition(obj.radius);
@@ -1005,7 +1001,7 @@ void Room::spawnPhages(uint32_t count)
 
 void Room::spawnMothers(uint32_t count)
 {
-  for (; count>0; --count) {
+  for (; count > 0; --count) {
     auto& obj = createMother();
     obj.modifyMass(m_config.mother.mass);
     obj.position = getRandomPosition(obj.radius);

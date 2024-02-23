@@ -16,6 +16,7 @@ Food::Food(Room& room, uint32_t id)
 {
   const auto& config = room.getConfig();
   type = typeFood;
+  radius = config.food.radius;
   materialPoint = true;
   resistanceRatio = config.food.resistanceRatio;
 }

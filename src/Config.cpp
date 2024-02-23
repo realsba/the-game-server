@@ -178,6 +178,8 @@ namespace toml
       result.minVelocity      = find<uint32_t>(v, "minVelocity");
       result.maxVelocity      = find<uint32_t>(v, "maxVelocity");
       result.resistanceRatio  = find<float>(v, "resistanceRatio");
+      result.minColorIndex    = find<int>(v, "minColorIndex");
+      result.maxColorIndex    = find<int>(v, "maxColorIndex");
 
       return result;
     }
@@ -207,13 +209,15 @@ namespace toml
     {
       config::Mother result{};
 
-      result.mass         = find<uint32_t>(v, "mass");
-      result.quantity     = find<uint32_t>(v, "quantity");
-      result.maxMass      = find<uint32_t>(v, "maxMass");
-      result.maxQuantity  = find<uint32_t>(v, "maxQuantity");
-      result.lifeTime     = find<Duration>(v, "lifeTime");
-      result.color        = find<uint32_t>(v, "color");
-      result.checkRadius  = find<uint32_t>(v, "checkRadius");
+      result.mass               = find<uint32_t>(v, "mass");
+      result.quantity           = find<uint32_t>(v, "quantity");
+      result.maxMass            = find<uint32_t>(v, "maxMass");
+      result.maxQuantity        = find<uint32_t>(v, "maxQuantity");
+      result.lifeTime           = find<Duration>(v, "lifeTime");
+      result.color              = find<uint32_t>(v, "color");
+      result.checkRadius        = find<uint32_t>(v, "checkRadius");
+      result.nearbyFoodLimit    = find<uint32_t>(v, "nearbyFoodLimit");
+      result.baseFoodProduction = find<uint32_t>(v, "baseFoodProduction");
 
       return result;
     }

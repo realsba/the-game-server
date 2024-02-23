@@ -95,6 +95,8 @@ maxQuantity = 5000
 minVelocity = 190
 maxVelocity = 210
 resistanceRatio = 30.0
+minColorIndex = 0
+maxColorIndex = 15
 
 [room.virus]
 mass = 165
@@ -118,6 +120,8 @@ maxQuantity = 20
 lifeTime = '10m'
 color = 12
 checkRadius = 60
+baseFoodProduction = 5
+nearbyFoodLimit = 100
 
 [room.generator.food]
 interval = '1s'
