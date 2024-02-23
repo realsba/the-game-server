@@ -838,7 +838,10 @@ void Room::update()
     m_gridmap.insert(cell);
   }
 
-  m_processingCells.insert(m_activatedCells.begin(), m_activatedCells.end());
+  if (!m_activatedCells.empty()) {
+    m_processingCells.insert(m_activatedCells.begin(), m_activatedCells.end());
+    m_activatedCells.clear();
+  }
 
   for (auto* cell : m_processingCells) {
     cell->applyResistanceForce();
@@ -1215,9 +1218,8 @@ void Room::onMotherDeath(Mother* mother)
 
 void Room::onMotionStarted(Cell* cell)
 {
-  spdlog::debug("ACTIVATED {}", cell->id);
-  //m_processingCells.insert(cell);
-  //m_modifiedCells.insert(cell);
+  m_processingCells.insert(cell);
+  m_modifiedCells.insert(cell);
 }
 
 void Room::onCellMassChange(Cell* cell, float deltaMass)
