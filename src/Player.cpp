@@ -92,13 +92,13 @@ void Player::init()
   m_maxMass = 0;
 }
 
-void Player::setPointer(const Vec2D& value)
+void Player::setPointerOffset(const Vec2D& value)
 {
   if (isDead() || !value) {
-    m_pointer.zero();
+    m_pointerOffset.zero();
     return;
   }
-  m_pointer = value;
+  m_pointerOffset = value;
   startMotion();
 }
 
@@ -116,7 +116,7 @@ void Player::removeSession(const SessionPtr& sess)
 {
   m_sessions.erase(sess);
   if (m_sessions.empty()) {
-    m_pointer.zero();
+    m_pointerOffset.zero();
   }
 }
 
@@ -286,10 +286,10 @@ void Player::removePlayer(Player* player)
 
 void Player::applyPointerForce(uint32_t tick)
 {
-  if (!m_pointer) {
+  if (!m_pointerOffset) {
     return;
   }
-  auto destination = m_position + m_pointer;
+  auto destination = m_position + m_pointerOffset;
   auto forceRatio = m_room.getConfig().player.pointerForceRatio;
   for (auto* avatar : m_avatars) {
     if (avatar->protection <= tick) {

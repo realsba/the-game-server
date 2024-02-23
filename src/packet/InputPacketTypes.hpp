@@ -10,7 +10,7 @@ struct InputPacketTypes {
     ChatMessage = 2,
     Greeting = 3,
     Play = 4,
-    Point = 5,
+    Move = 5,
     Eject = 6,
     Split = 7,
     Spectate = 8,

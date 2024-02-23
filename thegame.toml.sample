@@ -13,8 +13,7 @@ numThreads  = 2
 [influxdb]
 host        = '127.0.0.1'
 port        = 8086
-org         = ''
-bucket      = ''
+path        = '/api/v2/write?org=YOUR_ORG&bucket=YOUR_BUCKET&precision=ns'
 token       = ''
 interval    = '1m'
 

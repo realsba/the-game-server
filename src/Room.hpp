@@ -62,7 +62,7 @@ public:
   void leave(const SessionPtr& sess);
   void play(const SessionPtr& sess, const std::string& name, uint8_t color);
   void spectate(const SessionPtr& sess, uint32_t targetId);
-  void point(const SessionPtr& sess, const Vec2D& point);
+  void move(const SessionPtr& sess, const Vec2D& point);
   void eject(const SessionPtr& sess, const Vec2D& point);
   void split(const SessionPtr& sess, const Vec2D& point);
   void watch(const SessionPtr& sess, uint32_t playerId);
@@ -73,7 +73,7 @@ private:
   void doLeave(const SessionPtr& sess);
   void doPlay(const SessionPtr& sess, const std::string& name, uint8_t color);
   void doSpectate(const SessionPtr& sess, uint32_t targetId);
-  void doPoint(const SessionPtr& sess, const Vec2D& point);
+  void doMove(const SessionPtr& sess, const Vec2D& point);
   void doEject(const SessionPtr& sess, const Vec2D& point);
   void doSplit(const SessionPtr& sess, const Vec2D& point);
   void doWatch(const SessionPtr& sess, uint32_t playerId);
@@ -168,7 +168,7 @@ private:
   std::set<Player*>           m_zombiePlayers; // TODO: revise
   std::vector<Player*>        m_leaderboard;
   std::set<Bot*>              m_bots;
-  RequestsMap                 m_pointerRequests;
+  RequestsMap                 m_moveRequests;
   RequestsMap                 m_ejectRequests;
   RequestsMap                 m_splitRequests;
   NextId                      m_cellNextId;

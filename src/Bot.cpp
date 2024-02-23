@@ -58,11 +58,11 @@ void Bot::navigate()
   }
 
   if (m_target && m_target->isAttractiveFor(*m_mainAvatar)) {
-    m_pointer = m_target->position - m_position;
+    m_pointerOffset = m_target->position - m_position;
     return;
   }
 
-  m_pointer.zero();
+  m_pointerOffset.zero();
   choseTarget();
 }
 

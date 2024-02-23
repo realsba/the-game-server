@@ -42,7 +42,7 @@ public:
 
   virtual void init();
 
-  void setPointer(const Vec2D& value);
+  void setPointerOffset(const Vec2D& value);
   void addSession(const SessionPtr& sess);
   void removeSession(const SessionPtr& sess);
   void clearSessions();
@@ -85,7 +85,7 @@ protected:
   AABB                  m_viewport;
   AABB                  m_viewbox;
   Vec2D                 m_position;
-  Vec2D                 m_pointer; // TODO: rename to m_cursorOffset
+  Vec2D                 m_pointerOffset;
   TimePoint             m_lastActivity {TimePoint::clock::now()};
   Sector*               m_leftTopSector {nullptr};
   Sector*               m_rightBottomSector {nullptr};

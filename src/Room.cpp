@@ -177,9 +177,9 @@ void Room::spectate(const SessionPtr& sess, uint32_t targetId)
   asio::post(m_executor, std::bind_front(&Room::doSpectate, this, sess, targetId));
 }
 
-void Room::point(const SessionPtr& sess, const Vec2D& point)
+void Room::move(const SessionPtr& sess, const Vec2D& point)
 {
-  asio::post(m_executor, std::bind_front(&Room::doPoint, this, sess, point));
+  asio::post(m_executor, std::bind_front(&Room::doMove, this, sess, point));
 }
 
 void Room::eject(const SessionPtr& sess, const Vec2D& point)
@@ -274,7 +274,7 @@ void Room::doJoin(const SessionPtr& sess)
 void Room::doLeave(const SessionPtr& sess)
 {
   if (m_sessions.erase(sess)) {
-    m_pointerRequests.erase(sess);
+    m_moveRequests.erase(sess);
     m_ejectRequests.erase(sess);
     m_splitRequests.erase(sess);
     auto* player = sess->player();
@@ -407,9 +407,9 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
   sess->observable(target);
 }
 
-void Room::doPoint(const SessionPtr& sess, const Vec2D& point)
+void Room::doMove(const SessionPtr& sess, const Vec2D& point)
 {
-  m_pointerRequests.emplace(sess, point);
+  m_moveRequests.emplace(sess, point);
 }
 
 void Room::doEject(const SessionPtr& sess, const Vec2D& point)
@@ -768,14 +768,14 @@ void Room::checkMothers()
 
 void Room::handlePlayerRequests()
 {
-  for (const auto& it : m_pointerRequests) {
+  for (const auto& it : m_moveRequests) {
     const auto& sess = it.first;
     auto* player = sess->player();
     if (player) {
-      player->setPointer(it.second);
+      player->setPointerOffset(it.second);
     }
   }
-  m_pointerRequests.clear();
+  m_moveRequests.clear();
 
   for (const auto& it : m_ejectRequests) {
     const auto& sess = it.first;

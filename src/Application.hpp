@@ -47,7 +47,7 @@ private:
   void actionGreeting(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
   void actionPlay(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
   void actionSpectate(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionPoint(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionMove(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
   void actionEject(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
   void actionSplit(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
   void actionChatMessage(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
@@ -64,7 +64,7 @@ private:
     { InputPacketTypes::Greeting,    std::bind(&Application::actionGreeting,    this, _1, _2, _3) },
     { InputPacketTypes::Play,        std::bind(&Application::actionPlay,        this, _1, _2, _3) },
     { InputPacketTypes::Spectate,    std::bind(&Application::actionSpectate,    this, _1, _2, _3) },
-    { InputPacketTypes::Point,       std::bind(&Application::actionPoint,       this, _1, _2, _3) },
+    { InputPacketTypes::Move,        std::bind(&Application::actionMove,        this, _1, _2, _3) },
     { InputPacketTypes::Eject,       std::bind(&Application::actionEject,       this, _1, _2, _3) },
     { InputPacketTypes::Split,       std::bind(&Application::actionSplit,       this, _1, _2, _3) },
     { InputPacketTypes::ChatMessage, std::bind(&Application::actionChatMessage, this, _1, _2, _3) },

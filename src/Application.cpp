@@ -245,7 +245,7 @@ void Application::actionSpectate(const UserPtr& user, const SessionPtr& sess, be
   }
 }
 
-void Application::actionPoint(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionMove(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
   Vec2D point;
   point.x = deserialize<int16_t>(request);
@@ -253,7 +253,7 @@ void Application::actionPoint(const UserPtr& user, const SessionPtr& sess, beast
   if (user) {
     auto* room = user->getRoom();
     if (room) {
-      room->point(sess, point);
+      room->move(sess, point);
     }
   }
 }
