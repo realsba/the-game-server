@@ -58,6 +58,10 @@ elasticityRatio = 30.0
 cellMinMass = 35
 cellRadiusRatio = 6.0
 
+[room.leaderboard]
+limit = 20
+updateInterval = '1s'
+
 [room.player]
 mass = 250
 maxCells = 16

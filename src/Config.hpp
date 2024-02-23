@@ -36,6 +36,11 @@ struct InfluxDb {
   bool        enabled {false};
 };
 
+struct Leaderboard {
+  Duration    updateInterval {};
+  uint32_t    limit {0};
+};
+
 struct Player {
   uint32_t  mass {0};
   uint32_t  maxCells {0};
@@ -110,6 +115,7 @@ struct Generator {
 struct Room {
   using BotNames = std::vector<std::string>;
 
+  Leaderboard leaderboard;
   Player    player;
   Bot       bot;
   Avatar    avatar;
@@ -127,7 +133,6 @@ struct Room {
   uint32_t  spawnPosTryCount {0};
 
   Duration  checkPlayersInterval {};
-  Duration  updateLeaderboardInterval {};
   Duration  destroyOutdatedCellsInterval {};
   Duration  checkMothersInterval {};
   Duration  produceMothersInterval {};
@@ -141,7 +146,6 @@ struct Room {
   uint32_t  maxMass {0};
   uint32_t  maxPlayers {0};
   uint32_t  maxRadius {0};
-  uint32_t  leaderboardVisibleItems {0};
   float     scaleRatio {0};
   uint32_t  explodeVelocity {0};
 

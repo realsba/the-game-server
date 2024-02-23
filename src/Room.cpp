@@ -83,7 +83,7 @@ void Room::init(const config::Room& config)
 
   m_updateTimer.setInterval(m_config.updateInterval);
   m_checkPlayersTimer.setInterval(m_config.checkPlayersInterval);
-  m_updateLeaderboardTimer.setInterval(m_config.updateLeaderboardInterval);
+  m_updateLeaderboardTimer.setInterval(m_config.leaderboard.updateInterval);
   m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
   m_checkMothersTimer.setInterval(m_config.checkMothersInterval);
   m_produceMothersTimer.setInterval(m_config.produceMothersInterval);
@@ -902,7 +902,7 @@ void Room::updateLeaderboard()
   if (m_updateLeaderboard) {
     std::sort(m_leaderboard.begin(), m_leaderboard.end(), [] (Player* a, Player* b) { return *b < *a; });
     const auto& buffer = std::make_shared<Buffer>();
-    PacketLeaderboard packetLeaderboard{m_leaderboard, m_config.leaderboardVisibleItems};
+    PacketLeaderboard packetLeaderboard{m_leaderboard, m_config.leaderboard.limit};
     packetLeaderboard.format(*buffer);
     send(buffer);
     m_updateLeaderboard = false;

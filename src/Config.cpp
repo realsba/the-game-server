@@ -96,6 +96,20 @@ namespace toml
   };
 
   template <>
+  struct from<config::Leaderboard>
+  {
+    static auto from_toml(value& v)
+    {
+      config::Leaderboard result{};
+
+      result.limit = find<uint32_t>(v, "limit");
+      result.updateInterval = find<Duration>(v, "updateInterval");
+
+      return result;
+    }
+  };
+
+  template <>
   struct from<config::Player>
   {
     static auto from_toml(value& v)
@@ -255,7 +269,6 @@ namespace toml
 
       result.spawnPosTryCount             = find<uint32_t>(v, "spawnPosTryCount");
       result.checkPlayersInterval         = find<Duration>(v, "checkPlayersInterval");
-      result.updateLeaderboardInterval    = find<Duration>(v, "updateLeaderboardInterval");
       result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
       result.checkMothersInterval         = find<Duration>(v, "checkMothersInterval");
       result.produceMothersInterval       = find<Duration>(v, "produceMothersInterval");
@@ -269,15 +282,15 @@ namespace toml
       result.maxMass                      = find<uint32_t>(v, "maxMass");
       result.maxPlayers                   = find<uint32_t>(v, "maxPlayers");
       result.maxRadius                    = find<uint32_t>(v, "maxRadius");
-      result.leaderboardVisibleItems      = find<uint32_t>(v, "leaderboardVisibleItems");
       result.scaleRatio                   = find<float>(v, "scaleRatio");
       result.explodeVelocity              = find<uint32_t>(v, "explodeVelocity");
       result.resistanceRatio      = find<float>(v, "resistanceRatio");
       result.elasticityRatio      = find<float>(v, "elasticityRatio");
       result.cellMinMass          = find<uint32_t>(v, "cellMinMass");
       result.cellRadiusRatio      = find<float>(v, "cellRadiusRatio");
+      result.botNames             = find_or<config::Room::BotNames>(v, "botNames", {});
 
-
+      result.leaderboard = find<config::Leaderboard>(v, "leaderboard");
       result.player     = find<config::Player>(v, "player");
       result.bot        = find<config::Bot>(v, "bot");
       result.avatar     = find<config::Avatar>(v, "avatar");
