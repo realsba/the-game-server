@@ -119,10 +119,18 @@ void Room::start()
   m_destroyOutdatedCellsTimer.start();
   m_checkMothersTimer.start();
   m_produceMothersTimer.start();
-  m_foodGeneratorTimer.start();
-  m_virusGeneratorTimer.start();
-  m_phageGeneratorTimer.start();
-  m_motherGeneratorTimer.start();
+  if (m_config.generator.food.enabled) {
+    m_foodGeneratorTimer.start();
+  }
+  if (m_config.generator.virus.enabled) {
+    m_virusGeneratorTimer.start();
+  }
+  if (m_config.generator.phage.enabled) {
+    m_phageGeneratorTimer.start();
+  }
+  if (m_config.generator.mother.enabled) {
+    m_motherGeneratorTimer.start();
+  }
 }
 
 void Room::stop()

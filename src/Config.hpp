@@ -98,6 +98,7 @@ struct Generator {
   struct Item {
     Duration  interval {};
     uint32_t  quantity {0};
+    bool      enabled {false};
   };
 
   Item food;

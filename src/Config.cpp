@@ -213,7 +213,8 @@ namespace toml
       config::Generator::Item result{};
 
       result.interval = find<Duration>(v, "interval");
-      result.quantity = find<uint32_t >(v, "quantity");
+      result.quantity = find<uint32_t>(v, "quantity");
+      result.enabled  = find_or<bool>(v, "enabled", true);
 
       return result;
     }
