@@ -1144,7 +1144,6 @@ void Room::onAvatarDeath(Avatar* avatar)
   auto* player = avatar->player;
   player->removeAvatar(avatar);
 
-  m_mass -= avatar->mass;
   m_updateLeaderboard = true;
   m_avatarContainer.erase(avatar);
   removeCell(avatar);
@@ -1183,35 +1182,30 @@ void Room::onAvatarDeath(Avatar* avatar)
 
 void Room::onFoodDeath(Food* food)
 {
-  m_mass -= food->mass;
   m_foodContainer.erase(food);
   removeCell(food);
 }
 
 void Room::onBulletDeath(Bullet* bullet)
 {
-  m_mass -= bullet->mass;
   m_bulletContainer.erase(bullet);
   removeCell(bullet);
 }
 
 void Room::onVirusDeath(Virus* virus)
 {
-  m_mass -= virus->mass;
   m_virusContainer.erase(virus);
   removeCell(virus);
 }
 
 void Room::onPhageDeath(Phage* phage)
 {
-  m_mass -= phage->mass;
   m_phageContainer.erase(phage);
   removeCell(phage);
 }
 
 void Room::onMotherDeath(Mother* mother)
 {
-  m_mass -= mother->mass;
   m_motherContainer.erase(mother);
   removeCell(mother);
 }
