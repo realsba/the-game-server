@@ -45,7 +45,7 @@ void serializePlayer(Buffer& buffer, const Player& player)
 {
   serialize(buffer, OutgoingPacket::Type::Player);
   serialize(buffer, player.getId());
-  serialize(buffer, player.name);
+  serialize(buffer, player.getName());
 }
 
 void serializePlayerRemove(Buffer& buffer, uint32_t playerId)

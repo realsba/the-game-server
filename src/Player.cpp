@@ -30,6 +30,11 @@ uint32_t Player::getId() const
   return m_id;
 }
 
+std::string Player::getName() const
+{
+  return m_name;
+}
+
 uint32_t Player::getMass() const
 {
   return m_mass;
@@ -68,14 +73,22 @@ Avatar* Player::findTheBiggestAvatar() const
   return *maxElementIt;
 }
 
+Player* Player::getKiller() const
+{
+  return m_killer;
+}
+
 bool Player::isDead() const
 {
-  return m_avatars.empty();
+  return !m_status.isAlive;
 }
 
 uint8_t Player::getStatus() const
 {
-  return (online ? 1 : 0) | (m_avatars.empty() ? 0 : 2);
+  uint8_t status = 0;
+  status |= (m_status.isOnline ? 1 : 0) << 0;
+  status |= (m_status.isAlive ? 1 : 0) << 1;
+  return status;
 }
 
 const Sessions& Player::getSessions() const
@@ -86,6 +99,11 @@ const Sessions& Player::getSessions() const
 void Player::init()
 {
   m_maxMass = 0;
+}
+
+void Player::setName(const std::string& name)
+{
+  m_name = name;
 }
 
 void Player::setPointerOffset(const Vec2D& value)
@@ -107,13 +125,14 @@ void Player::setMainSession(const SessionPtr& sess)
     }
     m_mainSession = sess;
     m_mainSession->player(this);
+    m_status.isOnline = true;
     addSession(sess);
   }
 }
 
 void Player::addSession(const SessionPtr& sess)
 {
-  if (m_sessions.emplace(sess).second) {
+  if (m_sessions.emplace(sess).second) { // TODO: revise
     m_leftTopSector = nullptr;
     m_rightBottomSector = nullptr;
     m_sectors.clear();
@@ -124,10 +143,12 @@ void Player::addSession(const SessionPtr& sess)
 void Player::removeSession(const SessionPtr& sess)
 {
   if (m_sessions.erase(sess)) {
+    if (m_mainSession == sess) {
+      m_mainSession = nullptr;
+      m_status.isOnline = false;
+      m_pointerOffset.zero();
+    }
     sess->player(nullptr);
-  }
-  if (m_sessions.empty()) {
-    m_pointerOffset.zero();
   }
 }
 
@@ -154,12 +175,23 @@ void Player::addAvatar(Avatar* avatar)
   spdlog::debug("Player::addAvatar {}", avatar->id);
   avatar->player = this;
   m_avatars.emplace(avatar);
+  m_status.isAlive = true;
 }
 
-void Player::removeAvatar(Avatar* avatar)
+void Player::removeAvatar(Avatar* avatar, Player* killer)
 {
   spdlog::debug("Player::removeAvatar {}", avatar->id);
   m_avatars.erase(avatar);
+  if (m_avatars.empty()) {
+    m_status.isAlive = false;
+    if (killer) {
+      if (m_killer) {
+        m_killer->unsubscribeFromAnnihilationEvent(this);
+      }
+      m_killer = killer;
+      m_killer->subscribeToAnnihilationEvent(this, [this] { m_killer = nullptr; });
+    }
+  }
 }
 
 void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed)
@@ -419,5 +451,5 @@ void Player::startMotion()
 
 bool operator<(const Player& l, const Player& r)
 {
-  return std::tie(l.m_mass, r.name, r.m_id) < std::tie(r.m_mass, l.name, l.m_id);
+  return std::tie(l.m_mass, r.m_name, r.m_id) < std::tie(r.m_mass, l.m_name, l.m_id);
 }

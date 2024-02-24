@@ -32,18 +32,21 @@ public:
   virtual ~Player() = default;
 
   [[nodiscard]] uint32_t getId() const;
+  [[nodiscard]] std::string getName() const;
   [[nodiscard]] uint32_t getMass() const;
   [[nodiscard]] uint32_t getMaxMass() const;
   [[nodiscard]] const AABB& getViewBox() const;
   [[nodiscard]] Vec2D getPosition() const;
   [[nodiscard]] const Avatars& getAvatars() const;
   [[nodiscard]] Avatar* findTheBiggestAvatar() const;
+  [[nodiscard]] Player* getKiller() const;
   [[nodiscard]] bool isDead() const;
   [[nodiscard]] uint8_t getStatus() const;
   [[nodiscard]] const Sessions& getSessions() const;
 
   virtual void init();
 
+  void setName(const std::string& name);
   void setPointerOffset(const Vec2D& value);
   void setMainSession(const SessionPtr& sess);
   void addSession(const SessionPtr& sess);
@@ -51,7 +54,7 @@ public:
   void clearSessions();
   void setTargetPlayer(Player* player);
   virtual void addAvatar(Avatar* avatar);
-  virtual void removeAvatar(Avatar* avatar);
+  virtual void removeAvatar(Avatar* avatar, Player* killer);
   void synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
   void wakeUp();
   void calcParams();
@@ -69,13 +72,12 @@ protected:
   void handleAnnihilation();
   void startMotion();
 
-// * TODO: make private
-public:
-  std::string name;
-  Player*     killer {nullptr};
-  bool        online {false};
-
 protected:
+  struct Status {
+    bool isOnline : 1 {false};
+    bool isAlive : 1 {false};
+  };
+
   asio::steady_timer    m_deflationTimer;
   asio::steady_timer    m_annihilationTimer;
   Event<>               m_annihilationEvent;
@@ -84,6 +86,7 @@ protected:
   const Room&           m_room;
   const Gridmap&        m_gridmap;
 
+  std::string           m_name;
   Sessions              m_sessions;
   SessionPtr            m_mainSession {nullptr};
   Avatars               m_avatars;
@@ -96,8 +99,10 @@ protected:
   Sector*               m_leftTopSector {nullptr};
   Sector*               m_rightBottomSector {nullptr};
   Player*               m_targetPlayer {nullptr};
+  Player*               m_killer {nullptr};
   uint32_t              m_mass {0};
   uint32_t              m_maxMass {0};
+  Status                m_status;
   float                 m_scale {0};
 
   friend bool operator<(const Player& l, const Player& r);

@@ -23,7 +23,7 @@ public:
   void init() override;
 
   void addAvatar(Avatar* avatar) override;
-  void removeAvatar(Avatar* avatar) override;
+  void removeAvatar(Avatar* avatar, Player* killer) override;
 
 protected:
   void navigate();

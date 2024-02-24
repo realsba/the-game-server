@@ -92,11 +92,7 @@ void Avatar::interact(Avatar& other)
   }
   attacker->modifyMass(defender->mass);
   defender->kill();
-  Player& player = *defender->player;
-  player.removeAvatar(defender);
-  if (player.isDead()) {
-    player.killer = attacker->player;
-  }
+  defender->player->removeAvatar(defender, attacker->player);
 }
 
 void Avatar::interact(Food& food)
@@ -155,7 +151,7 @@ void Avatar::interact(Mother& mother)
   if (mother.mass >= 1.25 * mass && dist < mother.radius - 0.25 * radius) {
     mother.modifyMass(mass);
     kill();
-    player->removeAvatar(this);
+    player->removeAvatar(this, nullptr);
   } else if (mass > 1.25 * mother.mass && dist < radius - 0.25 * mother.radius) {
     room.explode(*this);
     mother.kill();

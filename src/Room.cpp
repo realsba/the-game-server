@@ -216,7 +216,6 @@ void Room::doJoin(const SessionPtr& sess)
   const auto& it = m_players.find(user->getId());
   if (it != m_players.end()) {
     Player* player = it->second;
-    player->online = true;
     if (player->isDead()) {
       OutgoingPacket::serializeFinish(*buffer);
     } else {
@@ -243,7 +242,6 @@ void Room::doLeave(const SessionPtr& sess)
     if (auto* player = sess->player()) {
       sendPacketPlayerLeave(player->getId());
       player->removeSession(sess);
-      player->online = false;
     }
     for (const auto& it : m_players) {
       it.second->removeSession(sess);
@@ -266,13 +264,12 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
       player = it->second;
     } else {
       player = new Player(m_executor, playerId, *this, m_gridmap);
-      player->name = name;
+      player->setName(name);
       player->subscribeToAnnihilationEvent(this, [this, playerId] { m_players.erase(playerId); });
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
       sendPacketPlayer(*player);
     }
-    player->online = true;
     player->setMainSession(sess);
     sendPacketPlayerJoin(player->getId());
   }
@@ -289,8 +286,8 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
 
   player->init();
   player->wakeUp();
-  if (player->name != name) {
-    player->name = name;
+  if (player->getName() != name) { // TODO: encapsulate logic in Player::setName
+    player->setName(name);
     sendPacketPlayer(*player);
   }
   sendPacketPlayerBorn(player->getId());
@@ -327,12 +324,11 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
       player = it->second;
     } else {
       player = new Player(m_executor, playerId, *this, m_gridmap);
-      player->name = "Player " + std::to_string(user->getId());
+      player->setName("Player " + std::to_string(user->getId()));
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
       sendPacketPlayer(*player);
     }
-    player->online = true;
     player->addSession(sess);
     sendPacketPlayerJoin(player->getId());
   }
@@ -403,7 +399,7 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
   const auto& buffer = std::make_shared<Buffer>();
   OutgoingPacket::serializeChatMessage(*buffer, player->getId(), text);
   send(buffer);
-  m_chatHistory.emplace_front(player->getId(), player->name, text);
+  m_chatHistory.emplace_front(player->getId(), player->getName(), text);
   while (m_chatHistory.size() > 128) {
     m_chatHistory.pop_back();
   }
@@ -945,8 +941,7 @@ void Room::spawnBot(uint32_t id, const std::string& name)
     bot = dynamic_cast<Bot*>(it->second);
   } else {
     bot = new Bot(m_executor, id, *this, m_gridmap);
-    bot->name = name.empty() ? "Bot " + std::to_string(id) : name;
-    bot->online = true;
+    bot->setName(name.empty() ? "Bot " + std::to_string(id) : name);
     bot->start();
     m_players.emplace(bot->getId(), bot);
     recalculateFreeSpace();
@@ -989,7 +984,7 @@ void Room::serialize(Buffer& buffer)
   for (const auto& it : m_players) {
     Player* player = it.second;
     ::serialize(buffer, player->getId());
-    ::serialize(buffer, player->name);
+    ::serialize(buffer, player->getName());
     ::serialize(buffer, player->getStatus());
   }
   count = m_chatHistory.size();
@@ -1056,7 +1051,7 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
 void Room::onAvatarDeath(Avatar* avatar)
 {
   auto& player = *avatar->player;
-  player.removeAvatar(avatar);
+  player.removeAvatar(avatar, nullptr); // TODO: revise
 
   m_updateLeaderboard = true;
   m_avatarContainer.erase(avatar);
@@ -1070,7 +1065,7 @@ void Room::onAvatarDeath(Avatar* avatar)
       m_leaderboard.erase(it);
     }
 
-    auto* observable = player.killer;
+    auto* observable = player.getKiller();
     if (!observable || observable->isDead()) {
       observable = m_leaderboard.empty() ? nullptr : *m_leaderboard.begin();
     }
@@ -1089,7 +1084,7 @@ void Room::onAvatarDeath(Avatar* avatar)
       sess->send(buffer);
     }
 
-    player.clearSessions();
+    player.clearSessions(); // TODO: revise the functionality
   }
 }
 

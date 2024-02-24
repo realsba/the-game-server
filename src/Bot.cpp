@@ -44,9 +44,9 @@ void Bot::addAvatar(Avatar* avatar)
   m_mainAvatar = findTheBiggestAvatar();
 }
 
-void Bot::removeAvatar(Avatar* avatar)
+void Bot::removeAvatar(Avatar* avatar, Player* killer)
 {
-  Player::removeAvatar(avatar);
+  Player::removeAvatar(avatar, killer);
   m_mainAvatar = findTheBiggestAvatar();
 }
 
