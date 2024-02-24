@@ -255,8 +255,7 @@ void Room::doJoin(const SessionPtr& sess)
       EmptyPacket packet(OutputPacketTypes::Finish);
       packet.format(*buffer);
     } else {
-      player->addSession(sess);
-      sess->player(player);
+      player->setMainSession(sess);
       PacketPlay packetPlay(*player);
       packetPlay.format(*buffer);
     }
@@ -278,10 +277,9 @@ void Room::doLeave(const SessionPtr& sess)
     m_moveRequests.erase(sess);
     m_ejectRequests.erase(sess);
     m_splitRequests.erase(sess);
-    auto* player = sess->player();
-    if (player) {
+    if (auto* player = sess->player()) {
       sendPacketPlayerLeave(player->getId());
-      sess->player(nullptr);
+      player->removeSession(sess);
       m_zombiePlayers.insert(player);
       player->online = false;
     }
@@ -312,7 +310,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
       sendPacketPlayer(*player);
     }
     player->online = true;
-    sess->player(player);
+    player->setMainSession(sess);
     sendPacketPlayerJoin(player->getId());
   }
 
@@ -373,7 +371,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
       sendPacketPlayer(*player);
     }
     player->online = true;
-    sess->player(player);
+    player->addSession(sess);
     sendPacketPlayerJoin(player->getId());
   }
 

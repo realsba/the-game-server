@@ -43,6 +43,7 @@ public:
   virtual void init();
 
   void setPointerOffset(const Vec2D& value);
+  void setMainSession(const SessionPtr& sess);
   void addSession(const SessionPtr& sess);
   void removeSession(const SessionPtr& sess);
   void clearSessions();
@@ -79,6 +80,7 @@ protected:
   const Gridmap&        m_gridmap;
 
   Sessions              m_sessions;
+  SessionPtr            m_mainSession {nullptr};
   Avatars               m_avatars;
   std::set<uint32_t>    m_visibleIds;
   std::set<Sector*>     m_sectors;

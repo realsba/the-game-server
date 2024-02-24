@@ -102,6 +102,19 @@ void Player::setPointerOffset(const Vec2D& value)
   startMotion();
 }
 
+void Player::setMainSession(const SessionPtr& sess)
+{
+  if (sess) {
+    if (m_mainSession) {
+      m_sessions.erase(m_mainSession);
+      m_mainSession->player(nullptr);
+    }
+    m_mainSession = sess;
+    m_mainSession->player(this);
+    addSession(sess);
+  }
+}
+
 void Player::addSession(const SessionPtr& sess)
 {
   if (m_sessions.emplace(sess).second) {
@@ -114,7 +127,9 @@ void Player::addSession(const SessionPtr& sess)
 
 void Player::removeSession(const SessionPtr& sess)
 {
-  m_sessions.erase(sess);
+  if (m_sessions.erase(sess)) {
+    sess->player(nullptr);
+  }
   if (m_sessions.empty()) {
     m_pointerOffset.zero();
   }
