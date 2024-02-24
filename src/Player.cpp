@@ -379,6 +379,8 @@ void Player::handleAnnihilation()
   for (auto* avatar : m_avatars) {
     avatar->annihilate();
   }
+  m_avatars.clear();
+  m_deflationTimer.cancel();
 }
 
 void Player::startMotion()
