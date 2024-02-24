@@ -9,14 +9,13 @@
 #include "ListenerFwd.hpp"
 
 #include "MySQLConnectionPool.hpp"
+#include "IncomingPacket.hpp"
 #include "RoomManager.hpp"
 #include "UsersCache.hpp"
 #include "Listener.hpp"
 #include "Session.hpp"
 #include "Timer.hpp"
 
-#include "packet/InputPacketTypes.hpp"
-#include "src/packet/serialization.hpp"
 
 #include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
@@ -57,18 +56,18 @@ private:
 
 private:
   using MessageHandler = std::function<void(const UserPtr&, const SessionPtr& sess, beast::flat_buffer& ms)>;
-  using MessageHandlers = std::map<int, MessageHandler>;
+  using MessageHandlers = std::map<uint8_t, MessageHandler>;
 
   const MessageHandlers m_handlers {
-    { InputPacketTypes::Ping,        std::bind(&Application::actionPing,        this, _1, _2, _3) },
-    { InputPacketTypes::Greeting,    std::bind(&Application::actionGreeting,    this, _1, _2, _3) },
-    { InputPacketTypes::Play,        std::bind(&Application::actionPlay,        this, _1, _2, _3) },
-    { InputPacketTypes::Spectate,    std::bind(&Application::actionSpectate,    this, _1, _2, _3) },
-    { InputPacketTypes::Move,        std::bind(&Application::actionMove,        this, _1, _2, _3) },
-    { InputPacketTypes::Eject,       std::bind(&Application::actionEject,       this, _1, _2, _3) },
-    { InputPacketTypes::Split,       std::bind(&Application::actionSplit,       this, _1, _2, _3) },
-    { InputPacketTypes::ChatMessage, std::bind(&Application::actionChatMessage, this, _1, _2, _3) },
-    { InputPacketTypes::Watch,       std::bind(&Application::actionWatch,       this, _1, _2, _3) },
+    {IncomingPacket::Type::Ping,        std::bind(&Application::actionPing, this, _1, _2, _3) },
+    {IncomingPacket::Type::Greeting,    std::bind(&Application::actionGreeting, this, _1, _2, _3) },
+    {IncomingPacket::Type::Play,        std::bind(&Application::actionPlay, this, _1, _2, _3) },
+    {IncomingPacket::Type::Spectate,    std::bind(&Application::actionSpectate, this, _1, _2, _3) },
+    {IncomingPacket::Type::Move,        std::bind(&Application::actionMove, this, _1, _2, _3) },
+    {IncomingPacket::Type::Eject,       std::bind(&Application::actionEject, this, _1, _2, _3) },
+    {IncomingPacket::Type::Split,       std::bind(&Application::actionSplit, this, _1, _2, _3) },
+    {IncomingPacket::Type::ChatMessage, std::bind(&Application::actionChatMessage, this, _1, _2, _3) },
+    {IncomingPacket::Type::Watch,       std::bind(&Application::actionWatch, this, _1, _2, _3) },
   };
 
   mutable std::mutex            m_mutex;

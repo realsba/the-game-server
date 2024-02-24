@@ -1,4 +1,4 @@
-// file   : src/packet/serialization.hpp
+// file   : src/serialization.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #ifndef THEGAME_PACKET_SERIALIZATION_HPP

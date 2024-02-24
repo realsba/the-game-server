@@ -3,6 +3,7 @@
 
 #include "Room.hpp"
 
+#include "OutgoingPacket.hpp"
 #include "Session.hpp"
 #include "Player.hpp"
 #include "Bot.hpp"
@@ -16,13 +17,7 @@
 #include "entity/Mother.hpp"
 
 #include "geometry/geometry.hpp"
-
-#include "packet/EmptyPacket.hpp"
-#include "packet/OutputPacketTypes.hpp"
-#include "packet/PacketLeaderboard.hpp"
-#include "packet/PacketPlay.hpp"
-#include "packet/PacketSpectate.hpp"
-#include "packet/serialization.hpp"
+#include "serialization.hpp"
 
 #include <boost/asio/post.hpp>
 
@@ -215,36 +210,7 @@ void Room::doJoin(const SessionPtr& sess)
   }
 
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::Room));
-  serialize(*buffer, static_cast<uint16_t>(m_config.width));
-  serialize(*buffer, static_cast<uint16_t>(m_config.height));
-  serialize(*buffer, static_cast<uint16_t>(m_config.viewportBase));
-  serialize(*buffer, m_config.viewportBuffer);
-  serialize(*buffer, m_config.aspectRatio);
-  serialize(*buffer, m_config.resistanceRatio);
-  serialize(*buffer, m_config.elasticityRatio);
-  serialize(*buffer, m_config.food.resistanceRatio);
-  auto count = m_players.size();
-  if (count > 255) {
-    spdlog::warn("The number of players exceeds the limit of 255");
-  }
-  serialize(*buffer, static_cast<uint8_t>(count));
-  for (const auto& it : m_players) {
-    Player* player = it.second;
-    serialize(*buffer, player->getId());
-    serialize(*buffer, player->name);
-    serialize(*buffer, player->getStatus());
-  }
-  count = m_chatHistory.size();
-  if (count > 255) {
-    spdlog::warn("The size of chat history exceeds the limit of 255");
-  }
-  serialize(*buffer, static_cast<uint8_t>(count));
-  for (const auto& msg  : m_chatHistory) {
-    serialize(*buffer, msg.authorId);
-    serialize(*buffer, msg.author);
-    serialize(*buffer, msg.text);
-  }
+  serialize(*buffer);
 
   uint32_t playerId = 0;
   const auto& it = m_players.find(user->getId());
@@ -252,17 +218,14 @@ void Room::doJoin(const SessionPtr& sess)
     Player* player = it->second;
     player->online = true;
     if (player->isDead()) {
-      EmptyPacket packet(OutputPacketTypes::Finish);
-      packet.format(*buffer);
+      OutgoingPacket::serializeFinish(*buffer);
     } else {
       player->setMainSession(sess);
-      PacketPlay packetPlay(*player);
-      packetPlay.format(*buffer);
+      OutgoingPacket::serializePlay(*buffer, *player);
     }
     playerId = player->getId();
   } else {
-    EmptyPacket packet(OutputPacketTypes::Finish);
-    packet.format(*buffer);
+    OutgoingPacket::serializeFinish(*buffer);
   }
   sess->send(buffer);
   if (playerId) {
@@ -280,7 +243,7 @@ void Room::doLeave(const SessionPtr& sess)
     if (auto* player = sess->player()) {
       sendPacketPlayerLeave(player->getId());
       player->removeSession(sess);
-      m_zombiePlayers.insert(player);
+      m_inactivePlayers.insert(player);
       player->online = false;
     }
     for (const auto& it : m_players) {
@@ -344,8 +307,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
   m_updateLeaderboard = true;
   m_fighters.insert(player);
   const auto& buffer = std::make_shared<Buffer>();
-  PacketPlay packetPlay(*player);
-  packetPlay.format(*buffer);
+  OutgoingPacket::serializePlay(*buffer, *player);
   sess->send(buffer);
   player->addSession(sess); // TODO: розібратись з додаваннями і забираннями sess
 }
@@ -399,8 +361,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
     observable->removeSession(sess);
   }
   const auto& buffer = std::make_shared<Buffer>();
-  PacketSpectate packet(*target);
-  packet.format(*buffer);
+  OutgoingPacket::serializeSpectate(*buffer, *target);
   sess->send(buffer);
   target->addSession(sess);
   sess->observable(target);
@@ -443,9 +404,7 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
     return;
   }
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::ChatMessage));
-  serialize(*buffer, player->getId());
-  serialize(*buffer, text);
+  OutgoingPacket::serializeChatMessage(*buffer, player->getId(), text);
   send(buffer);
   m_chatHistory.emplace_front(player->getId(), player->name, text);
   while (m_chatHistory.size() > 128) {
@@ -856,8 +815,7 @@ void Room::updateLeaderboard()
   if (m_updateLeaderboard) {
     std::sort(m_leaderboard.begin(), m_leaderboard.end(), [] (Player* a, Player* b) { return *b < *a; });
     const auto& buffer = std::make_shared<Buffer>();
-    PacketLeaderboard packetLeaderboard{m_leaderboard, m_config.leaderboard.limit};
-    packetLeaderboard.format(*buffer);
+    OutgoingPacket::serializeLeaderboard(*buffer, m_leaderboard, m_config.leaderboard.limit);
     send(buffer);
     m_updateLeaderboard = false;
   }
@@ -909,7 +867,7 @@ void Room::checkPlayers()
 
   // TODO: revise
   auto expirationTime = TimePoint::clock::now() - m_config.player.annihilationThreshold;
-  std::erase_if(m_zombiePlayers,
+  std::erase_if(m_inactivePlayers,
     [&](auto* player)
     {
       if (player->isDead() && player->getLastActivity() < expirationTime) {
@@ -1032,6 +990,40 @@ void Room::spawnBot(uint32_t id, const std::string& name)
   bot->init();
 }
 
+void Room::serialize(Buffer& buffer)
+{
+  ::serialize(buffer, OutgoingPacket::Type::Room);
+  ::serialize(buffer, static_cast<uint16_t>(m_config.width));
+  ::serialize(buffer, static_cast<uint16_t>(m_config.height));
+  ::serialize(buffer, static_cast<uint16_t>(m_config.viewportBase));
+  ::serialize(buffer, m_config.viewportBuffer);
+  ::serialize(buffer, m_config.aspectRatio);
+  ::serialize(buffer, m_config.resistanceRatio);
+  ::serialize(buffer, m_config.elasticityRatio);
+  ::serialize(buffer, m_config.food.resistanceRatio);
+  auto count = m_players.size();
+  if (count > 255) {
+    spdlog::warn("The number of players exceeds the limit of 255");
+  }
+  ::serialize(buffer, static_cast<uint8_t>(count));
+  for (const auto& it : m_players) {
+    Player* player = it.second;
+    ::serialize(buffer, player->getId());
+    ::serialize(buffer, player->name);
+    ::serialize(buffer, player->getStatus());
+  }
+  count = m_chatHistory.size();
+  if (count > 255) {
+    spdlog::warn("The size of chat history exceeds the limit of 255");
+  }
+  ::serialize(buffer, static_cast<uint8_t>(count));
+  for (const auto& msg  : m_chatHistory) {
+    ::serialize(buffer, msg.authorId);
+    ::serialize(buffer, msg.author);
+    ::serialize(buffer, msg.text);
+  }
+}
+
 void Room::send(const BufferPtr& buffer)
 {
   for (const auto& sess : m_sessions) {
@@ -1042,49 +1034,42 @@ void Room::send(const BufferPtr& buffer)
 void Room::sendPacketPlayer(const Player& player)
 {
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::Player));
-  serialize(*buffer, player.getId());
-  serialize(*buffer, player.name);
+  OutgoingPacket::serializePlayer(*buffer, player);
   send(buffer);
 }
 
 void Room::sendPacketPlayerRemove(uint32_t playerId)
 {
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerRemove));
-  serialize(*buffer, playerId);
+  OutgoingPacket::serializePlayerRemove(*buffer, playerId);
   send(buffer);
 }
 
 void Room::sendPacketPlayerJoin(uint32_t playerId)
 {
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerJoin));
-  serialize(*buffer, playerId);
+  OutgoingPacket::serializePlayerJoin(*buffer, playerId);
   send(buffer);
 }
 
 void Room::sendPacketPlayerLeave(uint32_t playerId)
 {
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerLeave));
-  serialize(*buffer, playerId);
+  OutgoingPacket::serializePlayerLeave(*buffer, playerId);
   send(buffer);
 }
 
 void Room::sendPacketPlayerBorn(uint32_t playerId)
 {
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerBorn));
-  serialize(*buffer, playerId);
+  OutgoingPacket::serializePlayerBorn(*buffer, playerId);
   send(buffer);
 }
 
 void Room::sendPacketPlayerDead(uint32_t playerId)
 {
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::PlayerDead));
-  serialize(*buffer, playerId);
+  OutgoingPacket::serializePlayerDead(*buffer, playerId);
   send(buffer);
 }
 
@@ -1111,15 +1096,13 @@ void Room::onAvatarDeath(Avatar* avatar)
     }
     const auto& buffer = std::make_shared<Buffer>();
     if (observable) {
-      PacketSpectate packet(*observable);
-      packet.format(*buffer);
+      OutgoingPacket::serializeSpectate(*buffer, *observable);
       for (const auto& sess : player.getSessions()) {
         observable->addSession(sess);
         sess->observable(observable);
       }
     } else {
-      EmptyPacket packet(OutputPacketTypes::Finish);
-      packet.format(*buffer);
+      OutgoingPacket::serializeFinish(*buffer);
     }
 
     for (const auto& sess : player.getSessions()) {

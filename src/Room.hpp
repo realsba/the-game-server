@@ -116,6 +116,7 @@ private:
   void spawnMothers(uint32_t count);
   void spawnBot(uint32_t id, const std::string& name = "");
 
+  void serialize(Buffer& buffer);
   void send(const BufferPtr& buffer);
   void sendPacketPlayer(const Player& player);
   void sendPacketPlayerRemove(uint32_t playerId);
@@ -165,7 +166,7 @@ private:
   Sessions                    m_sessions;
   std::map<uint32_t, Player*> m_players;
   std::set<Player*>           m_fighters;
-  std::set<Player*>           m_zombiePlayers; // TODO: revise
+  std::set<Player*>           m_inactivePlayers;
   std::vector<Player*>        m_leaderboard;
   std::set<Bot*>              m_bots;
   RequestsMap                 m_moveRequests;

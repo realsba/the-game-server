@@ -9,7 +9,7 @@
 #include "Phage.hpp"
 #include "Mother.hpp"
 
-#include "src/packet/serialization.hpp"
+#include "src/serialization.hpp"
 #include "src/geometry/geometry.hpp"
 #include "src/Player.hpp"
 #include "src/Room.hpp"
@@ -139,7 +139,7 @@ void Avatar::interact(Virus& virus)
 void Avatar::interact(Phage& phage)
 {
   const auto& config = room.getConfig();
-  if (mass <= config.cellMinMass || mass < 1.25 * phage.mass) { // TODO: move the constant to the config
+  if (mass <= config.cellMinMass || mass < phage.mass) {
     return;
   }
   auto distance = radius + phage.radius;
@@ -155,6 +155,7 @@ void Avatar::interact(Mother& mother)
   if (mother.mass >= 1.25 * mass && dist < mother.radius - 0.25 * radius) {
     mother.modifyMass(mass);
     kill();
+    player->removeAvatar(this);
   } else if (mass > 1.25 * mother.mass && dist < radius - 0.25 * mother.radius) {
     room.explode(*this);
     mother.kill();

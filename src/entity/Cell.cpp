@@ -4,7 +4,7 @@
 #include "Cell.hpp"
 
 #include "src/geometry/geometry.hpp"
-#include "src/packet/serialization.hpp"
+#include "src/serialization.hpp"
 
 #include "src/Player.hpp"
 #include "src/Room.hpp"

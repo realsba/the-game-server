@@ -14,8 +14,6 @@ find_package(OpenSSL REQUIRED)
 find_package(spdlog REQUIRED)
 
 add_executable(${PROJECT_NAME}
-    src/boost_asio.cpp
-    src/boost_mysql.cpp
     src/entity/Avatar.cpp
     src/entity/Avatar.hpp
     src/entity/Bullet.cpp
@@ -38,19 +36,6 @@ add_executable(${PROJECT_NAME}
     src/geometry/geometry.cpp
     src/geometry/geometry.hpp
     src/geometry/formatter.hpp
-    src/packet/EmptyPacket.cpp
-    src/packet/EmptyPacket.hpp
-    src/packet/InputPacketTypes.hpp
-    src/packet/OutputPacketTypes.hpp
-    src/packet/serialization.hpp
-    src/packet/PacketGreeting.cpp
-    src/packet/PacketGreeting.hpp
-    src/packet/PacketLeaderboard.cpp
-    src/packet/PacketLeaderboard.hpp
-    src/packet/PacketPlay.cpp
-    src/packet/PacketPlay.hpp
-    src/packet/PacketSpectate.cpp
-    src/packet/PacketSpectate.hpp
     src/Application.cpp
     src/Application.hpp
     src/AsioFormatter.hpp
@@ -63,6 +48,7 @@ add_executable(${PROJECT_NAME}
     src/Gridmap.hpp
     src/HttpClient.cpp
     src/HttpClient.hpp
+    src/IncomingPacket.hpp
     src/Listener.cpp
     src/Listener.hpp
     src/ListenerFwd.hpp
@@ -70,6 +56,8 @@ add_executable(${PROJECT_NAME}
     src/MySQLConnectionPool.hpp
     src/NextId.cpp
     src/NextId.hpp
+    src/OutgoingPacket.cpp
+    src/OutgoingPacket.hpp
     src/Player.cpp
     src/Player.hpp
     src/Room.cpp
@@ -87,7 +75,10 @@ add_executable(${PROJECT_NAME}
     src/UserFwd.hpp
     src/UsersCache.cpp
     src/UsersCache.hpp
+    src/boost_asio.cpp
+    src/boost_mysql.cpp
     src/main.cpp
+    src/serialization.hpp
     src/types.hpp
     src/util.cpp
     src/util.hpp

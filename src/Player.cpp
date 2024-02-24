@@ -3,13 +3,13 @@
 
 #include "Player.hpp"
 
+#include "serialization.hpp"
+#include "OutgoingPacket.hpp"
 #include "Session.hpp"
 #include "Room.hpp"
 
 #include "entity/Cell.hpp"
 #include "entity/Avatar.hpp"
-#include "packet/OutputPacketTypes.hpp"
-#include "packet/serialization.hpp"
 #include "geometry/geometry.hpp"
 
 #include <spdlog/spdlog.h>
@@ -213,7 +213,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
   }
 
   const auto& buffer = std::make_shared<Buffer>();
-  serialize(*buffer, static_cast<uint8_t>(OutputPacketTypes::Frame));
+  serialize(*buffer, OutgoingPacket::Type::Frame);
   serialize(*buffer, tick);
   serialize(*buffer, m_scale);
   serialize(*buffer, static_cast<uint16_t>(syncCells.size()));

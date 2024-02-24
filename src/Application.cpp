@@ -3,14 +3,13 @@
 
 #include "Application.hpp"
 
-#include "packet/OutputPacketTypes.hpp"
-#include "packet/EmptyPacket.hpp"
-#include "packet/PacketGreeting.hpp"
-
+#include "OutgoingPacket.hpp"
 #include "AsioFormatter.hpp"
 #include "HttpClient.hpp"
 #include "ScopeExit.hpp"
 #include "User.hpp"
+
+#include "serialization.hpp"
 
 #include <spdlog/spdlog.h>
 #include <fmt/chrono.h>
@@ -121,7 +120,7 @@ void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buff
       return;
     }
     try {
-      if (type != InputPacketTypes::Ping) {
+      if (type != IncomingPacket::Ping) {
         sess->lastActivity(TimePoint::clock::now());
       }
       it->second(user, sess, buffer);
@@ -173,8 +172,7 @@ void Application::sessionCloseHandler(const SessionPtr& sess)
 void Application::actionPing(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
 {
   const auto& buffer = std::make_shared<Buffer>();
-  EmptyPacket packet(OutputPacketTypes::Pong);
-  packet.format(*buffer);
+  OutgoingPacket::serializePong(*buffer);
   sess->send(buffer);
 }
 
@@ -183,7 +181,8 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
   if (current) {
     return; // user already logged in
   }
-  PacketGreeting packetGreeting;
+
+  const auto& buffer = std::make_shared<Buffer>();
   auto sid = deserialize<std::string>(request);
   auto user = m_users.getUserBySessId(sid);
   if (user) {
@@ -195,15 +194,14 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
       }
       prevSession->close();
     }
+    OutgoingPacket::serializeGreeting(*buffer, "");
   } else {
     user = m_users.create(sess->getRemoteEndpoint().address().to_v4().to_ulong());
-    packetGreeting.sid = user->getSessId();
+    OutgoingPacket::serializeGreeting(*buffer, user->getSessId());
     ++m_registrations;
   }
   user->setSession(sess);
   sess->user(user);
-  const auto& buffer = std::make_shared<Buffer>();
-  packetGreeting.format(*buffer);
   auto* room = user->getRoom();
   if (!room) {
     room = m_roomManager.obtain();
