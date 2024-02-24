@@ -6,8 +6,11 @@
 
 #include "geometry/Vec2D.hpp"
 #include "geometry/AABB.hpp"
+
 #include "TimePoint.hpp"
 #include "Gridmap.hpp"
+#include "Event.hpp"
+
 #include "types.hpp"
 
 #include <boost/asio/steady_timer.hpp>
@@ -36,7 +39,6 @@ public:
   [[nodiscard]] const Avatars& getAvatars() const;
   [[nodiscard]] Avatar* findTheBiggestAvatar() const;
   [[nodiscard]] bool isDead() const;
-  [[nodiscard]] TimePoint getLastActivity() const;
   [[nodiscard]] uint8_t getStatus() const;
   [[nodiscard]] const Sessions& getSessions() const;
 
@@ -47,14 +49,17 @@ public:
   void addSession(const SessionPtr& sess);
   void removeSession(const SessionPtr& sess);
   void clearSessions();
+  void setTargetPlayer(Player* player);
   virtual void addAvatar(Avatar* avatar);
   virtual void removeAvatar(Avatar* avatar);
   void synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
   void wakeUp();
   void calcParams();
-  void removePlayer(Player* player);
   void applyPointerForce(uint32_t tick);
   void recombine(uint32_t tick);
+
+  void subscribeToAnnihilationEvent(void* tag, Event<>::Handler&& handler);
+  void unsubscribeFromAnnihilationEvent(void* tag);
 
 protected:
   void recombine(Avatar& initiator, Avatar& target);
@@ -67,13 +72,13 @@ protected:
 // * TODO: make private
 public:
   std::string name;
-  Player*     arrowPlayer {nullptr};
   Player*     killer {nullptr};
   bool        online {false};
 
 protected:
   asio::steady_timer    m_deflationTimer;
   asio::steady_timer    m_annihilationTimer;
+  Event<>               m_annihilationEvent;
 
   const uint32_t        m_id {0};
   const Room&           m_room;
@@ -88,9 +93,9 @@ protected:
   AABB                  m_viewbox;
   Vec2D                 m_position;
   Vec2D                 m_pointerOffset;
-  TimePoint             m_lastActivity {TimePoint::clock::now()};
   Sector*               m_leftTopSector {nullptr};
   Sector*               m_rightBottomSector {nullptr};
+  Player*               m_targetPlayer {nullptr};
   uint32_t              m_mass {0};
   uint32_t              m_maxMass {0};
   float                 m_scale {0};

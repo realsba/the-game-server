@@ -17,6 +17,7 @@
 Player::Player(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
   : m_deflationTimer(executor)
   , m_annihilationTimer(executor)
+  , m_annihilationEvent(executor)
   , m_id(id)
   , m_room(room)
   , m_gridmap(gridmap)
@@ -70,11 +71,6 @@ Avatar* Player::findTheBiggestAvatar() const
 bool Player::isDead() const
 {
   return m_avatars.empty();
-}
-
-TimePoint Player::getLastActivity() const
-{
-  return m_lastActivity;
 }
 
 uint8_t Player::getStatus() const
@@ -138,6 +134,19 @@ void Player::removeSession(const SessionPtr& sess)
 void Player::clearSessions()
 {
   m_sessions.clear();
+}
+
+void Player::setTargetPlayer(Player* player)
+{
+  if (player != this) {
+    if (m_targetPlayer) {
+      m_targetPlayer->unsubscribeFromAnnihilationEvent(this);
+    }
+    m_targetPlayer = player;
+    if (m_targetPlayer) {
+      m_targetPlayer->subscribeToAnnihilationEvent(this, [this] { m_targetPlayer = nullptr; });
+    }
+  }
 }
 
 void Player::addAvatar(Avatar* avatar)
@@ -231,9 +240,9 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
     serialize(*buffer, avatar->maxVelocity);
     serialize(*buffer, avatar->protection);
   }
-  if (arrowPlayer) {
-    serialize(*buffer, arrowPlayer->getId());
-    const auto& position = arrowPlayer->getPosition();
+  if (m_targetPlayer) {
+    serialize(*buffer, m_targetPlayer->getId());
+    const auto& position = m_targetPlayer->getPosition();
     serialize(*buffer, position.x);
     serialize(*buffer, position.y);
   } else {
@@ -249,7 +258,6 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
 
 void Player::wakeUp()
 {
-  m_lastActivity = TimePoint::clock::now();
   scheduleDeflation();
   scheduleAnnihilation();
 }
@@ -292,13 +300,6 @@ void Player::calcParams()
   m_position = position;
 }
 
-void Player::removePlayer(Player* player)
-{
-  if (arrowPlayer == player) {
-    arrowPlayer = nullptr;
-  }
-}
-
 void Player::applyPointerForce(uint32_t tick)
 {
   if (!m_pointerOffset) {
@@ -335,6 +336,16 @@ void Player::recombine(uint32_t tick)
       recombine(first, second);
     }
   }
+}
+
+void Player::subscribeToAnnihilationEvent(void* tag, Event<>::Handler&& handler)
+{
+  m_annihilationEvent.subscribe(tag, std::move(handler));
+}
+
+void Player::unsubscribeFromAnnihilationEvent(void* tag)
+{
+  m_annihilationEvent.unsubscribe(tag);
 }
 
 void Player::recombine(Avatar& initiator, Avatar& target)
@@ -396,6 +407,7 @@ void Player::handleAnnihilation()
   }
   m_avatars.clear();
   m_deflationTimer.cancel();
+  m_annihilationEvent.notify();
 }
 
 void Player::startMotion()

@@ -243,7 +243,6 @@ void Room::doLeave(const SessionPtr& sess)
     if (auto* player = sess->player()) {
       sendPacketPlayerLeave(player->getId());
       player->removeSession(sess);
-      m_inactivePlayers.insert(player);
       player->online = false;
     }
     for (const auto& it : m_players) {
@@ -268,6 +267,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     } else {
       player = new Player(m_executor, playerId, *this, m_gridmap);
       player->name = name;
+      player->subscribeToAnnihilationEvent(this, [this, playerId] { m_players.erase(playerId); });
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
       sendPacketPlayer(*player);
@@ -390,10 +390,7 @@ void Room::doWatch(const SessionPtr& sess, uint32_t playerId)
   }
   const auto& it = m_players.find(playerId);
   if (it != m_players.end()) {
-    auto* target = it->second;
-    if (target != player) {
-      player->arrowPlayer = target;
-    }
+    player->setTargetPlayer(it->second);
   }
 }
 
@@ -864,23 +861,6 @@ void Room::checkPlayers()
       spawnBot(bot->getId());
     }
   }
-
-  // TODO: revise
-  auto expirationTime = TimePoint::clock::now() - m_config.player.annihilationThreshold;
-  std::erase_if(m_inactivePlayers,
-    [&](auto* player)
-    {
-      if (player->isDead() && player->getLastActivity() < expirationTime) {
-        m_players.erase(player->getId());
-        for (auto& it : m_players) {
-          it.second->removePlayer(player);
-        }
-        return true;
-      }
-      return false;
-    }
-  );
-
   recalculateFreeSpace();
 }
 
