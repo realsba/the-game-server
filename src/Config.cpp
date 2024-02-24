@@ -277,17 +277,17 @@ namespace toml
       result.checkMothersInterval         = find<Duration>(v, "checkMothersInterval");
       result.produceMothersInterval       = find<Duration>(v, "produceMothersInterval");
 
-      result.viewportBase                 = find<uint32_t>(v, "viewportBase");
-      result.viewportBuffer               = find<float>(v, "viewportBuffer");
-      result.aspectRatio                  = find<float>(v, "aspectRatio");
+      result.viewportBase         = find<uint32_t>(v, "viewportBase");
+      result.viewportBuffer       = find<float>(v, "viewportBuffer");
+      result.aspectRatio          = find<float>(v, "aspectRatio");
 
-      result.width                        = find<uint32_t>(v, "width");
-      result.height                       = find<uint32_t>(v, "height");
-      result.maxMass                      = find<uint32_t>(v, "maxMass");
-      result.maxPlayers                   = find<uint32_t>(v, "maxPlayers");
-      result.maxRadius                    = find<uint32_t>(v, "maxRadius");
-      result.scaleRatio                   = find<float>(v, "scaleRatio");
-      result.explodeVelocity              = find<uint32_t>(v, "explodeVelocity");
+      result.width                = find<uint32_t>(v, "width");
+      result.height               = find<uint32_t>(v, "height");
+      result.maxMass              = find<uint32_t>(v, "maxMass");
+      result.maxPlayers           = find<uint32_t>(v, "maxPlayers");
+      result.maxRadius            = find<uint32_t>(v, "maxRadius");
+      result.scaleRatio           = find<float>(v, "scaleRatio");
+      result.explodeVelocity      = find<uint32_t>(v, "explodeVelocity");
       result.resistanceRatio      = find<float>(v, "resistanceRatio");
       result.elasticityRatio      = find<float>(v, "elasticityRatio");
       result.cellMinMass          = find<uint32_t>(v, "cellMinMass");
@@ -304,6 +304,12 @@ namespace toml
       result.mother     = find<config::Mother>(v, "mother");
       result.generator  = find<config::Generator>(v, "generator");
 
+      result.simulationInterval = std::chrono::duration_cast<std::chrono::duration<double>>(result.updateInterval).count();
+      result.cellMinRadius = result.cellRadiusRatio * sqrt(result.cellMinMass / M_PI);
+      result.cellMaxRadius = result.cellRadiusRatio * sqrt(result.maxMass / M_PI);
+      result.cellRadiusDiff = result.cellMaxRadius - result.cellMinRadius;
+      result.avatarVelocityDiff = result.avatar.maxVelocity - result.avatar.minVelocity;
+
       return result;
     }
   };
@@ -313,7 +319,8 @@ namespace toml
 namespace config
 {
 
-void Config::load(const std::string& filename) {
+void Config::load(const std::string& filename)
+{
   auto data = toml::parse(filename);
 
   server    = toml::find<config::Server>(data, "server");

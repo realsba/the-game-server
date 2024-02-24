@@ -92,13 +92,6 @@ void Room::init(const config::Room& config)
   m_phageGeneratorTimer.setInterval(m_config.generator.phage.interval);
   m_motherGeneratorTimer.setInterval(m_config.generator.mother.interval);
 
-  // TODO: move to loading of config
-  m_config.simulationInterval = std::chrono::duration_cast<std::chrono::duration<double>>(m_config.updateInterval).count();
-  m_config.cellMinRadius = m_config.cellRadiusRatio * sqrt(m_config.cellMinMass / M_PI);
-  m_config.cellMaxRadius = m_config.cellRadiusRatio * sqrt(m_config.maxMass / M_PI);
-  m_config.cellRadiusDiff = m_config.cellMaxRadius - m_config.cellMinRadius;
-  m_config.avatarVelocityDiff = m_config.avatar.maxVelocity - m_config.avatar.minVelocity;
-
   m_gridmap.resize(m_config.width, m_config.height, 9);
   spawnFood(m_config.food.quantity);
   spawnViruses(m_config.virus.quantity);
