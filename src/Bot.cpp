@@ -53,7 +53,7 @@ void Bot::removeAvatar(Avatar* avatar)
 void Bot::navigate()
 {
   m_mainAvatar = findTheBiggestAvatar();
-  if (m_mainAvatar == nullptr || m_mainAvatar->zombie) { // TODO: revise
+  if (m_mainAvatar == nullptr || m_mainAvatar->zombie) {
     return;
   }
 

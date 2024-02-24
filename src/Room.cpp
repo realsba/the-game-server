@@ -1099,22 +1099,22 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
 
 void Room::onAvatarDeath(Avatar* avatar)
 {
-  auto* player = avatar->player;
-  player->removeAvatar(avatar);
+  auto& player = *avatar->player;
+  player.removeAvatar(avatar);
 
   m_updateLeaderboard = true;
   m_avatarContainer.erase(avatar);
   removeCell(avatar);
 
-  if (player->isDead()) {
-    sendPacketPlayerDead(player->getId());
+  if (player.isDead()) {
+    sendPacketPlayerDead(player.getId());
 
-    auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), player);
+    auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), &player);
     if (it != m_leaderboard.end()) {
       m_leaderboard.erase(it);
     }
 
-    auto* observable = player->killer;
+    auto* observable = player.killer;
     if (!observable || observable->isDead()) {
       observable = m_leaderboard.empty() ? nullptr : *m_leaderboard.begin();
     }
@@ -1122,19 +1122,20 @@ void Room::onAvatarDeath(Avatar* avatar)
     if (observable) {
       PacketSpectate packet(*observable);
       packet.format(*buffer);
-      for (const auto& sess : player->getSessions()) {
-        sess->send(buffer);
+      for (const auto& sess : player.getSessions()) {
         observable->addSession(sess);
         sess->observable(observable);
       }
     } else {
       EmptyPacket packet(OutputPacketTypes::Finish);
       packet.format(*buffer);
-      for (const auto& sess : player->getSessions()) {
-        sess->send(buffer);
-      }
     }
-    player->clearSessions();
+
+    for (const auto& sess : player.getSessions()) {
+      sess->send(buffer);
+    }
+
+    player.clearSessions();
   }
 }
 

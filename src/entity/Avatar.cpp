@@ -93,7 +93,8 @@ void Avatar::interact(Avatar& other)
   attacker->modifyMass(defender->mass);
   defender->kill();
   Player& player = *defender->player;
-  if (player.isDead()) { // TODO: does not work
+  player.removeAvatar(defender);
+  if (player.isDead()) {
     player.killer = attacker->player;
   }
 }
