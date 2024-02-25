@@ -24,15 +24,18 @@ public:
 
   void addAvatar(Avatar* avatar) override;
   void removeAvatar(Avatar* avatar, Player* killer) override;
+  void scheduleRespawn();
 
 protected:
   void navigate();
   void choseTarget();
+  void respawn();
 
 private:
-  Timer             m_navigationTimer;
-  Avatar*           m_mainAvatar {nullptr};
-  Cell*             m_target {nullptr};
+  Timer                 m_navigationTimer;
+  asio::steady_timer    m_respawnTimer;
+  Avatar*               m_mainAvatar {nullptr};
+  Cell*                 m_target {nullptr};
 };
 
 #endif /* THEGAME_BOT_HPP */

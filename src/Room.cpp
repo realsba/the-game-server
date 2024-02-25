@@ -88,15 +88,13 @@ void Room::init(const config::Room& config)
   m_motherGeneratorTimer.setInterval(m_config.generator.mother.interval);
 
   m_gridmap.resize(m_config.width, m_config.height, 9);
+
   spawnFood(m_config.food.quantity);
   spawnViruses(m_config.virus.quantity);
   spawnPhages(m_config.phage.quantity);
   spawnMothers(m_config.mother.quantity);
 
-  uint32_t id = 100;
-  for (const auto& name : m_config.botNames) {
-    spawnBot(id++, name);
-  }
+  createBots();
 }
 
 void Room::start()
@@ -265,7 +263,12 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     } else {
       player = new Player(m_executor, playerId, *this, m_gridmap);
       player->setName(name);
-      player->subscribeToAnnihilationEvent(this, [this, playerId] { m_players.erase(playerId); });
+      player->subscribeToAnnihilationEvent(this,
+        [this, player] {
+          m_players.erase(player->getId());
+          delete player;
+        }
+      ); // TODO: revise
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
       sendPacketPlayer(*player);
@@ -850,14 +853,24 @@ void Room::produceMothers()
   }
 }
 
-void Room::checkPlayers()
+void Room::checkPlayers() // TODO: move to class Bot
 {
   for (auto* bot : m_bots) {
     if (bot->isDead()) {
-      spawnBot(bot->getId());
+      auto& obj = createAvatar();
+      obj.modifyMass(m_config.bot.mass);
+      int radius = obj.radius;
+      obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
+      obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
+      obj.color = m_generator() % 12;
+      bot->addAvatar(&obj);
+      bot->calcParams();
+      bot->wakeUp();
+      m_leaderboard.emplace_back(bot);
+      m_fighters.insert(bot);
+      sendPacketPlayerBorn(bot->getId());
     }
   }
-  recalculateFreeSpace();
 }
 
 void Room::generateFood()
@@ -896,6 +909,19 @@ void Room::generateMothers()
   spawnMothers(std::min(m_config.generator.mother.quantity, availableSpace));
 }
 
+void Room::createBots()
+{
+  uint32_t id = 100;
+  for (const auto& name : m_config.botNames) {
+    auto* bot = new Bot(m_executor, id++, *this, m_gridmap);
+    bot->setName(name);
+    bot->start();
+    m_players.emplace(bot->getId(), bot);
+    m_bots.emplace(bot);
+  }
+  recalculateFreeSpace();
+}
+
 void Room::spawnFood(uint32_t count)
 {
   for (; count > 0; --count) {
@@ -931,38 +957,6 @@ void Room::spawnMothers(uint32_t count)
     obj.modifyMass(m_config.mother.mass);
     obj.position = getRandomPosition(obj.radius);
   }
-}
-
-void Room::spawnBot(uint32_t id, const std::string& name)
-{
-  const auto& it = m_players.find(id);
-  Bot* bot;
-  if (it != m_players.end()) {
-    bot = dynamic_cast<Bot*>(it->second);
-  } else {
-    bot = new Bot(m_executor, id, *this, m_gridmap);
-    bot->setName(name.empty() ? "Bot " + std::to_string(id) : name);
-    bot->start();
-    m_players.emplace(bot->getId(), bot);
-    recalculateFreeSpace();
-    m_bots.emplace(bot);
-    sendPacketPlayer(*bot);
-  }
-  if (bot->isDead()) {
-    auto& obj = createAvatar();
-    obj.modifyMass(m_config.bot.mass);
-    int radius = obj.radius;
-    obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
-    obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
-    obj.color = m_generator() % 12;
-    bot->addAvatar(&obj);
-    bot->calcParams();
-    bot->wakeUp();
-    m_leaderboard.emplace_back(bot);
-    m_fighters.insert(bot);
-    sendPacketPlayerBorn(bot->getId());
-  }
-  bot->init();
 }
 
 void Room::serialize(Buffer& buffer)

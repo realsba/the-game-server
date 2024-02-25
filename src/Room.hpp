@@ -110,11 +110,11 @@ private:
   void generatePhages();
   void generateMothers();
 
+  void createBots();
   void spawnFood(uint32_t count);
   void spawnViruses(uint32_t count);
   void spawnPhages(uint32_t count);
   void spawnMothers(uint32_t count);
-  void spawnBot(uint32_t id, const std::string& name = "");
 
   void serialize(Buffer& buffer);
   void send(const BufferPtr& buffer);
@@ -143,6 +143,7 @@ private:
   friend class Virus;
   friend class Phage;
   friend class Mother;
+  friend class Bot;
 
   using RequestsMap = std::map<SessionPtr, Vec2D>;
 

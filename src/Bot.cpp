@@ -12,6 +12,7 @@
 Bot::Bot(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
   : Player(executor, id, room, gridmap)
   , m_navigationTimer(executor, std::bind_front(&Bot::navigate, this), 200ms)
+  , m_respawnTimer(executor)
 {
 }
 
@@ -83,4 +84,22 @@ void Bot::choseTarget()
     m_target->subscribeToDeathEvent(this, [&] { m_target = nullptr; });
     startMotion();
   }
+}
+
+void Bot::scheduleRespawn()
+{
+  m_respawnTimer.expires_after(m_room.getConfig().bot.respawnDelay);
+  m_respawnTimer.async_wait(
+    [this](const boost::system::error_code& error)
+    {
+      if (!error) {
+        respawn();
+      }
+    }
+  );
+}
+
+void Bot::respawn()
+{
+  // TODO: implement
 }

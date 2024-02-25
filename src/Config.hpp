@@ -31,28 +31,29 @@ struct InfluxDb {
   std::string host;
   std::string path;
   std::string token;
-  Duration    interval {};
+  Duration    interval;
   uint16_t    port {0};
   bool        enabled {false};
 };
 
 struct Leaderboard {
-  Duration    updateInterval {};
+  Duration    updateInterval;
   uint32_t    limit {0};
 };
 
 struct Player {
   uint32_t  mass {0};
   uint32_t  maxCells {0};
-  Duration  deflationThreshold {};
-  Duration  deflationInterval {};
+  Duration  deflationThreshold;
+  Duration  deflationInterval;
   float     deflationRatio {0};
-  Duration  annihilationThreshold {};
+  Duration  annihilationThreshold;
   float     pointerForceRatio {0};
 };
 
 struct Bot {
   uint32_t mass {0};
+  Duration respawnDelay;
 };
 
 struct Avatar {
@@ -85,7 +86,7 @@ struct Virus {
   uint32_t  mass {0};
   uint32_t  quantity {0};
   uint32_t  maxQuantity {0};
-  Duration  lifeTime {};
+  Duration  lifeTime;
   uint32_t  color {0};
 };
 
@@ -96,7 +97,7 @@ struct Mother {
   uint32_t  quantity {0};
   uint32_t  maxMass {0};
   uint32_t  maxQuantity {0};
-  Duration  lifeTime {};
+  Duration  lifeTime;
   uint32_t  color {0};
   uint32_t  checkRadius {0};
   float     baseFoodProduction {0};
@@ -105,7 +106,7 @@ struct Mother {
 
 struct Generator {
   struct Item {
-    Duration  interval {};
+    Duration  interval;
     uint32_t  quantity {0};
     bool      enabled {false};
   };
@@ -132,14 +133,14 @@ struct Room {
   float     eps {0.01};
 
   uint32_t  numThreads {0};
-  Duration  updateInterval {};
+  Duration  updateInterval;
 
   uint32_t  spawnPosTryCount {0};
 
-  Duration  checkPlayersInterval {};
-  Duration  destroyOutdatedCellsInterval {};
-  Duration  checkMothersInterval {};
-  Duration  produceMothersInterval {};
+  Duration  checkPlayersInterval;
+  Duration  destroyOutdatedCellsInterval;
+  Duration  checkMothersInterval;
+  Duration  produceMothersInterval;
 
   uint32_t  viewportBase {0};           // shorter side (height)
   float     viewportBuffer {0};         // buffer on each side
