@@ -14,12 +14,12 @@
 
 #include <spdlog/spdlog.h>
 
-Player::Player(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
+Player::Player(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap)
   : m_deflationTimer(executor)
   , m_annihilationTimer(executor)
   , m_annihilationEvent(executor)
   , m_id(id)
-  , m_room(room)
+  , m_config(config)
   , m_gridmap(gridmap)
 {
   wakeUp();
@@ -219,7 +219,7 @@ void Player::split(const Vec2D& point)
   }
   size_t count = m_avatars.size();
   for (auto* avatar : m_avatars) {
-    if (count >= m_room.getConfig().player.maxCells) {
+    if (count >= m_config.player.maxCells) {
       break;
     }
     if (avatar->split(point)) {
@@ -334,7 +334,6 @@ void Player::calcParams()
   if (m_avatars.empty()) {
     return;
   }
-  const auto& config = m_room.getConfig();
   Vec2D position;
   float radius = 0;
   float mass = 0;
@@ -352,11 +351,11 @@ void Player::calcParams()
   if (m_mass > m_maxMass) {
     m_maxMass = m_mass;
   }
-  float scale = radius > config.maxRadius ? 1 + config.scaleRatio * (radius / config.maxRadius - 1) : 1;
+  float scale = radius > m_config.maxRadius ? 1 + m_config.scaleRatio * (radius / m_config.maxRadius - 1) : 1;
   if (m_scale != scale) {
     m_scale = scale;
-    auto halfHeight = 0.5 * config.viewportBase * (1 + 2 * config.viewportBuffer) * m_scale;
-    auto halfWidth = halfHeight * config.aspectRatio;
+    auto halfHeight = 0.5 * m_config.viewportBase * (1 + 2 * m_config.viewportBuffer) * m_scale;
+    auto halfWidth = halfHeight * m_config.aspectRatio;
     Vec2D buffer(halfWidth, halfHeight);
     m_viewport.a = position - buffer;
     m_viewport.b = position + buffer;
@@ -372,7 +371,7 @@ void Player::applyPointerForce(uint32_t tick)
     return;
   }
   auto destination = m_position + m_pointerOffset;
-  auto forceRatio = m_room.getConfig().player.pointerForceRatio;
+  auto forceRatio = m_config.player.pointerForceRatio;
   for (auto* avatar : m_avatars) {
     if (avatar->protection <= tick) {
       Vec2D direction(destination - avatar->position);
@@ -416,7 +415,7 @@ void Player::unsubscribeFromAnnihilationEvent(void* tag)
 
 void Player::recombine(Avatar& initiator, Avatar& target)
 {
-  auto elasticityRatio = m_room.getConfig().elasticityRatio;
+  auto elasticityRatio = m_config.elasticityRatio;
   auto direction((initiator.position - target.position).direction());
   if (initiator.isRecombined() && target.isRecombined()) {
     auto force = direction * ((initiator.mass + target.mass) * elasticityRatio);
@@ -435,7 +434,7 @@ void Player::recombine(Avatar& initiator, Avatar& target)
 
 void Player::scheduleDeflation()
 {
-  m_deflationTimer.expires_after(m_room.getConfig().player.deflationThreshold);
+  m_deflationTimer.expires_after(m_config.player.deflationThreshold);
   m_deflationTimer.async_wait([this](const boost::system::error_code &error) {
     if (!error) {
       handleDeflation();
@@ -445,7 +444,7 @@ void Player::scheduleDeflation()
 
 void Player::scheduleAnnihilation()
 {
-  m_annihilationTimer.expires_after(m_room.getConfig().player.annihilationThreshold);
+  m_annihilationTimer.expires_after(m_config.player.annihilationThreshold);
   m_annihilationTimer.async_wait([this](const boost::system::error_code& error) {
     if (!error) {
       handleAnnihilation();
@@ -455,7 +454,7 @@ void Player::scheduleAnnihilation()
 
 void Player::handleDeflation()
 {
-  m_deflationTimer.expires_after(m_room.getConfig().player.deflationInterval);
+  m_deflationTimer.expires_after(m_config.player.deflationInterval);
   m_deflationTimer.async_wait([this](const boost::system::error_code& error) {
     if (!error) {
       for (auto* avatar : m_avatars) {

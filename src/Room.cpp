@@ -302,7 +302,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(m_executor, playerId, *this, m_gridmap);
+      player = new Player(m_executor, playerId, m_config, m_gridmap);
       player->setName("Player " + std::to_string(user->getId()));
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
@@ -716,7 +716,7 @@ void Room::checkPlayers() // TODO: move to class Bot
 
 Player* Room::createPlayer(uint32_t id, const std::string& name)
 {
-  auto* player = new Player(m_executor, id, *this, m_gridmap);
+  auto* player = new Player(m_executor, id, m_config, m_gridmap);
   player->setName(name);
   player->subscribeToAnnihilationEvent(this,
     [this, player] {
@@ -733,7 +733,7 @@ void Room::createBots()
 {
   uint32_t id = 100;
   for (const auto& name : m_config.botNames) {
-    auto* bot = new Bot(m_executor, id++, *this, m_gridmap);
+    auto* bot = new Bot(m_executor, id++, m_config, m_gridmap);
     bot->setName(name);
     bot->start();
     m_players.emplace(bot->getId(), bot);

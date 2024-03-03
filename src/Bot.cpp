@@ -7,8 +7,8 @@
 
 #include "entity/Avatar.hpp"
 
-Bot::Bot(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
-  : Player(executor, id, room, gridmap)
+Bot::Bot(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap)
+  : Player(executor, id, config, gridmap)
   , m_navigationTimer(executor, std::bind_front(&Bot::navigate, this), 200ms)
   , m_respawnTimer(executor)
 {
@@ -29,6 +29,7 @@ void Bot::start()
 void Bot::stop()
 {
   m_navigationTimer.stop();
+  m_respawnTimer.cancel();
 }
 
 void Bot::init()
@@ -47,6 +48,9 @@ void Bot::removeAvatar(Avatar* avatar, Player* killer)
 {
   Player::removeAvatar(avatar, killer);
   m_mainAvatar = findTheBiggestAvatar();
+  if (!m_status.isAlive) {
+    scheduleRespawn();
+  }
 }
 
 void Bot::navigate()
@@ -86,7 +90,7 @@ void Bot::choseTarget()
 
 void Bot::scheduleRespawn()
 {
-  m_respawnTimer.expires_after(m_room.getConfig().bot.respawnDelay);
+  m_respawnTimer.expires_after(m_config.bot.respawnDelay);
   m_respawnTimer.async_wait(
     [this](const boost::system::error_code& error)
     {

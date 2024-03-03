@@ -14,7 +14,7 @@ namespace asio = boost::asio;
 
 class Bot : public Player {
 public:
-  Bot(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap);
+  Bot(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap);
   ~Bot() override;
 
   void start();
@@ -24,11 +24,11 @@ public:
 
   void addAvatar(Avatar* avatar) override;
   void removeAvatar(Avatar* avatar, Player* killer) override;
-  void scheduleRespawn();
 
 protected:
   void navigate();
   void choseTarget();
+  void scheduleRespawn();
   void respawn();
 
 private:

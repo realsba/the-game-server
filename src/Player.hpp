@@ -21,14 +21,16 @@
 
 namespace asio = boost::asio;
 
-class Avatar;
-class Room;
+namespace config {
+  class Room;
+}
 
+class Avatar;
 using Avatars = std::set<Avatar*>;
 
 class Player {
 public:
-  Player(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap);
+  Player(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap);
   virtual ~Player() = default;
 
   [[nodiscard]] uint32_t getId() const;
@@ -85,7 +87,7 @@ protected:
   Event<>               m_annihilationEvent;
 
   const uint32_t        m_id {0};
-  const Room&           m_room;
+  const config::Room&   m_config;
   const Gridmap&        m_gridmap;
 
   std::string           m_name;
