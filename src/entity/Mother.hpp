@@ -18,8 +18,13 @@ public:
   void interact(Phage& phage) override;
 
   void explode();
+  void generateFood();
 
-  uint32_t foodCount {0};
+  uint32_t foodCount {0}; // TODO: make protected
+
+protected:
+  std::uniform_real_distribution<float> m_foodVelocityDistribution;
+  std::uniform_int_distribution<> m_foodColorIndexDistribution;
 };
 
 #endif /* THEGAME_ENTITY_MOTHER_HPP */

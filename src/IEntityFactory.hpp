@@ -5,6 +5,7 @@
 #define THEGAME_I_ENTITY_FACTORY_HPP
 
 #include <cstdint>
+#include <random>
 
 class Avatar;
 class Food;
@@ -24,6 +25,8 @@ public:
   virtual Virus& createVirus() = 0;
   virtual Phage& createPhage() = 0;
   virtual Mother& createMother() = 0;
+
+  virtual std::random_device& randomGenerator() = 0;
 
   [[nodiscard]] virtual Vec2D getRandomPosition(double radius) const = 0;
   [[nodiscard]] virtual Vec2D getRandomDirection() const = 0;

@@ -22,6 +22,12 @@ Mother::Mother(
 {
   type = typeMother;
   color = config.mother.color;
+  m_foodVelocityDistribution = std::uniform_real_distribution<float>(
+    m_config.food.minVelocity, m_config.food.maxVelocity
+  );
+  m_foodColorIndexDistribution = std::uniform_int_distribution<>(
+    m_config.food.minColorIndex, m_config.food.maxColorIndex
+  );
 }
 
 void Mother::interact(Cell& cell)
@@ -83,5 +89,27 @@ void Mother::explode()
       obj.modifyMass(singleMass);
       obj.modifyVelocity(m_entityFactory.getRandomDirection() * m_config.explodeVelocity);
     }
+  }
+}
+
+void Mother::generateFood()
+{
+  if (foodCount >= m_config.mother.nearbyFoodLimit) {
+    return;
+  }
+
+  auto& generator = m_entityFactory.randomGenerator();
+  auto extraMassFactor = std::max(1.0f, (mass - m_config.mother.mass) / m_config.mother.mass);
+  auto foodToProduce = static_cast<int>(extraMassFactor * m_config.mother.baseFoodProduction);
+  foodCount += foodToProduce;
+
+  for (int i = 0; i < foodToProduce; ++i) {
+    const auto& direction = m_entityFactory.getRandomDirection();
+    auto& obj = m_entityFactory.createFood();
+    obj.creator = this;
+    obj.position = position + direction * radius;
+    obj.color = m_foodColorIndexDistribution(generator);
+    obj.modifyMass(m_config.food.mass);
+    obj.modifyVelocity(direction * m_foodVelocityDistribution(generator));
   }
 }

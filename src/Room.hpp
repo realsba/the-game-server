@@ -79,6 +79,7 @@ private:
   Phage& createPhage() override;
   Mother& createMother() override;
 
+  std::random_device& randomGenerator() override;
   Vec2D getRandomPosition(double radius) const override;
   Vec2D getRandomDirection() const override;
 
@@ -86,7 +87,7 @@ private:
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
   void removeCell(Cell* cell);
   void resolveCellPosition(Cell& cell);
-  void destroyOutdatedCells();
+  void destroyOutdatedCells(); // TODO: move logic to target classes
   void handlePlayerRequests();
   void update();
   void synchronize();

@@ -451,6 +451,11 @@ Mother& Room::createMother()
   return *mother;
 }
 
+std::random_device& Room::randomGenerator()
+{
+  return m_generator;
+}
+
 Vec2D Room::getRandomPosition(double radius) const
 {
   auto xDistribution = std::uniform_int_distribution<>(radius, m_config.width - radius);
@@ -686,30 +691,8 @@ void Room::produceMothers()
     return;
   }
 
-  auto velocityRange = m_config.food.maxVelocity - m_config.food.minVelocity;
-  auto velocityDistribution = std::uniform_real_distribution<float>(
-    m_config.food.minVelocity, m_config.food.minVelocity + velocityRange
-  );
-  auto colorDistribution = std::uniform_int_distribution<>(m_config.food.minColorIndex, m_config.food.maxColorIndex);
-
   for (auto* mother : m_motherContainer) {
-    if (mother->foodCount >= m_config.mother.nearbyFoodLimit) {
-      continue;
-    }
-
-    auto extraMassFactor = std::max(1.0f, (mother->mass - m_config.mother.mass) / m_config.mother.mass);
-    auto foodToProduce = static_cast<int>(extraMassFactor * m_config.mother.baseFoodProduction);
-    mother->foodCount += foodToProduce;
-
-    for (int i = 0; i < foodToProduce; ++i) {
-      const auto& direction = getRandomDirection();
-      auto& obj = createFood();
-      obj.creator = mother;
-      obj.position = mother->position + direction * mother->radius;
-      obj.color = colorDistribution(m_generator);
-      obj.modifyMass(m_config.food.mass);
-      obj.modifyVelocity(direction * velocityDistribution(m_generator));
-    }
+    mother->generateFood();
   }
 }
 
