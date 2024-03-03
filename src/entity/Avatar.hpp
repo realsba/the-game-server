@@ -8,7 +8,7 @@
 
 class Avatar : public Cell {
 public:
-  explicit Avatar(Room& room, uint32_t id = 0);
+  Avatar(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
 
   void modifyMass(float value) override;
 

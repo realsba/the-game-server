@@ -8,8 +8,13 @@
 #include "Phage.hpp"
 #include "Mother.hpp"
 
-Bullet::Bullet(Room& room, uint32_t id)
-  : Cell(room, id)
+Bullet::Bullet(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  uint32_t id
+)
+  : Cell(executor, entityFactory, config, id)
 {
   type = typeMass;
 }

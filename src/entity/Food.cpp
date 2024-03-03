@@ -10,12 +10,16 @@
 #include "Mother.hpp"
 
 #include "src/geometry/geometry.hpp"
-#include "src/Room.hpp"
+#include "src/Config.hpp"
 
-Food::Food(Room& room, uint32_t id)
-  : Cell(room, id)
+Food::Food(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  uint32_t id
+)
+  : Cell(executor, entityFactory, config, id)
 {
-  const auto& config = room.getConfig();
   type = typeFood;
   radius = config.food.radius;
   materialPoint = true;

@@ -9,13 +9,18 @@
 #include "Phage.hpp"
 #include "Mother.hpp"
 
-#include "src/serialization.hpp"
 #include "src/geometry/geometry.hpp"
 #include "src/Player.hpp"
-#include "src/Room.hpp"
+#include "src/Config.hpp"
+#include "src/serialization.hpp"
 
-Avatar::Avatar(Room& room, uint32_t id)
-  : Cell(room, id)
+Avatar::Avatar(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  uint32_t id
+)
+  : Cell(executor, entityFactory, config, id)
 {
   type = typeAvatar;
 }
@@ -23,8 +28,8 @@ Avatar::Avatar(Room& room, uint32_t id)
 void Avatar::modifyMass(float value)
 {
   Cell::modifyMass(value);
-  const auto& config = room.getConfig();
-  maxVelocity = config.avatar.maxVelocity - config.avatarVelocityDiff * (radius - config.cellMinRadius) / (config.cellRadiusDiff);
+  maxVelocity = m_config.avatar.maxVelocity - m_config.avatarVelocityDiff *
+    (radius - m_config.cellMinRadius) / (m_config.cellRadiusDiff);
 }
 
 void Avatar::simulate(double dt)
@@ -78,7 +83,7 @@ void Avatar::interact(Avatar& other)
     if ((dd > d * d) && (dd > d2 * d2)) {
       return;
     }
-    attacker->recombination(room.getConfig().avatar.recombinationTime);
+    attacker->recombination(m_config.avatar.recombinationTime);
   } else {
     if (attacker->mass < 1.25 * defender->mass || dd > d * d) {
       return;
@@ -122,20 +127,19 @@ void Avatar::interact(Virus& virus)
   }
   auto distance = radius - 0.6 * virus.radius;
   if (geometry::squareDistance(position, virus.position) < distance * distance) {
-    room.explode(*this);
+    // room.explode(*this); // TODO: implement
     virus.kill();
   }
 }
 
 void Avatar::interact(Phage& phage)
 {
-  const auto& config = room.getConfig();
-  if (mass <= config.cellMinMass || mass < phage.mass) {
+  if (mass <= m_config.cellMinMass || mass < phage.mass) {
     return;
   }
   auto distance = radius + phage.radius;
   if (geometry::squareDistance(position, phage.position) < distance * distance) {
-    auto m = std::min(static_cast<float>(config.simulationInterval * phage.mass), mass - config.cellMinMass);
+    auto m = std::min(static_cast<float>(m_config.simulationInterval * phage.mass), mass - m_config.cellMinMass);
     modifyMass(-m);
   }
 }
@@ -148,7 +152,7 @@ void Avatar::interact(Mother& mother)
     kill();
     player->removeAvatar(this, nullptr);
   } else if (mass > 1.25 * mother.mass && dist < radius - 0.25 * mother.radius) {
-    room.explode(*this);
+    // room.explode(*this); // TODO: implement
     mother.kill();
   }
 }
@@ -164,24 +168,23 @@ void Avatar::eject(const Vec2D& point)
     return;
   }
 
-  const auto& config = room.getConfig();
-  float massLoss = config.avatar.ejectionMassLoss;
-  if (zombie || mass < config.avatar.ejectionMinMass || mass - massLoss < config.cellMinMass) {
+  float massLoss = m_config.avatar.ejectionMassLoss;
+  if (zombie || mass < m_config.avatar.ejectionMinMass || mass - massLoss < m_config.cellMinMass) {
     return;
   }
 
   modifyMass(-massLoss);
-  auto& obj = room.createBullet();
+  auto& obj = m_entityFactory.createBullet();
   obj.player = player;
   obj.creator = this;
   obj.color = color;
   obj.position = position;
   obj.velocity = velocity;
-  obj.modifyMass(config.avatar.ejectionMass);
+  obj.modifyMass(m_config.avatar.ejectionMass);
   auto direction = point - position;
   if (direction) {
     direction.normalize();
-    obj.modifyVelocity(direction * config.avatar.ejectionVelocity);
+    obj.modifyVelocity(direction * m_config.avatar.ejectionVelocity);
     obj.position += direction * radius;
   }
 }
@@ -192,13 +195,12 @@ bool Avatar::split(const Vec2D& point)
     return false;
   }
 
-  const auto& config = room.getConfig();
   float m = 0.5 * mass;
-  if (mass < config.avatar.splitMinMass || m < config.cellMinMass) {
+  if (mass < m_config.avatar.splitMinMass || m < m_config.cellMinMass) {
     return false;
   }
 
-  auto& obj = room.createAvatar();
+  auto& obj = m_entityFactory.createAvatar();
   obj.color = color;
   obj.position = position;
   obj.velocity = velocity;
@@ -208,10 +210,10 @@ bool Avatar::split(const Vec2D& point)
   auto direction = point - position;
   if (direction) {
     direction.normalize();
-    obj.modifyVelocity(direction * config.avatar.splitVelocity);
+    obj.modifyVelocity(direction * m_config.avatar.splitVelocity);
   }
-  recombination(config.avatar.recombinationTime);
-  obj.recombination(config.avatar.recombinationTime);
+  recombination(m_config.avatar.recombinationTime);
+  obj.recombination(m_config.avatar.recombinationTime);
   player->addAvatar(&obj);
 
   return true;
@@ -230,12 +232,12 @@ bool Avatar::isRecombined() const
 
 void Avatar::deflate()
 {
-  modifyMass(-mass * room.getConfig().player.deflationRatio);
+  modifyMass(-mass * m_config.player.deflationRatio);
 }
 
 void Avatar::annihilate()
 {
-  auto& cell = room.createVirus();
+  auto& cell = m_entityFactory.createVirus();
   cell.modifyMass(mass);
   cell.position = position;
   cell.color = color;

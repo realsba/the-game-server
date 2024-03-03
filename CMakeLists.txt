@@ -48,6 +48,7 @@ add_executable(${PROJECT_NAME}
     src/Gridmap.hpp
     src/HttpClient.cpp
     src/HttpClient.hpp
+    src/IEntityFactory.hpp
     src/IncomingPacket.hpp
     src/Listener.cpp
     src/Listener.hpp

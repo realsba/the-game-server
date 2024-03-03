@@ -67,11 +67,6 @@ Room::~Room()
   }
 }
 
-const asio::any_io_executor& Room::getExecutor() const
-{
-  return m_executor;
-}
-
 void Room::init(const config::Room& config)
 {
   m_config = config;
@@ -398,7 +393,7 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
 
 Avatar& Room::createAvatar()
 {
-  auto* avatar = new Avatar(*this, m_cellNextId.pop());
+  auto* avatar = new Avatar(m_executor, *this, m_config, m_cellNextId.pop());
   avatar->subscribeToDeathEvent(this, std::bind_front(&Room::onAvatarDeath, this, avatar));
   avatar->subscribeToMassChangeEvent(this, std::bind(&Room::onAvatarMassChange, this, avatar, _1));
   avatar->subscribeToMotionStartedEvent(this, std::bind_front(&Room::onMotionStarted, this, avatar));
@@ -410,7 +405,7 @@ Avatar& Room::createAvatar()
 
 Food& Room::createFood()
 {
-  auto* food = new Food(*this, m_cellNextId.pop());
+  auto* food = new Food(m_executor, *this, m_config, m_cellNextId.pop());
   food->subscribeToDeathEvent(this, std::bind_front(&Room::onFoodDeath, this, food));
   food->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, food));
   m_foodContainer.insert(food);
@@ -420,7 +415,7 @@ Food& Room::createFood()
 
 Bullet& Room::createBullet()
 {
-  auto* bullet = new Bullet(*this, m_cellNextId.pop());
+  auto* bullet = new Bullet(m_executor, *this, m_config, m_cellNextId.pop());
   bullet->subscribeToDeathEvent(this, std::bind_front(&Room::onBulletDeath, this, bullet));
   bullet->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, bullet));
   m_bulletContainer.insert(bullet);
@@ -430,7 +425,7 @@ Bullet& Room::createBullet()
 
 Virus& Room::createVirus()
 {
-  auto* virus = new Virus(*this, m_cellNextId.pop());
+  auto* virus = new Virus(m_executor, *this, m_config, m_cellNextId.pop());
   virus->subscribeToDeathEvent(this, std::bind_front(&Room::onVirusDeath, this, virus));
   virus->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, virus, _1));
   virus->subscribeToMotionStartedEvent(this, std::bind_front(&Room::onMotionStarted, this, virus));
@@ -442,7 +437,7 @@ Virus& Room::createVirus()
 
 Phage& Room::createPhage()
 {
-  auto* phage = new Phage(*this, m_cellNextId.pop());
+  auto* phage = new Phage(m_executor, *this, m_config, m_cellNextId.pop());
   phage->subscribeToDeathEvent(this, std::bind_front(&Room::onPhageDeath, this, phage));
   phage->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, phage, _1));
   phage->subscribeToMotionStartedEvent(this, std::bind_front(&Room::onMotionStarted, this, phage));
@@ -454,7 +449,7 @@ Phage& Room::createPhage()
 
 Mother& Room::createMother()
 {
-  auto* mother = new Mother(*this, m_cellNextId.pop());
+  auto* mother = new Mother(m_executor, *this, m_config, m_cellNextId.pop());
   mother->subscribeToDeathEvent(this, std::bind_front(&Room::onMotherDeath, this, mother));
   mother->subscribeToMassChangeEvent(this, std::bind(&Room::onMotherMassChange, this, mother, _1));
   mother->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, mother));
@@ -513,14 +508,14 @@ void Room::explode(Mother& mother)
   }
 }
 
-Vec2D Room::getRandomPosition(uint32_t radius) const
+Vec2D Room::getRandomPosition(double radius) const
 {
   Circle c;
   c.radius = radius;
   for (uint32_t n = m_config.spawnPosTryCount; n > 0; --n) {
     bool intersect = false;
-    c.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
-    c.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
+    c.position.x = (m_generator() % static_cast<uint32_t>((m_config.width - 2 * radius)) + radius); // TODO: revise
+    c.position.y = (m_generator() % static_cast<uint32_t>((m_config.height - 2 * radius)) + radius);
     for (const auto& cell : m_forCheckRandomPos) {
       if (geometry::intersects(*cell, c)) {
         intersect = true;

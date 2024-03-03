@@ -10,12 +10,16 @@
 #include "Mother.hpp"
 
 #include "src/geometry/geometry.hpp"
-#include "src/Room.hpp"
+#include "src/Config.hpp"
 
-Virus::Virus(Room& room, uint32_t id)
-  : Cell(room, id)
+Virus::Virus(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  uint32_t id
+)
+  : Cell(executor, entityFactory, config, id)
 {
-  const auto& config = room.getConfig();
   type = typeVirus;
   color = config.virus.color;
 }
@@ -55,7 +59,7 @@ void Virus::interact(Virus& other)
 {
   auto distance = radius + other.radius;
   if (geometry::squareDistance(position, other.position) < distance * distance) {
-    auto& obj = room.createVirus();
+    auto& obj = m_entityFactory.createVirus();
     obj.modifyMass(mass + other.mass);
     obj.position = (position + other.position) * 0.5;
     kill();
@@ -67,7 +71,7 @@ void Virus::interact(Phage& phage)
 {
   auto distance = radius + phage.radius;
   if (geometry::squareDistance(position, phage.position) < distance * distance) {
-    auto& obj = room.createMother();
+    auto& obj = m_entityFactory.createMother();
     obj.modifyMass(mass + phage.mass);
     obj.position = (position + phage.position) * 0.5;
     kill();

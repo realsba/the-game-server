@@ -8,7 +8,7 @@
 
 class Food : public Cell {
 public:
-  explicit Food(Room& room, uint32_t id = 0);
+  Food(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
 
   bool intersects(const AABB& box) override;
 

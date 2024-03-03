@@ -10,12 +10,16 @@
 #include "Mother.hpp"
 
 #include "src/geometry/geometry.hpp"
-#include "src/Room.hpp"
+#include "src/Config.hpp"
 
-Phage::Phage(Room& room, uint32_t id)
-  : Cell(room, id)
+Phage::Phage(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  uint32_t id
+)
+  : Cell(executor, entityFactory, config, id)
 {
-  const auto& config = room.getConfig();
   type = typePhage;
   color = config.phage.color;
 }
@@ -60,7 +64,7 @@ void Phage::interact(Phage& other)
 {
   auto distance = radius + other.radius;
   if (geometry::squareDistance(position, other.position) < distance * distance) {
-    auto& obj = room.createPhage();
+    auto& obj = m_entityFactory.createPhage();
     obj.modifyMass(mass + other.mass);
     obj.position = (position + other.position) * 0.5;
     kill();

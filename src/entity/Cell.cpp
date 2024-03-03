@@ -4,22 +4,25 @@
 #include "Cell.hpp"
 
 #include "src/geometry/geometry.hpp"
+#include "src/geometry/AABB.hpp"
+#include "src/Config.hpp"
+
 #include "src/serialization.hpp"
 
-#include "src/Player.hpp"
-#include "src/Room.hpp"
-
-#include <spdlog/spdlog.h>
-
-Cell::Cell(Room& room, uint32_t id)
-  : room(room)
-  , id(id)
-  , m_deathEvent(room.getExecutor())
-  , m_massChangeEvent(room.getExecutor())
-  , m_motionStartedEvent(room.getExecutor())
-  , m_motionStoppedEvent(room.getExecutor())
+Cell::Cell(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  uint32_t id
+)
+  : id(id)
+  , m_config(config)
+  , m_entityFactory(entityFactory)
+  , m_deathEvent(executor)
+  , m_massChangeEvent(executor)
+  , m_motionStartedEvent(executor)
+  , m_motionStoppedEvent(executor)
 {
-  const auto& config = room.getConfig();
   resistanceRatio = config.resistanceRatio;
 }
 
@@ -31,14 +34,13 @@ AABB Cell::getAABB() const
 
 void Cell::modifyMass(float value)
 {
-  const auto& config = room.getConfig();
   auto old = mass;
   mass += value;
   if (mass < MIN_MASS) {
     mass = MIN_MASS;
   }
   if (!materialPoint) {
-    radius = config.cellRadiusRatio * sqrt(mass / M_PI);
+    radius = m_config.cellRadiusRatio * sqrt(mass / M_PI);
   }
   m_massChangeEvent.notify(mass - old);
 }

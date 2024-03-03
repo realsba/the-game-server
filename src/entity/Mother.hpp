@@ -8,7 +8,7 @@
 
 class Mother : public Cell {
 public:
-  explicit Mother(Room& room, uint32_t id = 0);
+  Mother(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;
@@ -17,7 +17,7 @@ public:
   void interact(Virus& virus) override;
   void interact(Phage& phage) override;
 
-  uint32_t          foodCount {0};
+  uint32_t foodCount {0};
 };
 
 #endif /* THEGAME_ENTITY_MOTHER_HPP */

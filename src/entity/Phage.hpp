@@ -8,7 +8,7 @@
 
 class Phage : public Cell {
 public:
-  explicit Phage(Room& room, uint32_t id = 0);
+  Phage(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
 
   void interact(Cell& cell) override;
   void interact(Avatar& avatar) override;

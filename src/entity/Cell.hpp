@@ -4,31 +4,32 @@
 #ifndef THEGAME_ENTITY_CELL_HPP
 #define THEGAME_ENTITY_CELL_HPP
 
+#include "src/IEntityFactory.hpp"
+
 #include "src/geometry/Circle.hpp"
-#include "src/Event.hpp"
 #include "src/TimePoint.hpp"
+#include "src/Event.hpp"
 #include "src/types.hpp"
 
-#include <cstdint>
 #include <string>
+
+#include <boost/asio/any_io_executor.hpp>
+
+namespace asio = boost::asio;
 
 class Sector;
 class Player;
-class Room;
 class AABB;
 
-class Avatar;
-class Food;
-class Bullet;
-class Virus;
-class Phage;
-class Mother;
+namespace config {
+  class Room;
+}
 
 class Cell : public Circle {
 public:
   static constexpr auto MIN_MASS = 1.0f;
 
-  explicit Cell(Room& room, uint32_t id = 0);
+  Cell(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
   virtual ~Cell() = default;
 
   [[nodiscard]] AABB getAABB() const;
@@ -81,7 +82,6 @@ public:
   TimePoint         created {TimePoint::clock::now()};
   Vec2D             velocity;
   Vec2D             force;
-  Room&             room;
   Cell*             creator {nullptr};
   Player*           player {nullptr};
   float             mass {0};
@@ -93,11 +93,15 @@ public:
   bool              zombie {false};
   bool              materialPoint {false};
 
+protected:
+  const config::Room&   m_config;
+  IEntityFactory&       m_entityFactory;
+
 private:
-  Event<>          m_deathEvent;
-  Event<float>     m_massChangeEvent;
-  Event<>          m_motionStartedEvent;
-  Event<>          m_motionStoppedEvent;
+  Event<>               m_deathEvent;
+  Event<float>          m_massChangeEvent;
+  Event<>               m_motionStartedEvent;
+  Event<>               m_motionStoppedEvent;
 };
 
 #endif /* THEGAME_ENTITY_CELL_HPP */

@@ -4,6 +4,8 @@
 #ifndef THEGAME_ROOM_HPP
 #define THEGAME_ROOM_HPP
 
+#include "IEntityFactory.hpp"
+
 #include "Gridmap.hpp"
 #include "NextId.hpp"
 #include "Config.hpp"
@@ -21,12 +23,6 @@ namespace asio = boost::asio;
 
 class Player;
 class Bot;
-class Avatar;
-class Food;
-class Bullet;
-class Virus;
-class Phage;
-class Mother;
 
 struct ChatMessage {
   ChatMessage(uint32_t authorId, std::string author, std::string text)
@@ -41,12 +37,11 @@ struct ChatMessage {
   uint32_t authorId;
 };
 
-class Room {
+class Room : public IEntityFactory {
 public:
   Room(asio::any_io_executor executor, uint32_t id);
-  ~Room();
+  ~Room() override;
 
-  const asio::any_io_executor& getExecutor() const;
   void init(const config::Room& config);
 
   void start();
@@ -77,17 +72,18 @@ private:
   void doWatch(const SessionPtr& sess, uint32_t playerId);
   void doChatMessage(const SessionPtr& sess, const std::string& text);
 
-  Avatar& createAvatar();
-  Food& createFood();
-  Bullet& createBullet();
-  Virus& createVirus();
-  Phage& createPhage();
-  Mother& createMother();
+  Avatar& createAvatar() override;
+  Food& createFood() override;
+  Bullet& createBullet() override;
+  Virus& createVirus() override;
+  Phage& createPhage() override;
+  Mother& createMother() override;
+
+  Vec2D getRandomPosition(double radius) const override;
 
   void explode(Avatar& avatar);
   void explode(Mother& mother);
 
-  Vec2D getRandomPosition(uint32_t radius) const;
   void recalculateFreeSpace();
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
   void removeCell(Cell* cell);
