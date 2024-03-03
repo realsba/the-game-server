@@ -38,8 +38,6 @@ public:
 
   void applyResistanceForce();
 
-  [[nodiscard]] virtual bool shouldBeProcessed() const;
-
   virtual bool intersects(const AABB& box);
   virtual void simulate(double dt);
   virtual void format(Buffer& buffer);
@@ -62,6 +60,8 @@ public:
   void unsubscribeFromMassChangeEvent(void* tag);
   void subscribeToMotionStartedEvent(void* tag, Event<>::Handler&& handler);
   void unsubscribeFromMotionStartedEvent(void* tag);
+  void subscribeToMotionStoppedEvent(void* tag, Event<>::Handler&& handler);
+  void unsubscribeFromMotionStoppedEvent(void* tag);
 
   enum Type {
     typeAvatar = 1,
@@ -97,6 +97,7 @@ private:
   Event<>          m_deathEvent;
   Event<float>     m_massChangeEvent;
   Event<>          m_motionStartedEvent;
+  Event<>          m_motionStoppedEvent;
 };
 
 #endif /* THEGAME_ENTITY_CELL_HPP */

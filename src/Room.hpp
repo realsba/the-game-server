@@ -129,14 +129,13 @@ private:
   void onPhageDeath(Phage* phage);
   void onMotherDeath(Mother* mother);
   void onMotionStarted(Cell* cell);
+  void onMotionStopped(Cell* cell);
   void onCellMassChange(Cell* cell, float deltaMass);
   void onAvatarMassChange(Avatar* avatar, float deltaMass);
   void onMotherMassChange(Mother* mother, float deltaMass);
 
 private:
   friend class Avatar;
-  friend class Food;
-  friend class Bullet;
   friend class Virus;
   friend class Phage;
   friend class Mother;

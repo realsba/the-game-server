@@ -27,11 +27,6 @@ void Avatar::modifyMass(float value)
   maxVelocity = config.avatar.maxVelocity - config.avatarVelocityDiff * (radius - config.cellMinRadius) / (config.cellRadiusDiff);
 }
 
-bool Avatar::shouldBeProcessed() const
-{
-  return player->getAvatars().size() > 1 || Cell::shouldBeProcessed();
-}
-
 void Avatar::simulate(double dt)
 {
   Cell::simulate(dt);

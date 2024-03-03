@@ -17,6 +17,7 @@ Cell::Cell(Room& room, uint32_t id)
   , m_deathEvent(room.getExecutor())
   , m_massChangeEvent(room.getExecutor())
   , m_motionStartedEvent(room.getExecutor())
+  , m_motionStoppedEvent(room.getExecutor())
 {
   const auto& config = room.getConfig();
   resistanceRatio = config.resistanceRatio;
@@ -53,11 +54,6 @@ void Cell::applyResistanceForce()
   force -= velocity.direction() * (radius * resistanceRatio);
 }
 
-bool Cell::shouldBeProcessed() const
-{
-  return static_cast<bool>(velocity);
-}
-
 bool Cell::intersects(const AABB& box)
 {
   return geometry::intersects(box, *this);
@@ -70,6 +66,7 @@ void Cell::simulate(double dt)
   velocity += acceleration * dt;
   if (std::fabs(1 + velocity.direction() * prevVelocity.direction()) <= 0.01) {
     velocity.zero();
+    m_motionStoppedEvent.notify();
   } else {
     position += velocity * dt;
   }
@@ -150,5 +147,15 @@ void Cell::subscribeToMotionStartedEvent(void* tag, Event<>::Handler&& handler)
 void Cell::unsubscribeFromMotionStartedEvent(void* tag)
 {
   m_motionStartedEvent.unsubscribe(tag);
+}
+
+void Cell::subscribeToMotionStoppedEvent(void *tag, Event<>::Handler &&handler)
+{
+  m_motionStoppedEvent.subscribe(tag, std::move(handler));
+}
+
+void Cell::unsubscribeFromMotionStoppedEvent(void *tag)
+{
+  m_motionStoppedEvent.unsubscribe(tag);
 }
 

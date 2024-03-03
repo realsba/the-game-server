@@ -11,7 +11,6 @@ public:
   explicit Avatar(Room& room, uint32_t id = 0);
 
   void modifyMass(float value) override;
-  [[nodiscard]] bool shouldBeProcessed() const override;
 
   void simulate(double dt) override;
   void format(Buffer& buffer) override;
