@@ -28,16 +28,16 @@ using namespace std::placeholders;
 
 Room::Room(asio::any_io_executor executor, uint32_t id)
   : m_executor(std::move(executor))
-  , m_updateTimer(m_executor, std::bind_front(&Room::update, this))
-  , m_checkPlayersTimer(m_executor, std::bind_front(&Room::checkPlayers, this))
-  , m_updateLeaderboardTimer(m_executor, std::bind_front(&Room::updateLeaderboard, this))
-  , m_destroyOutdatedCellsTimer(m_executor, std::bind_front(&Room::destroyOutdatedCells, this))
-  , m_checkMothersTimer(m_executor, std::bind_front(&Room::checkMothers, this))
-  , m_produceMothersTimer(m_executor, std::bind_front(&Room::produceMothers, this))
-  , m_foodGeneratorTimer(m_executor, std::bind_front(&Room::generateFood, this))
-  , m_virusGeneratorTimer(m_executor, std::bind_front(&Room::generateViruses, this))
-  , m_phageGeneratorTimer(m_executor, std::bind_front(&Room::generatePhages, this))
-  , m_motherGeneratorTimer(m_executor, std::bind_front(&Room::generateMothers, this))
+  , m_updateTimer(m_executor, [this] { update(); })
+  , m_checkPlayersTimer(m_executor, [this] { checkPlayers(); })
+  , m_updateLeaderboardTimer(m_executor, [this] { updateLeaderboard(); })
+  , m_destroyOutdatedCellsTimer(m_executor, [this] { destroyOutdatedCells(); })
+  , m_checkMothersTimer(m_executor, [this] { checkMothers(); })
+  , m_produceMothersTimer(m_executor, [this] { produceMothers(); })
+  , m_foodGeneratorTimer(m_executor, [this] { generateFood(); })
+  , m_virusGeneratorTimer(m_executor, [this] { generateViruses(); })
+  , m_phageGeneratorTimer(m_executor, [this] { generatePhages(); })
+  , m_motherGeneratorTimer(m_executor, [this] { generateMothers(); })
   , m_id(id)
 {
 }
@@ -89,10 +89,10 @@ void Room::init(const config::Room& config)
 
   m_gridmap.resize(m_config.width, m_config.height, 9);
 
-  spawnFood(m_config.food.quantity);
-  spawnViruses(m_config.virus.quantity);
-  spawnPhages(m_config.phage.quantity);
-  spawnMothers(m_config.mother.quantity);
+  generateFood(m_config.food.quantity);
+  generateViruses(m_config.virus.quantity);
+  generatePhages(m_config.phage.quantity);
+  generateMothers(m_config.mother.quantity);
 
   createBots();
 }
@@ -794,42 +794,6 @@ void Room::checkPlayers() // TODO: move to class Bot
   }
 }
 
-void Room::generateFood()
-{
-  if (m_mass >= m_config.maxMass || m_foodContainer.size() > m_config.food.maxQuantity) {
-    return;
-  }
-  auto availableSpace = static_cast<uint32_t>(m_config.food.maxQuantity - m_foodContainer.size());
-  spawnFood(std::min(m_config.generator.food.quantity, availableSpace));
-}
-
-void Room::generateViruses()
-{
-  if (m_mass >= m_config.maxMass || m_virusContainer.size() > m_config.virus.maxQuantity) {
-    return;
-  }
-  auto availableSpace = static_cast<uint32_t>(m_config.virus.maxQuantity - m_virusContainer.size());
-  spawnViruses(std::min(m_config.generator.virus.quantity, availableSpace));
-}
-
-void Room::generatePhages()
-{
-  if (m_mass >= m_config.maxMass || m_phageContainer.size() > m_config.phage.maxQuantity) {
-    return;
-  }
-  auto availableSpace = static_cast<uint32_t>(m_config.phage.maxQuantity - m_phageContainer.size());
-  spawnPhages(std::min(m_config.generator.phage.quantity, availableSpace));
-}
-
-void Room::generateMothers()
-{
-  if (m_mass >= m_config.maxMass || m_motherContainer.size() > m_config.mother.maxQuantity) {
-    return;
-  }
-  auto availableSpace = static_cast<uint32_t>(m_config.mother.maxQuantity - m_motherContainer.size());
-  spawnMothers(std::min(m_config.generator.mother.quantity, availableSpace));
-}
-
 Player* Room::createPlayer(uint32_t id, const std::string& name)
 {
   auto* player = new Player(m_executor, id, *this, m_gridmap);
@@ -858,7 +822,43 @@ void Room::createBots()
   recalculateFreeSpace();
 }
 
-void Room::spawnFood(uint32_t count)
+void Room::generateFood()
+{
+  if (m_mass >= m_config.maxMass || m_foodContainer.size() > m_config.food.maxQuantity) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.food.maxQuantity - m_foodContainer.size());
+  generateFood(std::min(m_config.generator.food.quantity, availableSpace));
+}
+
+void Room::generateViruses()
+{
+  if (m_mass >= m_config.maxMass || m_virusContainer.size() > m_config.virus.maxQuantity) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.virus.maxQuantity - m_virusContainer.size());
+  generateViruses(std::min(m_config.generator.virus.quantity, availableSpace));
+}
+
+void Room::generatePhages()
+{
+  if (m_mass >= m_config.maxMass || m_phageContainer.size() > m_config.phage.maxQuantity) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.phage.maxQuantity - m_phageContainer.size());
+  generatePhages(std::min(m_config.generator.phage.quantity, availableSpace));
+}
+
+void Room::generateMothers()
+{
+  if (m_mass >= m_config.maxMass || m_motherContainer.size() > m_config.mother.maxQuantity) {
+    return;
+  }
+  auto availableSpace = static_cast<uint32_t>(m_config.mother.maxQuantity - m_motherContainer.size());
+  generateMothers(std::min(m_config.generator.mother.quantity, availableSpace));
+}
+
+void Room::generateFood(uint32_t count)
 {
   for (; count > 0; --count) {
     auto& obj = createFood();
@@ -868,7 +868,7 @@ void Room::spawnFood(uint32_t count)
   }
 }
 
-void Room::spawnViruses(uint32_t count)
+void Room::generateViruses(uint32_t count)
 {
   for (; count > 0; --count) {
     auto& obj = createVirus();
@@ -877,7 +877,7 @@ void Room::spawnViruses(uint32_t count)
   }
 }
 
-void Room::spawnPhages(uint32_t count)
+void Room::generatePhages(uint32_t count)
 {
   for (; count > 0; --count) {
     auto& obj = createPhage();
@@ -886,7 +886,7 @@ void Room::spawnPhages(uint32_t count)
   }
 }
 
-void Room::spawnMothers(uint32_t count)
+void Room::generateMothers(uint32_t count)
 {
   for (; count > 0; --count) {
     auto& obj = createMother();

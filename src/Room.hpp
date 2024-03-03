@@ -101,17 +101,17 @@ private:
   void produceMothers();
   void checkPlayers();
 
+  Player* createPlayer(uint32_t id, const std::string& name);
+  void createBots();
+
   void generateFood();
   void generateViruses();
   void generatePhages();
   void generateMothers();
-
-  Player* createPlayer(uint32_t id, const std::string& name);
-  void createBots();
-  void spawnFood(uint32_t count);
-  void spawnViruses(uint32_t count);
-  void spawnPhages(uint32_t count);
-  void spawnMothers(uint32_t count);
+  void generateFood(uint32_t count);
+  void generateViruses(uint32_t count);
+  void generatePhages(uint32_t count);
+  void generateMothers(uint32_t count);
 
   void serialize(Buffer& buffer);
   void send(const BufferPtr& buffer);
