@@ -127,7 +127,7 @@ void Avatar::interact(Virus& virus)
   }
   auto distance = radius - 0.6 * virus.radius;
   if (geometry::squareDistance(position, virus.position) < distance * distance) {
-    // room.explode(*this); // TODO: implement
+    explode();
     virus.kill();
   }
 }
@@ -152,7 +152,7 @@ void Avatar::interact(Mother& mother)
     kill();
     player->removeAvatar(this, nullptr);
   } else if (mass > 1.25 * mother.mass && dist < radius - 0.25 * mother.radius) {
-    // room.explode(*this); // TODO: implement
+    explode();
     mother.kill();
   }
 }
@@ -242,4 +242,40 @@ void Avatar::annihilate()
   cell.position = position;
   cell.color = color;
   kill();
+}
+
+// TODO: revise
+void Avatar::explode()
+{
+  const auto& avatars = player->getAvatars();
+  if (avatars.size() >= m_config.player.maxCells) {
+    return;
+  }
+  float explodedMass = 0;
+  float minMass = std::max(m_config.avatar.explosionMinMass, m_config.cellMinMass);
+  for (auto n = m_config.avatar.explosionParts; n > 0; --n) {
+    float m = 0.125 * mass;
+    if (m < minMass) {
+      m = minMass;
+    }
+    if (explodedMass + m > mass) {
+      break;
+    }
+    explodedMass += m;
+    auto& obj = m_entityFactory.createAvatar();
+    obj.modifyMass(m);
+    const auto& direction = m_entityFactory.getRandomDirection();
+    obj.position = position + direction * (radius + obj.radius);
+    obj.color = color;
+    obj.modifyVelocity(direction * m_config.explodeVelocity);
+    obj.recombination(m_config.avatar.recombinationTime);
+    player->addAvatar(&obj);
+    if (avatars.size() >= m_config.player.maxCells) {
+      break;
+    }
+  }
+  if (explodedMass) {
+    recombination(m_config.avatar.recombinationTime);
+    modifyMass(-explodedMass);
+  }
 }

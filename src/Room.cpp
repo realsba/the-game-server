@@ -131,11 +131,6 @@ void Room::stop()
   }
 }
 
-uint32_t Room::getId() const
-{
-  return m_id;
-}
-
 bool Room::hasFreeSpace() const
 {
   return m_hasFreeSpace;
@@ -280,9 +275,7 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
 
   auto& obj = createAvatar();
   obj.modifyMass(m_config.player.mass);
-  int radius = obj.radius;
-  obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
-  obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
+  obj.position = getRandomPosition(obj.radius);
   obj.color = color;
   player->addAvatar(&obj);
   player->calcParams();
@@ -458,75 +451,34 @@ Mother& Room::createMother()
   return *mother;
 }
 
-void Room::explode(Avatar& avatar)
-{
-  const auto& avatars = avatar.player->getAvatars();
-  if (avatars.size() >= m_config.player.maxCells) {
-    return;
-  }
-  float explodedMass = 0;
-  float minMass = std::max(m_config.avatar.explosionMinMass, m_config.cellMinMass);
-  for (auto n = m_config.avatar.explosionParts; n > 0; --n) {
-    float mass = 0.125 * avatar.mass;
-    if (mass < minMass) {
-      mass = minMass;
-    }
-    if (explodedMass + mass > avatar.mass) {
-      break;
-    }
-    explodedMass += mass;
-    auto& obj = createAvatar();
-    obj.modifyMass(mass);
-    float angle = (m_generator() % 3600) * M_PI / 1800;
-    Vec2D direction(sin(angle), cos(angle));
-    obj.position = avatar.position + direction * (avatar.radius + obj.radius);
-    obj.color = avatar.color;
-    obj.modifyVelocity(direction * m_config.explodeVelocity);
-    obj.recombination(m_config.avatar.recombinationTime);
-    avatar.player->addAvatar(&obj);
-    if (avatars.size() >= m_config.player.maxCells) {
-      break;
-    }
-  }
-  if (explodedMass) {
-    avatar.recombination(m_config.avatar.recombinationTime);
-    avatar.modifyMass(-explodedMass);
-  }
-}
-
-void Room::explode(Mother& mother)
-{
-  float doubleMass = m_config.mother.mass * 2;
-  while (mother.mass >= doubleMass) {
-    auto& obj = createMother();
-    obj.modifyMass(m_config.mother.mass);
-    float angle = (m_generator() % 3600) * M_PI / 1800;
-    Vec2D direction(sin(angle), cos(angle));
-    obj.position = mother.position;
-    obj.modifyVelocity(direction * m_config.explodeVelocity);
-    mother.modifyMass(-static_cast<float>(m_config.mother.mass));
-  }
-}
-
 Vec2D Room::getRandomPosition(double radius) const
 {
-  Circle c;
-  c.radius = radius;
+  auto xDistribution = std::uniform_int_distribution<>(radius, m_config.width - radius);
+  auto yDistribution = std::uniform_int_distribution<>(radius, m_config.height - radius);
+  Circle circle(radius);
+
   for (uint32_t n = m_config.spawnPosTryCount; n > 0; --n) {
-    bool intersect = false;
-    c.position.x = (m_generator() % static_cast<uint32_t>((m_config.width - 2 * radius)) + radius); // TODO: revise
-    c.position.y = (m_generator() % static_cast<uint32_t>((m_config.height - 2 * radius)) + radius);
+    bool isIntersecting = false;
+    circle.position.x = xDistribution(m_generator);
+    circle.position.y = yDistribution(m_generator);
     for (const auto& cell : m_forCheckRandomPos) {
-      if (geometry::intersects(*cell, c)) {
-        intersect = true;
+      if (geometry::intersects(*cell, circle)) {
+        isIntersecting = true;
         break;
       }
     }
-    if (!intersect) {
+    if (!isIntersecting) {
       break;
     }
   }
-  return c.position;
+  return circle.position;
+}
+
+Vec2D Room::getRandomDirection() const
+{
+  static auto angleDistribution = std::uniform_real_distribution<float>(0, 2 * M_PI);
+  auto angle = angleDistribution(m_generator);
+  return {std::sin(angle), std::cos(angle)};
 }
 
 void Room::recalculateFreeSpace()
@@ -738,8 +690,7 @@ void Room::produceMothers()
   auto velocityDistribution = std::uniform_real_distribution<float>(
     m_config.food.minVelocity, m_config.food.minVelocity + velocityRange
   );
-  auto angleDistribution = std::uniform_real_distribution<float>(0, 2 * M_PI);
-  auto colorDistribution = std::uniform_int_distribution<int>(m_config.food.minColorIndex, m_config.food.maxColorIndex);
+  auto colorDistribution = std::uniform_int_distribution<>(m_config.food.minColorIndex, m_config.food.maxColorIndex);
 
   for (auto* mother : m_motherContainer) {
     if (mother->foodCount >= m_config.mother.nearbyFoodLimit) {
@@ -748,12 +699,10 @@ void Room::produceMothers()
 
     auto extraMassFactor = std::max(1.0f, (mother->mass - m_config.mother.mass) / m_config.mother.mass);
     auto foodToProduce = static_cast<int>(extraMassFactor * m_config.mother.baseFoodProduction);
-
     mother->foodCount += foodToProduce;
 
     for (int i = 0; i < foodToProduce; ++i) {
-      auto angle = angleDistribution(m_generator);
-      auto direction = Vec2D(sin(angle), cos(angle));
+      const auto& direction = getRandomDirection();
       auto& obj = createFood();
       obj.creator = mother;
       obj.position = mother->position + direction * mother->radius;
@@ -770,9 +719,7 @@ void Room::checkPlayers() // TODO: move to class Bot
     if (bot->isDead()) {
       auto& obj = createAvatar();
       obj.modifyMass(m_config.bot.mass);
-      int radius = obj.radius;
-      obj.position.x = (m_generator() % (m_config.width - 2 * radius)) + radius;
-      obj.position.y = (m_generator() % (m_config.height - 2 * radius)) + radius;
+      obj.position = getRandomPosition(obj.radius);
       obj.color = m_generator() % 12;
       bot->addAvatar(&obj);
       bot->calcParams();
@@ -1066,8 +1013,7 @@ void Room::onAvatarMassChange(Avatar* avatar, float deltaMass)
 void Room::onMotherMassChange(Mother* mother, float deltaMass)
 {
   onCellMassChange(mother, deltaMass);
-
   if (mother->mass >= m_config.mother.maxMass) {
-    explode(*mother);
+    mother->explode();
   }
 }

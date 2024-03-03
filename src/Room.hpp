@@ -24,6 +24,7 @@ namespace asio = boost::asio;
 class Player;
 class Bot;
 
+// TODO: move to separate file
 struct ChatMessage {
   ChatMessage(uint32_t authorId, std::string author, std::string text)
     : text(std::move(text))
@@ -47,9 +48,8 @@ public:
   void start();
   void stop();
 
-  uint32_t getId() const;
   bool hasFreeSpace() const;
-  const config::Room& getConfig() const;
+  const config::Room& getConfig() const; // TODO: remove
 
   void join(const SessionPtr& sess);
   void leave(const SessionPtr& sess);
@@ -80,9 +80,7 @@ private:
   Mother& createMother() override;
 
   Vec2D getRandomPosition(double radius) const override;
-
-  void explode(Avatar& avatar);
-  void explode(Mother& mother);
+  Vec2D getRandomDirection() const override;
 
   void recalculateFreeSpace();
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
@@ -131,14 +129,9 @@ private:
   void onMotherMassChange(Mother* mother, float deltaMass);
 
 private:
-  friend class Avatar;
-  friend class Virus;
-  friend class Phage;
-  friend class Mother;
-  friend class Bot;
-
   using RequestsMap = std::map<SessionPtr, Vec2D>;
 
+  mutable std::random_device  m_generator;
   asio::any_io_executor       m_executor;
   Timer                       m_updateTimer;
   Timer                       m_checkPlayersTimer;
@@ -151,9 +144,6 @@ private:
   Timer                       m_phageGeneratorTimer;
   Timer                       m_motherGeneratorTimer;
 
-  mutable std::random_device  m_generator;
-
-  const uint32_t              m_id {0};
   config::Room                m_config;
   Gridmap                     m_gridmap;
   Sessions                    m_sessions;
@@ -180,12 +170,12 @@ private:
   std::set<Cell*>             m_forCheckRandomPos;
   std::list<ChatMessage>      m_chatHistory;
 
-  TimePoint m_lastUpdate {TimePoint::clock::now()};
-
-  uint32_t  m_tick {0};                        // TODO: stop using and remove
-  double    m_mass {0};
-  bool      m_updateLeaderboard {false};
-  bool      m_hasFreeSpace {true};
+  TimePoint                   m_lastUpdate {TimePoint::clock::now()};
+  double                      m_mass {0};
+  const uint32_t              m_id {0};
+  uint32_t                    m_tick {0};                        // TODO: stop using and remove
+  bool                        m_updateLeaderboard {false};
+  bool                        m_hasFreeSpace {true};
 };
 
 #endif /* THEGAME_ROOM_HPP */

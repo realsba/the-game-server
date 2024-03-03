@@ -70,3 +70,18 @@ void Mother::interact(Phage& phage)
     phage.kill();
   }
 }
+
+void Mother::explode()
+{
+  auto singleMass = static_cast<int>(m_config.mother.mass);
+  auto numObjects = std::max(static_cast<int>(mass) / singleMass - 1, 0);
+  if (numObjects > 0) {
+    modifyMass(-numObjects * singleMass);
+    for (int i = 0; i < numObjects; ++i) {
+      auto& obj = m_entityFactory.createMother();
+      obj.position = position;
+      obj.modifyMass(singleMass);
+      obj.modifyVelocity(m_entityFactory.getRandomDirection() * m_config.explodeVelocity);
+    }
+  }
+}

@@ -32,6 +32,7 @@ public:
 
   void deflate();
   void annihilate();
+  void explode();
 
   uint32_t          protection {0};
   float             maxVelocity {0};
