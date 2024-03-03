@@ -1,8 +1,8 @@
-// file   : src/entity/Event.hpp
+// file   : src/entity/EventEmitter.hpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#ifndef THEGAME_EVENT_HPP
-#define THEGAME_EVENT_HPP
+#ifndef THEGAME_EVENT_EMITTER_HPP
+#define THEGAME_EVENT_EMITTER_HPP
 
 #include <functional>
 #include <map>
@@ -13,11 +13,11 @@
 namespace asio = boost::asio;
 
 template<typename... Args>
-class Event {
+class EventEmitter {
 public:
   using Handler = std::function<void(Args...)>;
 
-  explicit Event(const asio::any_io_executor& executor)
+  explicit EventEmitter(const asio::any_io_executor& executor)
     : m_executor(executor)
   {}
 
@@ -31,7 +31,7 @@ public:
     m_subscribers.erase(tag);
   }
 
-  void notify(Args&&... args)
+  void emit(Args&&... args)
   {
     for (const auto& it : m_subscribers) {
       asio::post(m_executor,
@@ -50,4 +50,4 @@ private:
   std::map<void*, Handler>      m_subscribers;
 };
 
-#endif /* THEGAME_EVENT_HPP */
+#endif /* THEGAME_EVENT_EMITTER_HPP */

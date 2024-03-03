@@ -17,7 +17,7 @@ Bot::Bot(const asio::any_io_executor& executor, uint32_t id, const config::Room&
 Bot::~Bot()
 {
   if (m_target) {
-    m_target->unsubscribeFromDeathEvent(this);
+    m_target->unsubscribeFromDeath(this);
   }
 }
 
@@ -83,7 +83,7 @@ void Bot::choseTarget()
 
   if (target) {
     m_target = target;
-    m_target->subscribeToDeathEvent(this, [&] { m_target = nullptr; });
+    m_target->subscribeToDeath(this, [&] { m_target = nullptr; });
     startMotion();
   }
 }

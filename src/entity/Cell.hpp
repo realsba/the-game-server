@@ -8,7 +8,7 @@
 
 #include "src/geometry/Circle.hpp"
 #include "src/TimePoint.hpp"
-#include "src/Event.hpp"
+#include "src/EventEmitter.hpp"
 #include "src/types.hpp"
 
 #include <string>
@@ -55,14 +55,15 @@ public:
 
   void kill();
   void startMotion();
-  void subscribeToDeathEvent(void* tag, Event<>::Handler&& handler);
-  void unsubscribeFromDeathEvent(void* tag);
-  void subscribeToMassChangeEvent(void* tag, Event<float>::Handler&& handler);
-  void unsubscribeFromMassChangeEvent(void* tag);
-  void subscribeToMotionStartedEvent(void* tag, Event<>::Handler&& handler);
-  void unsubscribeFromMotionStartedEvent(void* tag);
-  void subscribeToMotionStoppedEvent(void* tag, Event<>::Handler&& handler);
-  void unsubscribeFromMotionStoppedEvent(void* tag);
+
+  void subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler);
+  void unsubscribeFromDeath(void* tag);
+  void subscribeToMassChange(void* tag, EventEmitter<float>::Handler&& handler);
+  void unsubscribeFromMassChange(void* tag);
+  void subscribeToMotionStarted(void* tag, EventEmitter<>::Handler&& handler);
+  void unsubscribeFromMotionStarted(void* tag);
+  void subscribeToMotionStopped(void* tag, EventEmitter<>::Handler&& handler);
+  void unsubscribeFromMotionStopped(void* tag);
 
   enum Type {
     typeAvatar = 1,
@@ -98,10 +99,10 @@ protected:
   IEntityFactory&       m_entityFactory;
 
 private:
-  Event<>               m_deathEvent;
-  Event<float>          m_massChangeEvent;
-  Event<>               m_motionStartedEvent;
-  Event<>               m_motionStoppedEvent;
+  EventEmitter<>        m_deathEmitter;
+  EventEmitter<float>   m_massChangedEmitter;
+  EventEmitter<>        m_motionStartedEmitter;
+  EventEmitter<>        m_motionStoppedEmitter;
 };
 
 #endif /* THEGAME_ENTITY_CELL_HPP */

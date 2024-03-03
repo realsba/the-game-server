@@ -387,10 +387,10 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
 Avatar& Room::createAvatar()
 {
   auto* avatar = new Avatar(m_executor, *this, m_config, m_cellNextId.pop());
-  avatar->subscribeToDeathEvent(this, std::bind_front(&Room::onAvatarDeath, this, avatar));
-  avatar->subscribeToMassChangeEvent(this, std::bind(&Room::onAvatarMassChange, this, avatar, _1));
-  avatar->subscribeToMotionStartedEvent(this, std::bind_front(&Room::onMotionStarted, this, avatar));
-  avatar->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, avatar));
+  avatar->subscribeToDeath(this, std::bind_front(&Room::onAvatarDeath, this, avatar));
+  avatar->subscribeToMassChange(this, std::bind(&Room::onAvatarMassChange, this, avatar, _1));
+  avatar->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, avatar));
+  avatar->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, avatar));
   m_avatarContainer.insert(avatar);
   updateNewCellRegistries(avatar);
   return *avatar;
@@ -399,8 +399,8 @@ Avatar& Room::createAvatar()
 Food& Room::createFood()
 {
   auto* food = new Food(m_executor, *this, m_config, m_cellNextId.pop());
-  food->subscribeToDeathEvent(this, std::bind_front(&Room::onFoodDeath, this, food));
-  food->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, food));
+  food->subscribeToDeath(this, std::bind_front(&Room::onFoodDeath, this, food));
+  food->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, food));
   m_foodContainer.insert(food);
   updateNewCellRegistries(food, false);
   return *food;
@@ -409,8 +409,8 @@ Food& Room::createFood()
 Bullet& Room::createBullet()
 {
   auto* bullet = new Bullet(m_executor, *this, m_config, m_cellNextId.pop());
-  bullet->subscribeToDeathEvent(this, std::bind_front(&Room::onBulletDeath, this, bullet));
-  bullet->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, bullet));
+  bullet->subscribeToDeath(this, std::bind_front(&Room::onBulletDeath, this, bullet));
+  bullet->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, bullet));
   m_bulletContainer.insert(bullet);
   updateNewCellRegistries(bullet, false);
   return *bullet;
@@ -419,10 +419,10 @@ Bullet& Room::createBullet()
 Virus& Room::createVirus()
 {
   auto* virus = new Virus(m_executor, *this, m_config, m_cellNextId.pop());
-  virus->subscribeToDeathEvent(this, std::bind_front(&Room::onVirusDeath, this, virus));
-  virus->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, virus, _1));
-  virus->subscribeToMotionStartedEvent(this, std::bind_front(&Room::onMotionStarted, this, virus));
-  virus->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, virus));
+  virus->subscribeToDeath(this, std::bind_front(&Room::onVirusDeath, this, virus));
+  virus->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, virus, _1));
+  virus->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, virus));
+  virus->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, virus));
   m_virusContainer.insert(virus);
   updateNewCellRegistries(virus);
   return *virus;
@@ -431,10 +431,10 @@ Virus& Room::createVirus()
 Phage& Room::createPhage()
 {
   auto* phage = new Phage(m_executor, *this, m_config, m_cellNextId.pop());
-  phage->subscribeToDeathEvent(this, std::bind_front(&Room::onPhageDeath, this, phage));
-  phage->subscribeToMassChangeEvent(this, std::bind(&Room::onCellMassChange, this, phage, _1));
-  phage->subscribeToMotionStartedEvent(this, std::bind_front(&Room::onMotionStarted, this, phage));
-  phage->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, phage));
+  phage->subscribeToDeath(this, std::bind_front(&Room::onPhageDeath, this, phage));
+  phage->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, phage, _1));
+  phage->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, phage));
+  phage->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, phage));
   m_phageContainer.insert(phage);
   updateNewCellRegistries(phage);
   return *phage;
@@ -443,9 +443,9 @@ Phage& Room::createPhage()
 Mother& Room::createMother()
 {
   auto* mother = new Mother(m_executor, *this, m_config, m_cellNextId.pop());
-  mother->subscribeToDeathEvent(this, std::bind_front(&Room::onMotherDeath, this, mother));
-  mother->subscribeToMassChangeEvent(this, std::bind(&Room::onMotherMassChange, this, mother, _1));
-  mother->subscribeToMotionStoppedEvent(this, std::bind_front(&Room::onMotionStopped, this, mother));
+  mother->subscribeToDeath(this, std::bind_front(&Room::onMotherDeath, this, mother));
+  mother->subscribeToMassChange(this, std::bind(&Room::onMotherMassChange, this, mother, _1));
+  mother->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, mother));
   m_motherContainer.insert(mother);
   updateNewCellRegistries(mother);
   return *mother;
@@ -718,10 +718,10 @@ Player* Room::createPlayer(uint32_t id, const std::string& name)
 {
   auto* player = new Player(m_executor, id, m_config, m_gridmap);
   player->setName(name);
-  player->subscribeToAnnihilationEvent(this,
+  player->subscribeToAnnihilation(this,
     [this, player] {
-     m_players.erase(player->getId());
-     delete player;
+      m_players.erase(player->getId());
+      delete player;
     }
   ); // TODO: revise
   m_players.emplace(id, player);

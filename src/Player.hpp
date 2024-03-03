@@ -9,7 +9,7 @@
 
 #include "TimePoint.hpp"
 #include "Gridmap.hpp"
-#include "Event.hpp"
+#include "EventEmitter.hpp"
 
 #include "types.hpp"
 
@@ -65,8 +65,8 @@ public:
   void applyPointerForce(uint32_t tick);
   void recombine(uint32_t tick);
 
-  void subscribeToAnnihilationEvent(void* tag, Event<>::Handler&& handler);
-  void unsubscribeFromAnnihilationEvent(void* tag);
+  void subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handler);
+  void unsubscribeFromAnnihilation(void* tag);
 
 protected:
   void recombine(Avatar& initiator, Avatar& target);
@@ -84,7 +84,7 @@ protected:
 
   asio::steady_timer    m_deflationTimer;
   asio::steady_timer    m_annihilationTimer;
-  Event<>               m_annihilationEvent;
+  EventEmitter<>        m_annihilationEmitter;
 
   const uint32_t        m_id {0};
   const config::Room&   m_config;

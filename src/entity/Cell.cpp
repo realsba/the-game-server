@@ -18,10 +18,10 @@ Cell::Cell(
   : id(id)
   , m_config(config)
   , m_entityFactory(entityFactory)
-  , m_deathEvent(executor)
-  , m_massChangeEvent(executor)
-  , m_motionStartedEvent(executor)
-  , m_motionStoppedEvent(executor)
+  , m_deathEmitter(executor)
+  , m_massChangedEmitter(executor)
+  , m_motionStartedEmitter(executor)
+  , m_motionStoppedEmitter(executor)
 {
   resistanceRatio = config.resistanceRatio;
 }
@@ -42,13 +42,13 @@ void Cell::modifyMass(float value)
   if (!materialPoint) {
     radius = m_config.cellRadiusRatio * sqrt(mass / M_PI);
   }
-  m_massChangeEvent.notify(mass - old);
+  m_massChangedEmitter.emit(mass - old);
 }
 
 void Cell::modifyVelocity(const Vec2D& value)
 {
   velocity += value;
-  m_motionStartedEvent.notify();
+  m_motionStartedEmitter.emit();
 }
 
 void Cell::applyResistanceForce()
@@ -68,7 +68,7 @@ void Cell::simulate(double dt)
   velocity += acceleration * dt;
   if (std::fabs(1 + velocity.direction() * prevVelocity.direction()) <= 0.01) {
     velocity.zero();
-    m_motionStoppedEvent.notify();
+    m_motionStoppedEmitter.emit();
   } else {
     position += velocity * dt;
   }
@@ -113,51 +113,51 @@ bool Cell::isAttractiveFor(const Avatar& avatar)
 void Cell::kill()
 {
   zombie = true;
-  m_deathEvent.notify();
+  m_deathEmitter.emit();
 }
 
 void Cell::startMotion()
 {
-  m_motionStartedEvent.notify();
+  m_motionStartedEmitter.emit();
 }
 
-void Cell::subscribeToDeathEvent(void* tag, Event<>::Handler&& handler)
+void Cell::subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler)
 {
-  m_deathEvent.subscribe(tag, std::move(handler));
+  m_deathEmitter.subscribe(tag, std::move(handler));
 }
 
-void Cell::unsubscribeFromDeathEvent(void* tag)
+void Cell::unsubscribeFromDeath(void* tag)
 {
-  m_deathEvent.unsubscribe(tag);
+  m_deathEmitter.unsubscribe(tag);
 }
 
-void Cell::subscribeToMassChangeEvent(void* tag, Event<float>::Handler&& handler)
+void Cell::subscribeToMassChange(void* tag, EventEmitter<float>::Handler&& handler)
 {
-  m_massChangeEvent.subscribe(tag, std::move(handler));
+  m_massChangedEmitter.subscribe(tag, std::move(handler));
 }
 
-void Cell::unsubscribeFromMassChangeEvent(void* tag)
+void Cell::unsubscribeFromMassChange(void* tag)
 {
-  m_massChangeEvent.unsubscribe(tag);
+  m_massChangedEmitter.unsubscribe(tag);
 }
 
-void Cell::subscribeToMotionStartedEvent(void* tag, Event<>::Handler&& handler)
+void Cell::subscribeToMotionStarted(void* tag, EventEmitter<>::Handler&& handler)
 {
-  m_motionStartedEvent.subscribe(tag, std::move(handler));
+  m_motionStartedEmitter.subscribe(tag, std::move(handler));
 }
 
-void Cell::unsubscribeFromMotionStartedEvent(void* tag)
+void Cell::unsubscribeFromMotionStarted(void* tag)
 {
-  m_motionStartedEvent.unsubscribe(tag);
+  m_motionStartedEmitter.unsubscribe(tag);
 }
 
-void Cell::subscribeToMotionStoppedEvent(void *tag, Event<>::Handler &&handler)
+void Cell::subscribeToMotionStopped(void *tag, EventEmitter<>::Handler &&handler)
 {
-  m_motionStoppedEvent.subscribe(tag, std::move(handler));
+  m_motionStoppedEmitter.subscribe(tag, std::move(handler));
 }
 
-void Cell::unsubscribeFromMotionStoppedEvent(void *tag)
+void Cell::unsubscribeFromMotionStopped(void *tag)
 {
-  m_motionStoppedEvent.unsubscribe(tag);
+  m_motionStoppedEmitter.unsubscribe(tag);
 }
 

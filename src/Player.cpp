@@ -17,7 +17,7 @@
 Player::Player(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap)
   : m_deflationTimer(executor)
   , m_annihilationTimer(executor)
-  , m_annihilationEvent(executor)
+  , m_annihilationEmitter(executor)
   , m_id(id)
   , m_config(config)
   , m_gridmap(gridmap)
@@ -169,11 +169,11 @@ void Player::setTargetPlayer(Player* player)
 {
   if (player != this) {
     if (m_targetPlayer) {
-      m_targetPlayer->unsubscribeFromAnnihilationEvent(this);
+      m_targetPlayer->unsubscribeFromAnnihilation(this);
     }
     m_targetPlayer = player;
     if (m_targetPlayer) {
-      m_targetPlayer->subscribeToAnnihilationEvent(this, [this] { m_targetPlayer = nullptr; });
+      m_targetPlayer->subscribeToAnnihilation(this, [this] { m_targetPlayer = nullptr; });
     }
   }
 }
@@ -194,10 +194,10 @@ void Player::removeAvatar(Avatar* avatar, Player* killer)
     m_status.isAlive = false;
     if (killer) {
       if (m_killer) {
-        m_killer->unsubscribeFromAnnihilationEvent(this);
+        m_killer->unsubscribeFromAnnihilation(this);
       }
       m_killer = killer;
-      m_killer->subscribeToAnnihilationEvent(this, [this] { m_killer = nullptr; });
+      m_killer->subscribeToAnnihilation(this, [this] { m_killer = nullptr; });
     }
   }
 }
@@ -403,14 +403,14 @@ void Player::recombine(uint32_t tick)
   }
 }
 
-void Player::subscribeToAnnihilationEvent(void* tag, Event<>::Handler&& handler)
+void Player::subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handler)
 {
-  m_annihilationEvent.subscribe(tag, std::move(handler));
+  m_annihilationEmitter.subscribe(tag, std::move(handler));
 }
 
-void Player::unsubscribeFromAnnihilationEvent(void* tag)
+void Player::unsubscribeFromAnnihilation(void* tag)
 {
-  m_annihilationEvent.unsubscribe(tag);
+  m_annihilationEmitter.unsubscribe(tag);
 }
 
 void Player::recombine(Avatar& initiator, Avatar& target)
@@ -472,7 +472,7 @@ void Player::handleAnnihilation()
   }
   m_avatars.clear();
   m_deflationTimer.cancel();
-  m_annihilationEvent.notify();
+  m_annihilationEmitter.emit();
 }
 
 void Player::startMotion()

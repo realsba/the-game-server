@@ -43,7 +43,7 @@ add_executable(${PROJECT_NAME}
     src/Bot.hpp
     src/Config.cpp
     src/Config.hpp
-    src/Event.hpp
+    src/EventEmitter.hpp
     src/Gridmap.cpp
     src/Gridmap.hpp
     src/HttpClient.cpp
