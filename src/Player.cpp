@@ -108,12 +108,12 @@ void Player::setName(const std::string& name)
 
 void Player::setPointerOffset(const Vec2D& value)
 {
-  if (isDead() || !value) {
+  if (m_status.isAlive && value) {
+    m_pointerOffset = value;
+    startMotion();
+  } else {
     m_pointerOffset.zero();
-    return;
   }
-  m_pointerOffset = value;
-  startMotion();
 }
 
 void Player::setMainSession(const SessionPtr& sess)
@@ -127,6 +127,14 @@ void Player::setMainSession(const SessionPtr& sess)
     m_mainSession->player(this);
     m_status.isOnline = true;
     addSession(sess);
+
+    const auto& buffer = std::make_shared<Buffer>();
+    if (m_status.isAlive) {
+      OutgoingPacket::serializePlay(*buffer, *this);
+    } else {
+      OutgoingPacket::serializeFinish(*buffer);
+    }
+    m_mainSession->send(buffer);
   }
 }
 
@@ -190,6 +198,32 @@ void Player::removeAvatar(Avatar* avatar, Player* killer)
       }
       m_killer = killer;
       m_killer->subscribeToAnnihilationEvent(this, [this] { m_killer = nullptr; });
+    }
+  }
+}
+
+void Player::eject(const Vec2D& point)
+{
+  if (!m_status.isAlive) {
+    return;
+  }
+  for (auto* avatar : m_avatars) {
+    avatar->eject(point);
+  }
+}
+
+void Player::split(const Vec2D& point)
+{
+  if (!m_status.isAlive) {
+    return;
+  }
+  size_t count = m_avatars.size();
+  for (auto* avatar : m_avatars) {
+    if (count >= m_room.getConfig().player.maxCells) {
+      break;
+    }
+    if (avatar->split(point)) {
+      ++count;
     }
   }
 }

@@ -55,6 +55,8 @@ public:
   void setTargetPlayer(Player* player);
   virtual void addAvatar(Avatar* avatar);
   virtual void removeAvatar(Avatar* avatar, Player* killer);
+  void eject(const Vec2D& point);
+  void split(const Vec2D& point);
   void synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
   void wakeUp();
   void calcParams();

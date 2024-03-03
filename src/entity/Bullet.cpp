@@ -8,8 +8,6 @@
 #include "Phage.hpp"
 #include "Mother.hpp"
 
-#include "src/Room.hpp"
-
 Bullet::Bullet(Room& room, uint32_t id)
   : Cell(room, id)
 {

@@ -163,6 +163,65 @@ bool Avatar::isAttractiveFor(const Avatar& avatar)
   return mass * 1.25 < avatar.mass;
 }
 
+void Avatar::eject(const Vec2D& point)
+{
+  if (zombie) {
+    return;
+  }
+
+  const auto& config = room.getConfig();
+  float massLoss = config.avatar.ejectionMassLoss;
+  if (zombie || mass < config.avatar.ejectionMinMass || mass - massLoss < config.cellMinMass) {
+    return;
+  }
+
+  modifyMass(-massLoss);
+  auto& obj = room.createBullet();
+  obj.player = player;
+  obj.creator = this;
+  obj.color = color;
+  obj.position = position;
+  obj.velocity = velocity;
+  obj.modifyMass(config.avatar.ejectionMass);
+  auto direction = point - position;
+  if (direction) {
+    direction.normalize();
+    obj.modifyVelocity(direction * config.avatar.ejectionVelocity);
+    obj.position += direction * radius;
+  }
+}
+
+bool Avatar::split(const Vec2D& point)
+{
+  if (zombie) {
+    return false;
+  }
+
+  const auto& config = room.getConfig();
+  float m = 0.5 * mass;
+  if (mass < config.avatar.splitMinMass || m < config.cellMinMass) {
+    return false;
+  }
+
+  auto& obj = room.createAvatar();
+  obj.color = color;
+  obj.position = position;
+  obj.velocity = velocity;
+  // obj.protection = m_tick + 40; // TODO: implement
+  obj.modifyMass(m);
+  modifyMass(-m);
+  auto direction = point - position;
+  if (direction) {
+    direction.normalize();
+    obj.modifyVelocity(direction * config.avatar.splitVelocity);
+  }
+  recombination(config.avatar.recombinationTime);
+  obj.recombination(config.avatar.recombinationTime);
+  player->addAvatar(&obj);
+
+  return true;
+}
+
 void Avatar::recombination(float t)
 {
   m_recombinationTime += t;

@@ -3,6 +3,7 @@
 
 #include "Food.hpp"
 
+#include "Avatar.hpp"
 #include "Bullet.hpp"
 #include "Virus.hpp"
 #include "Phage.hpp"

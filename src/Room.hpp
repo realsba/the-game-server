@@ -10,8 +10,6 @@
 #include "Timer.hpp"
 #include "types.hpp"
 
-#include "entity/Avatar.hpp"
-
 #include <utility>
 #include <random>
 #include <vector>
@@ -86,8 +84,6 @@ private:
   Phage& createPhage();
   Mother& createMother();
 
-  bool eject(Avatar& avatar, const Vec2D& point);
-  bool split(Avatar& avatar, const Vec2D& point);
   void explode(Avatar& avatar);
   void explode(Mother& mother);
 
@@ -110,6 +106,7 @@ private:
   void generatePhages();
   void generateMothers();
 
+  Player* createPlayer(uint32_t id, const std::string& name);
   void createBots();
   void spawnFood(uint32_t count);
   void spawnViruses(uint32_t count);

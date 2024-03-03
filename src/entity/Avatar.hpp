@@ -26,6 +26,8 @@ public:
 
   bool isAttractiveFor(const Avatar& avatar) override;
 
+  void eject(const Vec2D& point);
+  bool split(const Vec2D& point);
   void recombination(float t);
   [[nodiscard]] bool isRecombined() const;
 

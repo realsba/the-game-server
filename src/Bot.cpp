@@ -5,9 +5,7 @@
 
 #include "Room.hpp"
 
-#include "entity/Cell.hpp"
-
-#include "geometry/geometry.hpp"
+#include "entity/Avatar.hpp"
 
 Bot::Bot(const asio::any_io_executor& executor, uint32_t id, Room& room, Gridmap& gridmap)
   : Player(executor, id, room, gridmap)

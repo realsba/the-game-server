@@ -210,21 +210,18 @@ void Room::doJoin(const SessionPtr& sess)
   const auto& buffer = std::make_shared<Buffer>();
   serialize(*buffer);
 
-  uint32_t playerId = 0;
-  const auto& it = m_players.find(user->getId());
+  // TODO: revise
+  uint32_t playerId = user->getId();
+  const auto& it = m_players.find(playerId);
   if (it != m_players.end()) {
-    Player* player = it->second;
-    if (player->isDead()) {
-      OutgoingPacket::serializeFinish(*buffer);
-    } else {
-      player->setMainSession(sess);
-      OutgoingPacket::serializePlay(*buffer, *player);
-    }
-    playerId = player->getId();
+    it->second->setMainSession(sess);
   } else {
     OutgoingPacket::serializeFinish(*buffer);
+    playerId = 0;
   }
+
   sess->send(buffer);
+
   if (playerId) {
     sendPacketPlayerJoin(playerId);
     m_updateLeaderboard = true;
@@ -254,23 +251,14 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     throw std::runtime_error("Room::play(): the user doesn't set");
   }
 
-  uint32_t playerId = user->getId();
   auto* player = sess->player();
   if (!player) {
+    uint32_t playerId = user->getId();
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(m_executor, playerId, *this, m_gridmap);
-      player->setName(name);
-      player->subscribeToAnnihilationEvent(this,
-        [this, player] {
-          m_players.erase(player->getId());
-          delete player;
-        }
-      ); // TODO: revise
-      m_players.emplace(playerId, player);
-      recalculateFreeSpace();
+      player = createPlayer(playerId, name);
       sendPacketPlayer(*player);
     }
     player->setMainSession(sess);
@@ -469,53 +457,6 @@ Mother& Room::createMother()
   return *mother;
 }
 
-bool Room::eject(Avatar& avatar, const Vec2D& point)
-{
-  float massLoss = m_config.avatar.ejectionMassLoss;
-  if (avatar.mass < m_config.avatar.ejectionMinMass || avatar.mass - massLoss < m_config.cellMinMass) {
-    return false;
-  }
-  avatar.modifyMass(-massLoss);
-  auto& obj = createBullet();
-  obj.player = avatar.player;
-  obj.creator = &avatar;
-  obj.color = avatar.color;
-  obj.position = avatar.position;
-  obj.velocity = avatar.velocity;
-  obj.modifyMass(m_config.avatar.ejectionMass);
-  auto direction = point - avatar.position;
-  if (direction) {
-    direction.normalize();
-    obj.modifyVelocity(direction * m_config.avatar.ejectionVelocity);
-    obj.position += direction * avatar.radius;
-  }
-  return true;
-}
-
-bool Room::split(Avatar& avatar, const Vec2D& point)
-{
-  float mass = 0.5 * avatar.mass;
-  if (avatar.mass < m_config.avatar.splitMinMass || mass < m_config.cellMinMass) {
-    return false;
-  }
-  auto& obj = createAvatar();
-  obj.color = avatar.color;
-  obj.position = avatar.position;
-  obj.velocity = avatar.velocity;
-  obj.protection = m_tick + 40;
-  obj.modifyMass(mass);
-  avatar.modifyMass(-mass);
-  auto direction = point - avatar.position;
-  if (direction) {
-    direction.normalize();
-    obj.modifyVelocity(direction * m_config.avatar.splitVelocity);
-  }
-  obj.recombination(m_config.avatar.recombinationTime);
-  avatar.recombination(m_config.avatar.recombinationTime);
-  avatar.player->addAvatar(&obj);
-  return true;
-}
-
 void Room::explode(Avatar& avatar)
 {
   const auto& avatars = avatar.player->getAvatars();
@@ -685,43 +626,23 @@ void Room::checkMothers()
 
 void Room::handlePlayerRequests()
 {
-  for (const auto& it : m_moveRequests) {
-    const auto& sess = it.first;
-    auto* player = sess->player();
-    if (player) {
-      player->setPointerOffset(it.second);
+  for (const auto& [sess, offset] : m_moveRequests) {
+    if (auto* player = sess->player()) {
+      player->setPointerOffset(offset);
     }
   }
   m_moveRequests.clear();
 
-  for (const auto& it : m_ejectRequests) {
-    const auto& sess = it.first;
-    auto* player = sess->player();
-    if (player && !player->isDead()) {
-      for (auto* avatar : player->getAvatars()) {
-        eject(*avatar, it.second);
-      }
+  for (const auto& [sess, point] : m_ejectRequests) {
+    if (auto* player = sess->player()) {
+      player->eject(point);
     }
   }
   m_ejectRequests.clear();
 
-  for (const auto& it : m_splitRequests) {
-    const auto& sess = it.first;
-    auto* player = sess->player();
-    if (player && !player->isDead()) {
-      auto avatars = player->getAvatars();
-      size_t count = avatars.size();
-      if (count >= m_config.player.maxCells) {
-        break;
-      }
-      for (Avatar* avatar : avatars) {
-        if (split(*avatar, it.second)) {
-          ++count;
-          if (count >= m_config.player.maxCells) {
-            break;
-          }
-        }
-      }
+  for (const auto& [sess, point] : m_splitRequests) {
+    if (auto* player = sess->player()) {
+      player->split(point);
     }
   }
   m_splitRequests.clear();
@@ -907,6 +828,21 @@ void Room::generateMothers()
   }
   auto availableSpace = static_cast<uint32_t>(m_config.mother.maxQuantity - m_motherContainer.size());
   spawnMothers(std::min(m_config.generator.mother.quantity, availableSpace));
+}
+
+Player* Room::createPlayer(uint32_t id, const std::string& name)
+{
+  auto* player = new Player(m_executor, id, *this, m_gridmap);
+  player->setName(name);
+  player->subscribeToAnnihilationEvent(this,
+    [this, player] {
+     m_players.erase(player->getId());
+     delete player;
+    }
+  ); // TODO: revise
+  m_players.emplace(id, player);
+  recalculateFreeSpace();
+  return player;
 }
 
 void Room::createBots()
