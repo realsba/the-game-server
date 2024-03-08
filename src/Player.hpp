@@ -7,9 +7,10 @@
 #include "geometry/Vec2D.hpp"
 #include "geometry/AABB.hpp"
 
+#include "IEntityFactory.hpp"
+#include "EventEmitter.hpp"
 #include "TimePoint.hpp"
 #include "Gridmap.hpp"
-#include "EventEmitter.hpp"
 
 #include "types.hpp"
 
@@ -30,7 +31,13 @@ using Avatars = std::set<Avatar*>;
 
 class Player {
 public:
-  Player(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap);
+  Player(
+    const asio::any_io_executor& executor,
+    IEntityFactory& entityFactory,
+    const config::Room& config,
+    Gridmap& gridmap,
+    uint32_t id
+  );
   virtual ~Player() = default;
 
   [[nodiscard]] uint32_t getId() const;
@@ -49,6 +56,7 @@ public:
   virtual void init();
 
   void setName(const std::string& name);
+  void setColor(uint8_t color);
   void setPointerOffset(const Vec2D& value);
   void setMainSession(const SessionPtr& sess);
   void addSession(const SessionPtr& sess);
@@ -61,7 +69,7 @@ public:
   void split(const Vec2D& point);
   void synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
   void wakeUp();
-  void calcParams();
+  void calcParams(); // TODO: optimize using
   void applyPointerForce(uint32_t tick);
   void recombine(uint32_t tick);
 
@@ -85,10 +93,12 @@ protected:
   asio::steady_timer    m_deflationTimer;
   asio::steady_timer    m_annihilationTimer;
   EventEmitter<>        m_annihilationEmitter;
+  EventEmitter<>        m_deathEmitter;
 
-  const uint32_t        m_id {0};
+  IEntityFactory&       m_entityFactory;
   const config::Room&   m_config;
   const Gridmap&        m_gridmap;
+  const uint32_t        m_id {0};
 
   std::string           m_name;
   Sessions              m_sessions;
@@ -106,8 +116,9 @@ protected:
   Player*               m_killer {nullptr};
   uint32_t              m_mass {0};
   uint32_t              m_maxMass {0};
-  Status                m_status;
   float                 m_scale {0};
+  uint8_t               m_color {0};
+  Status                m_status;
 
   friend bool operator<(const Player& l, const Player& r);
 };

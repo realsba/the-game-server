@@ -14,13 +14,21 @@
 
 #include <spdlog/spdlog.h>
 
-Player::Player(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap)
+Player::Player(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  Gridmap& gridmap,
+  uint32_t id
+)
   : m_deflationTimer(executor)
   , m_annihilationTimer(executor)
   , m_annihilationEmitter(executor)
-  , m_id(id)
+  , m_deathEmitter(executor)
+  , m_entityFactory(entityFactory)
   , m_config(config)
   , m_gridmap(gridmap)
+  , m_id(id)
 {
   wakeUp();
 }
@@ -104,6 +112,11 @@ void Player::init()
 void Player::setName(const std::string& name)
 {
   m_name = name;
+}
+
+void Player::setColor(uint8_t color)
+{
+  m_color = color;
 }
 
 void Player::setPointerOffset(const Vec2D& value)

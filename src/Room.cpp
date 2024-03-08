@@ -33,7 +33,7 @@ Room::Room(asio::any_io_executor executor, uint32_t id)
   , m_updateLeaderboardTimer(m_executor, [this] { updateLeaderboard(); })
   , m_destroyOutdatedCellsTimer(m_executor, [this] { destroyOutdatedCells(); })
   , m_checkMothersTimer(m_executor, [this] { checkMothers(); })
-  , m_produceMothersTimer(m_executor, [this] { produceMothers(); })
+  , m_mothersGenerateFoodTimer(m_executor, [this] { generateFoodByMothers(); })
   , m_foodGeneratorTimer(m_executor, [this] { generateFood(); })
   , m_virusGeneratorTimer(m_executor, [this] { generateViruses(); })
   , m_phageGeneratorTimer(m_executor, [this] { generatePhages(); })
@@ -76,7 +76,7 @@ void Room::init(const config::Room& config)
   m_updateLeaderboardTimer.setInterval(m_config.leaderboard.updateInterval);
   m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
   m_checkMothersTimer.setInterval(m_config.checkMothersInterval);
-  m_produceMothersTimer.setInterval(m_config.produceMothersInterval);
+  m_mothersGenerateFoodTimer.setInterval(m_config.mother.foodGenerationInterval);
   m_foodGeneratorTimer.setInterval(m_config.generator.food.interval);
   m_virusGeneratorTimer.setInterval(m_config.generator.virus.interval);
   m_phageGeneratorTimer.setInterval(m_config.generator.phage.interval);
@@ -99,7 +99,7 @@ void Room::start()
   m_updateLeaderboardTimer.start();
   m_destroyOutdatedCellsTimer.start();
   m_checkMothersTimer.start();
-  m_produceMothersTimer.start();
+  m_mothersGenerateFoodTimer.start();
   if (m_config.generator.food.enabled) {
     m_foodGeneratorTimer.start();
   }
@@ -121,7 +121,7 @@ void Room::stop()
   m_updateLeaderboardTimer.stop();
   m_destroyOutdatedCellsTimer.stop();
   m_checkMothersTimer.stop();
-  m_produceMothersTimer.stop();
+  m_mothersGenerateFoodTimer.stop();
   m_foodGeneratorTimer.stop();
   m_virusGeneratorTimer.stop();
   m_phageGeneratorTimer.stop();
@@ -134,11 +134,6 @@ void Room::stop()
 bool Room::hasFreeSpace() const
 {
   return m_hasFreeSpace;
-}
-
-const config::Room& Room::getConfig() const
-{
-  return m_config;
 }
 
 void Room::join(const SessionPtr& sess)
@@ -302,7 +297,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(m_executor, playerId, m_config, m_gridmap);
+      player = new Player(m_executor, *this, m_config, m_gridmap, playerId);
       player->setName("Player " + std::to_string(user->getId()));
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
@@ -572,16 +567,6 @@ void Room::destroyOutdatedCells()
   std::erase_if(m_motherContainer, expired);
 }
 
-void Room::checkMothers()
-{
-  for (auto* mother : m_motherContainer) {
-    auto radius = mother->radius + m_config.mother.checkRadius;
-    Vec2D size(radius, radius);
-    AABB boundingBox(mother->position - size, mother->position + size);
-    mother->foodCount = m_gridmap.count(boundingBox);
-  }
-}
-
 void Room::handlePlayerRequests()
 {
   for (const auto& [sess, offset] : m_moveRequests) {
@@ -685,7 +670,7 @@ void Room::updateLeaderboard()
   }
 }
 
-void Room::produceMothers()
+void Room::generateFoodByMothers()
 {
   if (m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
     return;
@@ -693,6 +678,16 @@ void Room::produceMothers()
 
   for (auto* mother : m_motherContainer) {
     mother->generateFood();
+  }
+}
+
+void Room::checkMothers()
+{
+  for (auto* mother : m_motherContainer) {
+    auto radius = mother->radius + m_config.mother.checkRadius;
+    Vec2D size(radius, radius);
+    AABB boundingBox(mother->position - size, mother->position + size);
+    mother->foodCount = m_gridmap.count(boundingBox);
   }
 }
 
@@ -716,7 +711,7 @@ void Room::checkPlayers() // TODO: move to class Bot
 
 Player* Room::createPlayer(uint32_t id, const std::string& name)
 {
-  auto* player = new Player(m_executor, id, m_config, m_gridmap);
+  auto* player = new Player(m_executor, *this, m_config, m_gridmap, id);
   player->setName(name);
   player->subscribeToAnnihilation(this,
     [this, player] {
@@ -733,7 +728,7 @@ void Room::createBots()
 {
   uint32_t id = 100;
   for (const auto& name : m_config.botNames) {
-    auto* bot = new Bot(m_executor, id++, m_config, m_gridmap);
+    auto* bot = new Bot(m_executor, *this, m_config, m_gridmap, id++);
     bot->setName(name);
     bot->start();
     m_players.emplace(bot->getId(), bot);

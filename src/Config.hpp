@@ -102,6 +102,7 @@ struct Mother {
   uint32_t  checkRadius {0};
   float     baseFoodProduction {0};
   uint32_t  nearbyFoodLimit {0};
+  Duration  foodGenerationInterval;
 };
 
 struct Generator {

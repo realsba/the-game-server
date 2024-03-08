@@ -7,8 +7,14 @@
 
 #include "entity/Avatar.hpp"
 
-Bot::Bot(const asio::any_io_executor& executor, uint32_t id, const config::Room& config, Gridmap& gridmap)
-  : Player(executor, id, config, gridmap)
+Bot::Bot(
+  const asio::any_io_executor& executor,
+  IEntityFactory& entityFactory,
+  const config::Room& config,
+  Gridmap& gridmap,
+  uint32_t id
+)
+  : Player(executor, entityFactory, config, gridmap, id)
   , m_navigationTimer(executor, std::bind_front(&Bot::navigate, this), 200ms)
   , m_respawnTimer(executor)
 {
@@ -95,13 +101,8 @@ void Bot::scheduleRespawn()
     [this](const boost::system::error_code& error)
     {
       if (!error) {
-        respawn();
+//        respawn(); TODO: implement
       }
     }
   );
-}
-
-void Bot::respawn()
-{
-  // TODO: implement
 }

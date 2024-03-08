@@ -49,7 +49,6 @@ public:
   void stop();
 
   bool hasFreeSpace() const;
-  const config::Room& getConfig() const; // TODO: remove
 
   void join(const SessionPtr& sess);
   void leave(const SessionPtr& sess);
@@ -92,8 +91,8 @@ private:
   void update();
   void synchronize();
   void updateLeaderboard();
+  void generateFoodByMothers();
   void checkMothers();
-  void produceMothers();
   void checkPlayers();
 
   Player* createPlayer(uint32_t id, const std::string& name);
@@ -139,7 +138,7 @@ private:
   Timer                       m_updateLeaderboardTimer;
   Timer                       m_destroyOutdatedCellsTimer;
   Timer                       m_checkMothersTimer;
-  Timer                       m_produceMothersTimer;
+  Timer                       m_mothersGenerateFoodTimer;
   Timer                       m_foodGeneratorTimer;
   Timer                       m_virusGeneratorTimer;
   Timer                       m_phageGeneratorTimer;
