@@ -38,9 +38,10 @@ void Bot::stop()
   m_respawnTimer.cancel();
 }
 
-void Bot::init()
+void Bot::respawn()
 {
-  Player::init();
+  Player::respawn();
+  m_mainAvatar->modifyMass(static_cast<float>(m_config.bot.mass) - m_mainAvatar->mass);
   m_target = nullptr;
 }
 
@@ -101,7 +102,7 @@ void Bot::scheduleRespawn()
     [this](const boost::system::error_code& error)
     {
       if (!error) {
-//        respawn(); TODO: implement
+        respawn();
       }
     }
   );

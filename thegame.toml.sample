@@ -31,7 +31,6 @@ numThreads = 4
 updateInterval = '20ms'
 spawnPosTryCount = 10
 
-checkPlayersInterval = '5s'
 updateLeaderboardInterval = '1s'
 destroyOutdatedCellsInterval = '3s'
 checkMothersInterval = '10s'
@@ -72,6 +71,7 @@ pointerForceRatio = 2.5
 
 [room.bot]
 mass = 500
+respawnDelay = '5s'
 
 [room.avatar]
 minVelocity = 200

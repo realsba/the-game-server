@@ -93,7 +93,6 @@ private:
   void updateLeaderboard();
   void generateFoodByMothers();
   void checkMothers();
-  void checkPlayers();
 
   Player* createPlayer(uint32_t id, const std::string& name);
   void createBots();
@@ -116,6 +115,7 @@ private:
   void sendPacketPlayerBorn(uint32_t playerId);
   void sendPacketPlayerDead(uint32_t playerId);
 
+  void onPlayerRespawn(Player* player);
   void onAvatarDeath(Avatar* avatar);
   void onFoodDeath(Food* food);
   void onBulletDeath(Bullet* bullet);
@@ -134,7 +134,6 @@ private:
   mutable std::random_device  m_generator;
   asio::any_io_executor       m_executor;
   Timer                       m_updateTimer;
-  Timer                       m_checkPlayersTimer;
   Timer                       m_updateLeaderboardTimer;
   Timer                       m_destroyOutdatedCellsTimer;
   Timer                       m_checkMothersTimer;

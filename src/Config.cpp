@@ -136,6 +136,7 @@ struct from<config::Bot>
     config::Bot result{};
 
     result.mass = find<uint32_t>(v, "mass");
+    result.respawnDelay = find<Duration>(v, "respawnDelay");
 
     return result;
   }
@@ -273,7 +274,6 @@ struct from<config::Room>
     }
 
     result.spawnPosTryCount             = find<uint32_t>(v, "spawnPosTryCount");
-    result.checkPlayersInterval         = find<Duration>(v, "checkPlayersInterval");
     result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
     result.checkMothersInterval         = find<Duration>(v, "checkMothersInterval");
 

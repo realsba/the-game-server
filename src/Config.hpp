@@ -138,10 +138,8 @@ struct Room {
 
   uint32_t  spawnPosTryCount {0};
 
-  Duration  checkPlayersInterval;
   Duration  destroyOutdatedCellsInterval;
   Duration  checkMothersInterval;
-  Duration  produceMothersInterval;
 
   uint32_t  viewportBase {0};           // shorter side (height)
   float     viewportBuffer {0};         // buffer on each side

@@ -53,7 +53,7 @@ public:
   [[nodiscard]] uint8_t getStatus() const;
   [[nodiscard]] const Sessions& getSessions() const;
 
-  virtual void init();
+  virtual void respawn();
 
   void setName(const std::string& name);
   void setColor(uint8_t color);
@@ -75,6 +75,7 @@ public:
 
   void subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handler);
   void unsubscribeFromAnnihilation(void* tag);
+  void subscribeToRespawn(void* tag, EventEmitter<>::Handler&& handler);
 
 protected:
   void recombine(Avatar& initiator, Avatar& target);
@@ -94,6 +95,7 @@ protected:
   asio::steady_timer    m_annihilationTimer;
   EventEmitter<>        m_annihilationEmitter;
   EventEmitter<>        m_deathEmitter;
+  EventEmitter<>        m_respawnEmitter;
 
   IEntityFactory&       m_entityFactory;
   const config::Room&   m_config;

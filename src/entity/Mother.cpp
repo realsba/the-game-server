@@ -107,7 +107,7 @@ void Mother::generateFood()
     const auto& direction = m_entityFactory.getRandomDirection();
     auto& obj = m_entityFactory.createFood();
     obj.creator = this;
-    obj.position = position + direction * radius;
+    obj.position = position + direction * radius; // TODO: Check if the position is within the bounds of the room
     obj.color = m_foodColorIndexDistribution(generator);
     obj.modifyMass(m_config.food.mass);
     obj.modifyVelocity(direction * m_foodVelocityDistribution(generator));

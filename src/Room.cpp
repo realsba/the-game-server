@@ -29,7 +29,6 @@ using namespace std::placeholders;
 Room::Room(asio::any_io_executor executor, uint32_t id)
   : m_executor(std::move(executor))
   , m_updateTimer(m_executor, [this] { update(); })
-  , m_checkPlayersTimer(m_executor, [this] { checkPlayers(); })
   , m_updateLeaderboardTimer(m_executor, [this] { updateLeaderboard(); })
   , m_destroyOutdatedCellsTimer(m_executor, [this] { destroyOutdatedCells(); })
   , m_checkMothersTimer(m_executor, [this] { checkMothers(); })
@@ -72,7 +71,6 @@ void Room::init(const config::Room& config)
   m_config = config;
 
   m_updateTimer.setInterval(m_config.updateInterval);
-  m_checkPlayersTimer.setInterval(m_config.checkPlayersInterval);
   m_updateLeaderboardTimer.setInterval(m_config.leaderboard.updateInterval);
   m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
   m_checkMothersTimer.setInterval(m_config.checkMothersInterval);
@@ -95,7 +93,6 @@ void Room::init(const config::Room& config)
 void Room::start()
 {
   m_updateTimer.start();
-  m_checkPlayersTimer.start();
   m_updateLeaderboardTimer.start();
   m_destroyOutdatedCellsTimer.start();
   m_checkMothersTimer.start();
@@ -117,7 +114,6 @@ void Room::start()
 void Room::stop()
 {
   m_updateTimer.stop();
-  m_checkPlayersTimer.stop();
   m_updateLeaderboardTimer.stop();
   m_destroyOutdatedCellsTimer.stop();
   m_checkMothersTimer.stop();
@@ -244,7 +240,6 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
       player = it->second;
     } else {
       player = createPlayer(playerId, name);
-      sendPacketPlayer(*player);
     }
     player->setMainSession(sess);
     sendPacketPlayerJoin(player->getId());
@@ -260,23 +255,18 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     sess->observable(nullptr);
   }
 
-  player->init();
-  player->wakeUp();
+  player->setColor(color);
   if (player->getName() != name) {
     player->setName(name);
     sendPacketPlayer(*player);
   }
+  player->respawn();
   sendPacketPlayerBorn(player->getId());
 
-  auto& obj = createAvatar();
-  obj.modifyMass(m_config.player.mass);
-  obj.position = getRandomPosition(obj.radius);
-  obj.color = color;
-  player->addAvatar(&obj);
-  player->calcParams();
   m_leaderboard.emplace_back(player);
   m_updateLeaderboard = true;
   m_fighters.insert(player);
+
   const auto& buffer = std::make_shared<Buffer>();
   OutgoingPacket::serializePlay(*buffer, *player);
   sess->send(buffer);
@@ -691,24 +681,6 @@ void Room::checkMothers()
   }
 }
 
-void Room::checkPlayers() // TODO: move to class Bot
-{
-  for (auto* bot : m_bots) {
-    if (bot->isDead()) {
-      auto& obj = createAvatar();
-      obj.modifyMass(m_config.bot.mass);
-      obj.position = getRandomPosition(obj.radius);
-      obj.color = m_generator() % 12;
-      bot->addAvatar(&obj);
-      bot->calcParams();
-      bot->wakeUp();
-      m_leaderboard.emplace_back(bot);
-      m_fighters.insert(bot);
-      sendPacketPlayerBorn(bot->getId());
-    }
-  }
-}
-
 Player* Room::createPlayer(uint32_t id, const std::string& name)
 {
   auto* player = new Player(m_executor, *this, m_config, m_gridmap, id);
@@ -719,7 +691,9 @@ Player* Room::createPlayer(uint32_t id, const std::string& name)
       delete player;
     }
   ); // TODO: revise
+  player->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, player));
   m_players.emplace(id, player);
+  sendPacketPlayer(*player);
   recalculateFreeSpace();
   return player;
 }
@@ -730,9 +704,13 @@ void Room::createBots()
   for (const auto& name : m_config.botNames) {
     auto* bot = new Bot(m_executor, *this, m_config, m_gridmap, id++);
     bot->setName(name);
+    bot->setColor(m_generator() % 12); // TODO: use distribution
+    bot->respawn();
     bot->start();
+    bot->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, bot));
     m_players.emplace(bot->getId(), bot);
     m_bots.emplace(bot);
+    sendPacketPlayer(*bot);
   }
   recalculateFreeSpace();
 }
@@ -891,6 +869,14 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
   const auto& buffer = std::make_shared<Buffer>();
   OutgoingPacket::serializePlayerDead(*buffer, playerId);
   send(buffer);
+}
+
+void Room::onPlayerRespawn(Player* player)
+{
+  m_leaderboard.emplace_back(player);
+  m_updateLeaderboard = true;
+  m_fighters.insert(player);
+  sendPacketPlayerBorn(player->getId());
 }
 
 void Room::onAvatarDeath(Avatar* avatar)

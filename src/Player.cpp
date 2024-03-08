@@ -25,6 +25,7 @@ Player::Player(
   , m_annihilationTimer(executor)
   , m_annihilationEmitter(executor)
   , m_deathEmitter(executor)
+  , m_respawnEmitter(executor)
   , m_entityFactory(entityFactory)
   , m_config(config)
   , m_gridmap(gridmap)
@@ -104,9 +105,21 @@ const Sessions& Player::getSessions() const
   return m_sessions;
 }
 
-void Player::init()
+void Player::respawn()
 {
-  m_maxMass = 0;
+  if (m_status.isAlive) {
+    return;
+  }
+
+  auto& avatar = m_entityFactory.createAvatar();
+  avatar.modifyMass(m_config.player.mass);
+  avatar.position = m_entityFactory.getRandomPosition(avatar.radius);
+  avatar.color = m_color;
+  addAvatar(&avatar);
+  calcParams(); // TODO: do not use
+  wakeUp();
+
+  m_respawnEmitter.emit();
 }
 
 void Player::setName(const std::string& name)
@@ -197,6 +210,9 @@ void Player::addAvatar(Avatar* avatar)
   avatar->player = this;
   m_avatars.emplace(avatar);
   m_status.isAlive = true;
+
+  //TODO: implement params calculating mass && position
+  // m_position = (m_position * (m_mass - newAvatar->mass) + newAvatar->position * newAvatar->mass) / m_mass;
 }
 
 void Player::removeAvatar(Avatar* avatar, Player* killer)
@@ -424,6 +440,11 @@ void Player::subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handle
 void Player::unsubscribeFromAnnihilation(void* tag)
 {
   m_annihilationEmitter.unsubscribe(tag);
+}
+
+void Player::subscribeToRespawn(void*tag, EventEmitter<>::Handler&& handler)
+{
+  m_respawnEmitter.subscribe(tag, std::move(handler));
 }
 
 void Player::recombine(Avatar& initiator, Avatar& target)

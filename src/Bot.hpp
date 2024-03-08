@@ -26,7 +26,7 @@ public:
   void start();
   void stop();
 
-  void init() override;
+  void respawn() override;
 
   void addAvatar(Avatar* avatar) override;
   void removeAvatar(Avatar* avatar, Player* killer) override;
@@ -35,7 +35,6 @@ protected:
   void navigate();
   void choseTarget();
   void scheduleRespawn();
-  void respawn();
 
 private:
   Timer                 m_navigationTimer;

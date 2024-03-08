@@ -6,6 +6,9 @@
 #include "geometry/geometry.hpp"
 #include "entity/Cell.hpp"
 
+#include "geometry/formatter.hpp"
+#include <spdlog/spdlog.h>
+
 void Gridmap::resize(uint32_t width, uint32_t height, uint8_t power)
 {
   m_box.b.x = static_cast<float>(width - 1);
@@ -43,6 +46,7 @@ AABB Gridmap::clip(const AABB& box) const
 Sector* Gridmap::getSector(const Vec2D& point) const
 {
   if (!m_box.contain(point)) {
+    spdlog::debug("getSector error {}", point);
     return nullptr;
   }
   uint32_t row = static_cast<uint32_t>(point.y) >> m_power;
