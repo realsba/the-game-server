@@ -67,15 +67,16 @@ public:
   virtual void removeAvatar(Avatar* avatar, Player* killer);
   void eject(const Vec2D& point);
   void split(const Vec2D& point);
-  void synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
+  void synchronize(const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
   void wakeUp();
   void calcParams(); // TODO: optimize using
-  void applyPointerForce(uint32_t tick);
-  void recombine(uint32_t tick);
+  void applyPointerForce();
+  void recombine();
 
   void subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handler);
   void unsubscribeFromAnnihilation(void* tag);
   void subscribeToRespawn(void* tag, EventEmitter<>::Handler&& handler);
+  void subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler);
 
 protected:
   void recombine(Avatar& initiator, Avatar& target);

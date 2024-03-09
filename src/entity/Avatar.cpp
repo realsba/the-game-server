@@ -28,20 +28,8 @@ Avatar::Avatar(
 void Avatar::modifyMass(float value)
 {
   Cell::modifyMass(value);
-  maxVelocity = m_config.avatar.maxVelocity - m_config.avatarVelocityDiff *
+  m_maxVelocity = m_config.avatar.maxVelocity - m_config.avatarVelocityDiff *
     (radius - m_config.cellMinRadius) / (m_config.cellRadiusDiff);
-}
-
-void Avatar::simulate(double dt)
-{
-  Cell::simulate(dt);
-  if (m_recombinationTime > 0) {
-    m_recombinationTime -= dt;
-    if (m_recombinationTime <= 0) {
-      m_recombinationTime = 0;
-      m_recombined = true;
-    }
-  }
 }
 
 void Avatar::format(Buffer& buffer)
@@ -83,7 +71,7 @@ void Avatar::interact(Avatar& other)
     if ((dd > d * d) && (dd > d2 * d2)) {
       return;
     }
-    attacker->recombination(m_config.avatar.recombinationTime);
+    attacker->startRecombination();
   } else {
     if (attacker->mass < 1.25 * defender->mass || dd > d * d) {
       return;
@@ -162,6 +150,28 @@ bool Avatar::isAttractiveFor(const Avatar& avatar)
   return mass * 1.25 < avatar.mass;
 }
 
+float Avatar::getMaxVelocity() const
+{
+  return m_maxVelocity;
+}
+
+bool Avatar::isRecombined() const
+{
+  if (!m_recombined) {
+    m_recombined = m_fusionTime < TimePoint::clock::now();
+  }
+  return m_recombined;
+}
+
+void Avatar::applyPointAttractionForce(const Vec2D& point, float forceRatio)
+{
+  Vec2D direction(point - position);
+  float distance = direction.length();
+  float k = distance < radius ? distance / radius : 1;
+  Vec2D v = direction.direction() * (k * m_maxVelocity);
+  force += (v - velocity) * (mass * forceRatio);
+}
+
 void Avatar::eject(const Vec2D& point)
 {
   if (zombie) {
@@ -189,22 +199,22 @@ void Avatar::eject(const Vec2D& point)
   }
 }
 
-bool Avatar::split(const Vec2D& point)
+Avatar* Avatar::split(const Vec2D& point)
 {
   if (zombie) {
-    return false;
+    return nullptr;
   }
 
   float m = 0.5 * mass;
   if (mass < m_config.avatar.splitMinMass || m < m_config.cellMinMass) {
-    return false;
+    return nullptr;
   }
 
   auto& obj = m_entityFactory.createAvatar();
   obj.color = color;
   obj.position = position;
   obj.velocity = velocity;
-  // obj.protection = m_tick + 40; // TODO: implement
+  obj.player = player;
   obj.modifyMass(m);
   modifyMass(-m);
   auto direction = point - position;
@@ -212,22 +222,16 @@ bool Avatar::split(const Vec2D& point)
     direction.normalize();
     obj.modifyVelocity(direction * m_config.avatar.splitVelocity);
   }
-  recombination(m_config.avatar.recombinationTime);
-  obj.recombination(m_config.avatar.recombinationTime);
-  player->addAvatar(&obj);
+  startRecombination();
+  obj.startRecombination();
 
-  return true;
+  return &obj;
 }
 
-void Avatar::recombination(float t)
+void Avatar::startRecombination()
 {
-  m_recombinationTime += t;
+  m_fusionTime = TimePoint::clock::now() + m_config.avatar.recombinationDuration;
   m_recombined = false;
-}
-
-bool Avatar::isRecombined() const
-{
-  return m_recombined;
 }
 
 void Avatar::deflate()
@@ -268,14 +272,14 @@ void Avatar::explode()
     obj.position = position + direction * (radius + obj.radius);
     obj.color = color;
     obj.modifyVelocity(direction * m_config.explodeVelocity);
-    obj.recombination(m_config.avatar.recombinationTime);
+    obj.startRecombination();
     player->addAvatar(&obj);
     if (avatars.size() >= m_config.player.maxCells) {
       break;
     }
   }
   if (explodedMass) {
-    recombination(m_config.avatar.recombinationTime);
+    startRecombination();
     modifyMass(-explodedMass);
   }
 }

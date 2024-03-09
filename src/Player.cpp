@@ -226,6 +226,7 @@ void Player::removeAvatar(Avatar* avatar, Player* killer)
       m_killer = killer;
       m_killer->subscribeToAnnihilation(this, [this] { m_killer = nullptr; });
     }
+    m_deathEmitter.emit();
   }
 }
 
@@ -244,18 +245,26 @@ void Player::split(const Vec2D& point)
   if (!m_status.isAlive) {
     return;
   }
+
+  std::vector<Avatar*> createdAvatars;
   size_t count = m_avatars.size();
   for (auto* avatar : m_avatars) {
     if (count >= m_config.player.maxCells) {
       break;
     }
-    if (avatar->split(point)) {
+    if (auto* obj = avatar->split(point)) {
+      createdAvatars.push_back(obj);
       ++count;
     }
   }
+
+  // TODO: revise, use addAvatar
+  if (!createdAvatars.empty()) {
+    m_avatars.insert(createdAvatars.begin(), createdAvatars.end());
+  }
 }
 
-void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const std::vector<uint32_t>& removed)
+void Player::synchronize(const std::set<Cell*>& modified, const std::vector<uint32_t>& removed)
 {
   AABB viewport(m_gridmap.clip(m_viewport));
   auto* leftTop = m_gridmap.getSector(viewport.a);
@@ -316,7 +325,7 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
 
   const auto& buffer = std::make_shared<Buffer>();
   serialize(*buffer, OutgoingPacket::Type::Frame);
-  serialize(*buffer, tick);
+  serialize(*buffer, 0); // tick, TODO: remove
   serialize(*buffer, m_scale);
   serialize(*buffer, static_cast<uint16_t>(syncCells.size()));
   for (Cell* cell : syncCells) {
@@ -330,8 +339,8 @@ void Player::synchronize(uint32_t tick, const std::set<Cell*>& modified, const s
   serialize(*buffer, static_cast<uint8_t>(m_avatars.size()));
   for (const Avatar* avatar : m_avatars) {
     serialize(*buffer, avatar->id);
-    serialize(*buffer, avatar->maxVelocity);
-    serialize(*buffer, avatar->protection);
+    serialize(*buffer, avatar->getMaxVelocity());
+    serialize(*buffer, 0); // protection TODO: remove
   }
   if (m_targetPlayer) {
     serialize(*buffer, m_targetPlayer->getId());
@@ -392,37 +401,30 @@ void Player::calcParams()
   m_position = position;
 }
 
-void Player::applyPointerForce(uint32_t tick)
+void Player::applyPointerForce()
 {
   if (!m_pointerOffset) {
     return;
   }
   auto destination = m_position + m_pointerOffset;
-  auto forceRatio = m_config.player.pointerForceRatio;
   for (auto* avatar : m_avatars) {
-    if (avatar->protection <= tick) {
-      Vec2D direction(destination - avatar->position);
-      float distance = direction.length();
-      float k = distance < avatar->radius ? distance / avatar->radius : 1;
-      Vec2D velocity = direction.direction() * (k * avatar->maxVelocity);
-      avatar->force += (velocity - avatar->velocity) * (avatar->mass * forceRatio);
-    }
+    avatar->applyPointAttractionForce(destination, m_config.player.pointerForceRatio);
   }
 }
 
-void Player::recombine(uint32_t tick)
+void Player::recombine()
 {
   if (m_avatars.size() < 2) {
     return;
   }
   for (auto it = m_avatars.begin(); it != m_avatars.end(); ++it) {
     Avatar& first = **it;
-    if (first.zombie || first.protection > tick) {
+    if (first.zombie) {
       continue;
     }
     for (auto jt = std::next(it); jt != m_avatars.end(); ++jt) {
       Avatar& second = **jt;
-      if (second.zombie || second.protection > tick) {
+      if (second.zombie) {
         continue;
       }
       recombine(first, second);
@@ -443,6 +445,11 @@ void Player::unsubscribeFromAnnihilation(void* tag)
 void Player::subscribeToRespawn(void*tag, EventEmitter<>::Handler&& handler)
 {
   m_respawnEmitter.subscribe(tag, std::move(handler));
+}
+
+void Player::subscribeToDeath(void *tag, EventEmitter<>::Handler &&handler)
+{
+  m_deathEmitter.subscribe(tag, std::move(handler));
 }
 
 void Player::recombine(Avatar& initiator, Avatar& target)

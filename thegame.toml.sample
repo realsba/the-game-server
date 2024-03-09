@@ -84,7 +84,7 @@ ejectionMinMass = 82
 ejectionVelocity = 550
 ejectionMass = 50
 ejectionMassLoss = 100
-recombinationTime = 8
+recombinationDuration = '8s'
 
 [room.food]
 mass = 5

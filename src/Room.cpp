@@ -580,15 +580,14 @@ void Room::update()
   auto now{TimePoint::clock::now()};
   auto deltaTime{now - m_lastUpdate};
   m_lastUpdate = now;
-  ++m_tick;
 
   handlePlayerRequests();
 
   double dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
 
   for (auto* player : m_fighters) {
-    player->applyPointerForce(m_tick);
-    player->recombine(m_tick);
+    player->applyPointerForce();
+    player->recombine();
   }
 
   for (auto* cell : m_createdCells) {
@@ -628,7 +627,7 @@ void Room::synchronize()
 {
   for (auto* player : m_fighters) {
     player->calcParams();
-    player->synchronize(m_tick, m_modifiedCells, m_removedCellIds);
+    player->synchronize(m_modifiedCells, m_removedCellIds);
   }
   m_modifiedCells.clear();
   m_removedCellIds.clear();
@@ -686,6 +685,7 @@ Player* Room::createPlayer(uint32_t id, const std::string& name)
     }
   ); // TODO: revise
   player->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, player));
+  player->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, player));
   m_players.emplace(id, player);
   sendPacketPlayer(*player);
   recalculateFreeSpace();
@@ -698,6 +698,7 @@ void Room::createBots()
   for (const auto& name : m_config.botNames) {
     auto* bot = new Bot(m_executor, *this, m_config, m_gridmap, id++);
     bot->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, bot));
+    bot->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, bot));
     bot->setName(name);
     bot->setColor(m_generator() % 12); // TODO: use distribution
     bot->respawn();
@@ -867,50 +868,52 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
 
 void Room::onPlayerRespawn(Player* player)
 {
+  spdlog::debug("Room::onPlayerRespawn {}:{}", player->getId(), player->getName());
   m_leaderboard.emplace_back(player);
   m_updateLeaderboard = true;
   m_fighters.insert(player);
   sendPacketPlayerBorn(player->getId());
 }
 
-void Room::onAvatarDeath(Avatar* avatar)
+void Room::onPlayerDeath(Player* player)
 {
-  auto& player = *avatar->player;
-  player.removeAvatar(avatar, nullptr); // TODO: revise
+  spdlog::debug("Room::onPlayerDeath {}:{}", player->getId(), player->getName());
+  auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), player);
+  if (it != m_leaderboard.end()) {
+    m_leaderboard.erase(it);
+    m_updateLeaderboard = true;
+  }
+  m_fighters.erase(player);
+  sendPacketPlayerDead(player->getId());
 
-  m_updateLeaderboard = true;
-  m_avatarContainer.erase(avatar);
-  removeCell(avatar);
-
-  if (player.isDead()) {
-    sendPacketPlayerDead(player.getId());
-
-    auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), &player);
-    if (it != m_leaderboard.end()) {
-      m_leaderboard.erase(it);
-    }
-
-    auto* observable = player.getKiller();
+  const auto& sessions = player->getSessions();
+  if (!sessions.empty()) {
+    auto* observable = player->getKiller();
     if (!observable || observable->isDead()) {
       observable = m_leaderboard.empty() ? nullptr : *m_leaderboard.begin();
     }
     const auto& buffer = std::make_shared<Buffer>();
-    if (observable) {
+    if (!observable || observable->isDead()) {
+      OutgoingPacket::serializeFinish(*buffer);
+    } else {
       OutgoingPacket::serializeSpectate(*buffer, *observable);
-      for (const auto& sess : player.getSessions()) {
+      for (const auto& sess : sessions) {
         observable->addSession(sess);
         sess->observable(observable);
       }
-    } else {
-      OutgoingPacket::serializeFinish(*buffer);
     }
-
-    for (const auto& sess : player.getSessions()) {
+    for (const auto& sess : sessions) {
       sess->send(buffer);
     }
-
-    player.clearSessions(); // TODO: revise the functionality
+    player->clearSessions();
   }
+}
+
+void Room::onAvatarDeath(Avatar* avatar)
+{
+  m_avatarContainer.erase(avatar);
+  removeCell(avatar);
+  m_updateLeaderboard = true;
 }
 
 void Room::onFoodDeath(Food* food)
@@ -951,7 +954,6 @@ void Room::onMotionStarted(Cell* cell)
 
 void Room::onMotionStopped(Cell* cell)
 {
-  spdlog::debug("Room::onMotionStopped {}", cell->id);
   m_processingCells.erase(cell);
   m_modifiedCells.insert(cell);
 }

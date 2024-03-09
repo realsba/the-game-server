@@ -57,6 +57,7 @@ struct Bot {
 };
 
 struct Avatar {
+  Duration  recombinationDuration;
   uint32_t  minVelocity {0};
   uint32_t  maxVelocity {0};
   uint32_t  explosionMinMass {0};
@@ -67,7 +68,6 @@ struct Avatar {
   uint32_t  ejectionVelocity {0};
   uint32_t  ejectionMass {0};
   uint32_t  ejectionMassLoss {0};
-  uint32_t  recombinationTime {0}; // TODO: use Duration
 };
 
 struct Food {

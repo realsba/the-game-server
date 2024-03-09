@@ -116,6 +116,7 @@ private:
   void sendPacketPlayerDead(uint32_t playerId);
 
   void onPlayerRespawn(Player* player);
+  void onPlayerDeath(Player* player);
   void onAvatarDeath(Avatar* avatar);
   void onFoodDeath(Food* food);
   void onBulletDeath(Bullet* bullet);
@@ -172,7 +173,6 @@ private:
   TimePoint                   m_lastUpdate {TimePoint::clock::now()};
   double                      m_mass {0};
   const uint32_t              m_id {0};
-  uint32_t                    m_tick {0};                        // TODO: stop using and remove
   bool                        m_updateLeaderboard {false};
   bool                        m_hasFreeSpace {true};
 };

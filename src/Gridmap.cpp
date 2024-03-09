@@ -22,9 +22,8 @@ void Gridmap::resize(uint32_t width, uint32_t height, uint8_t power)
   m_sectors.resize(m_rowCount * m_colCount);
   int id = 0, x = 0, y = 0;
   for (Sector& sector : m_sectors) {
-    sector.id = id++;
     sector.box = AABB(x, y, x + sectorSize - 1, y + sectorSize - 1);
-    if (id % m_colCount) {
+    if (++id % m_colCount) {
       x += sectorSize;
     } else {
       x = 0;

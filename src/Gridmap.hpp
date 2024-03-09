@@ -16,7 +16,6 @@ class Cell;
 struct Sector {
   std::set<Cell*> cells;
   AABB box;
-  uint16_t id {0};
 };
 
 class Gridmap {

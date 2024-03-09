@@ -12,7 +12,6 @@ public:
 
   void modifyMass(float value) override;
 
-  void simulate(double dt) override;
   void format(Buffer& buffer) override;
 
   void interact(Cell& cell) override;
@@ -25,21 +24,23 @@ public:
 
   bool isAttractiveFor(const Avatar& avatar) override;
 
+  float getMaxVelocity() const;
+  bool isRecombined() const;
+
+  void applyPointAttractionForce(const Vec2D& point, float forceRatio);
+
   void eject(const Vec2D& point);
-  bool split(const Vec2D& point);
-  void recombination(float t);
-  [[nodiscard]] bool isRecombined() const;
+  Avatar* split(const Vec2D& point);
+  void startRecombination();
 
   void deflate();
   void annihilate();
   void explode();
 
-  uint32_t          protection {0};
-  float             maxVelocity {0};
-
 private:
-  float             m_recombinationTime {0};
-  bool              m_recombined {false};
+  TimePoint         m_fusionTime;
+  float             m_maxVelocity {0};
+  mutable bool      m_recombined {false};
 };
 
 #endif /* THEGAME_ENTITY_AVATAR_HPP */

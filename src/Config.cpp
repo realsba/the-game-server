@@ -149,6 +149,7 @@ struct from<config::Avatar>
   {
     config::Avatar result{};
 
+    result.recombinationDuration = find<Duration>(v, "recombinationDuration");
     result.minVelocity        = find<uint32_t>(v, "minVelocity");
     result.maxVelocity        = find<uint32_t>(v, "maxVelocity");
     result.explosionMinMass   = find<uint32_t>(v, "explosionMinMass");
@@ -159,7 +160,6 @@ struct from<config::Avatar>
     result.ejectionVelocity   = find<uint32_t>(v, "ejectionVelocity");
     result.ejectionMass       = find<uint32_t>(v, "ejectionMass");
     result.ejectionMassLoss   = find<uint32_t>(v, "ejectionMassLoss");
-    result.recombinationTime  = find<uint32_t>(v, "recombinationTime");
 
     return result;
   }
