@@ -195,7 +195,9 @@ void Room::doJoin(const SessionPtr& sess)
   uint32_t playerId = user->getId();
   const auto& it = m_players.find(playerId);
   if (it != m_players.end()) {
-    it->second->setMainSession(sess);
+    auto& player = *it->second;
+    player.setMainSession(sess);
+    OutgoingPacket::serializePlay(*buffer, player);
   } else {
     OutgoingPacket::serializeFinish(*buffer);
     playerId = 0;
@@ -232,6 +234,12 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     throw std::runtime_error("Room::play(): the user doesn't set");
   }
 
+  auto* observable = sess->observable();
+  if (observable) {
+    observable->removeSession(sess);
+    sess->observable(nullptr);
+  }
+
   auto* player = sess->player();
   if (!player) {
     uint32_t playerId = user->getId();
@@ -241,36 +249,21 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     } else {
       player = createPlayer(playerId, name);
     }
-    player->setMainSession(sess);
-    sendPacketPlayerJoin(player->getId());
   }
 
-  if (!player->isDead()) {
-    return;
+  player->setMainSession(sess);
+
+  if (player->isDead()) {
+    player->setColor(color);
+    if (player->getName() != name) {
+      player->setName(name);
+    }
+    player->respawn();
   }
 
-  auto* observable = sess->observable();
-  if (observable) {
-    observable->removeSession(sess);
-    sess->observable(nullptr);
-  }
-
-  player->setColor(color);
-  if (player->getName() != name) {
-    player->setName(name);
-    sendPacketPlayer(*player);
-  }
-  player->respawn();
+  sendPacketPlayer(*player);
+  sendPacketPlayerJoin(player->getId());
   sendPacketPlayerBorn(player->getId());
-
-  m_leaderboard.emplace_back(player);
-  m_updateLeaderboard = true;
-  m_fighters.insert(player);
-
-  const auto& buffer = std::make_shared<Buffer>();
-  OutgoingPacket::serializePlay(*buffer, *player);
-  sess->send(buffer);
-  player->addSession(sess); // TODO: розібратись з додаваннями і забираннями sess
 }
 
 void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
@@ -703,11 +696,11 @@ void Room::createBots()
   uint32_t id = 100;
   for (const auto& name : m_config.botNames) {
     auto* bot = new Bot(m_executor, *this, m_config, m_gridmap, id++);
+    bot->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, bot));
     bot->setName(name);
     bot->setColor(m_generator() % 12); // TODO: use distribution
     bot->respawn();
     bot->start();
-    bot->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, bot));
     m_players.emplace(bot->getId(), bot);
     m_bots.emplace(bot);
     sendPacketPlayer(*bot);

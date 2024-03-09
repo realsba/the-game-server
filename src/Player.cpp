@@ -119,6 +119,12 @@ void Player::respawn()
   calcParams(); // TODO: do not use
   wakeUp();
 
+  if (m_mainSession) {
+    const auto& buffer = std::make_shared<Buffer>();
+    OutgoingPacket::serializePlay(*buffer, *this);
+    m_mainSession->send(buffer);
+  }
+
   m_respawnEmitter.emit();
 }
 
@@ -153,14 +159,6 @@ void Player::setMainSession(const SessionPtr& sess)
     m_mainSession->player(this);
     m_status.isOnline = true;
     addSession(sess);
-
-    const auto& buffer = std::make_shared<Buffer>();
-    if (m_status.isAlive) {
-      OutgoingPacket::serializePlay(*buffer, *this);
-    } else {
-      OutgoingPacket::serializeFinish(*buffer);
-    }
-    m_mainSession->send(buffer);
   }
 }
 
