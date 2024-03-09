@@ -61,6 +61,10 @@ public:
   void chatMessage(const SessionPtr& sess, const std::string& text);
 
 private:
+  std::random_device& randomGenerator() override;
+  Vec2D getRandomPosition(double radius) const override;
+  Vec2D getRandomDirection() const override;
+
   void doJoin(const SessionPtr& sess);
   void doLeave(const SessionPtr& sess);
   void doPlay(const SessionPtr& sess, const std::string& name, uint8_t color);
@@ -77,10 +81,6 @@ private:
   Virus& createVirus() override;
   Phage& createPhage() override;
   Mother& createMother() override;
-
-  std::random_device& randomGenerator() override;
-  Vec2D getRandomPosition(double radius) const override;
-  Vec2D getRandomDirection() const override;
 
   void recalculateFreeSpace();
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);

@@ -177,6 +177,41 @@ void Room::chatMessage(const SessionPtr& sess, const std::string& text)
   asio::post(m_executor, std::bind_front(&Room::doChatMessage, this, sess, text));
 }
 
+std::random_device& Room::randomGenerator()
+{
+  return m_generator;
+}
+
+Vec2D Room::getRandomPosition(double radius) const
+{
+  auto xDistribution = std::uniform_int_distribution<>(radius, m_config.width - radius);
+  auto yDistribution = std::uniform_int_distribution<>(radius, m_config.height - radius);
+  Circle circle(radius);
+
+  for (uint32_t n = m_config.spawnPosTryCount; n > 0; --n) {
+    bool isIntersecting = false;
+    circle.position.x = xDistribution(m_generator);
+    circle.position.y = yDistribution(m_generator);
+    for (const auto& cell : m_forCheckRandomPos) {
+      if (geometry::intersects(*cell, circle)) {
+        isIntersecting = true;
+        break;
+      }
+    }
+    if (!isIntersecting) {
+      break;
+    }
+  }
+  return circle.position;
+}
+
+Vec2D Room::getRandomDirection() const
+{
+  static auto angleDistribution = std::uniform_real_distribution<float>(0, 2 * M_PI);
+  auto angle = angleDistribution(m_generator);
+  return {std::sin(angle), std::cos(angle)};
+}
+
 void Room::doJoin(const SessionPtr& sess)
 {
   if (!m_sessions.emplace(sess).second) {
@@ -218,11 +253,12 @@ void Room::doLeave(const SessionPtr& sess)
     m_ejectRequests.erase(sess);
     m_splitRequests.erase(sess);
     if (auto* player = sess->player()) {
-      sendPacketPlayerLeave(player->getId());
       player->removeSession(sess);
+      sendPacketPlayerLeave(player->getId());
     }
-    for (const auto& it : m_players) {
-      it.second->removeSession(sess);
+    if (auto* observable = sess->observable()) {
+      observable->removeSession(sess);
+      sess->observable(nullptr);
     }
   }
 }
@@ -429,41 +465,6 @@ Mother& Room::createMother()
   return *mother;
 }
 
-std::random_device& Room::randomGenerator()
-{
-  return m_generator;
-}
-
-Vec2D Room::getRandomPosition(double radius) const
-{
-  auto xDistribution = std::uniform_int_distribution<>(radius, m_config.width - radius);
-  auto yDistribution = std::uniform_int_distribution<>(radius, m_config.height - radius);
-  Circle circle(radius);
-
-  for (uint32_t n = m_config.spawnPosTryCount; n > 0; --n) {
-    bool isIntersecting = false;
-    circle.position.x = xDistribution(m_generator);
-    circle.position.y = yDistribution(m_generator);
-    for (const auto& cell : m_forCheckRandomPos) {
-      if (geometry::intersects(*cell, circle)) {
-        isIntersecting = true;
-        break;
-      }
-    }
-    if (!isIntersecting) {
-      break;
-    }
-  }
-  return circle.position;
-}
-
-Vec2D Room::getRandomDirection() const
-{
-  static auto angleDistribution = std::uniform_real_distribution<float>(0, 2 * M_PI);
-  auto angle = angleDistribution(m_generator);
-  return {std::sin(angle), std::cos(angle)};
-}
-
 void Room::recalculateFreeSpace()
 {
   m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
@@ -655,11 +656,11 @@ void Room::updateLeaderboard()
 
 void Room::generateFoodByMothers()
 {
-  if (m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
-    return;
-  }
-
   for (auto* mother : m_motherContainer) {
+    if (m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
+      return;
+    }
+
     mother->generateFood();
   }
 }

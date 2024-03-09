@@ -176,11 +176,11 @@ void Player::removeSession(const SessionPtr& sess)
 {
   if (m_sessions.erase(sess)) {
     if (m_mainSession == sess) {
-      m_mainSession = nullptr;
+      m_mainSession->player(nullptr);
+      m_mainSession.reset();
       m_status.isOnline = false;
       m_pointerOffset.zero();
     }
-    sess->player(nullptr);
   }
 }
 
