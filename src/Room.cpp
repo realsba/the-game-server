@@ -694,13 +694,15 @@ Player* Room::createPlayer(uint32_t id, const std::string& name)
 
 void Room::createBots()
 {
+  static auto colorIndexDistribution = std::uniform_int_distribution<uint8_t>(0, 12);
+
   uint32_t id = 100;
   for (const auto& name : m_config.botNames) {
     auto* bot = new Bot(m_executor, *this, m_config, m_gridmap, id++);
     bot->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, bot));
     bot->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, bot));
     bot->setName(name);
-    bot->setColor(m_generator() % 12); // TODO: use distribution
+    bot->setColor(colorIndexDistribution(m_generator));
     bot->respawn();
     bot->start();
     m_players.emplace(bot->getId(), bot);
@@ -748,10 +750,13 @@ void Room::generateMothers()
 
 void Room::generateFood(uint32_t count)
 {
+  auto colorIndexDistribution = std::uniform_int_distribution<uint8_t>(
+    m_config.food.minColorIndex, m_config.food.maxColorIndex
+  );
   for (; count > 0; --count) {
     auto& obj = createFood();
     obj.position = getRandomPosition(obj.radius);
-    obj.color = m_generator() % 16;
+    obj.color = colorIndexDistribution(m_generator);
     obj.modifyMass(m_config.food.mass);
   }
 }

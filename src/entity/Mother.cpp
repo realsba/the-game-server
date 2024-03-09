@@ -25,7 +25,7 @@ Mother::Mother(
   m_foodVelocityDistribution = std::uniform_real_distribution<float>(
     m_config.food.minVelocity, m_config.food.maxVelocity
   );
-  m_foodColorIndexDistribution = std::uniform_int_distribution<>(
+  m_foodColorIndexDistribution = std::uniform_int_distribution<uint8_t>(
     m_config.food.minColorIndex, m_config.food.maxColorIndex
   );
 }

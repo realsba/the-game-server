@@ -24,7 +24,7 @@ public:
 
 protected:
   std::uniform_real_distribution<float> m_foodVelocityDistribution;
-  std::uniform_int_distribution<> m_foodColorIndexDistribution;
+  std::uniform_int_distribution<uint8_t> m_foodColorIndexDistribution;
 };
 
 #endif /* THEGAME_ENTITY_MOTHER_HPP */
