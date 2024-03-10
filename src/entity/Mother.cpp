@@ -10,6 +10,8 @@
 #include "Phage.hpp"
 
 #include "src/geometry/geometry.hpp"
+#include "src/geometry/AABB.hpp"
+#include "src/Gridmap.hpp"
 #include "src/Config.hpp"
 
 Mother::Mother(
@@ -94,14 +96,14 @@ void Mother::explode()
 
 void Mother::generateFood()
 {
-  if (foodCount >= m_config.mother.nearbyFoodLimit) {
+  if (m_nearbyFoodQuantity >= m_config.mother.nearbyFoodLimit) {
     return;
   }
 
   auto& generator = m_entityFactory.randomGenerator();
   auto extraMassFactor = std::max(1.0f, (mass - m_config.mother.mass) / m_config.mother.mass);
   auto foodToProduce = static_cast<int>(extraMassFactor * m_config.mother.baseFoodProduction);
-  foodCount += foodToProduce;
+  m_nearbyFoodQuantity += foodToProduce;
 
   for (int i = 0; i < foodToProduce; ++i) {
     const auto& direction = m_entityFactory.getRandomDirection();
@@ -112,4 +114,12 @@ void Mother::generateFood()
     obj.modifyMass(m_config.food.mass);
     obj.modifyVelocity(direction * m_foodVelocityDistribution(generator));
   }
+}
+
+void Mother::calculateNearbyFood()
+{
+  auto radius = this->radius + m_config.mother.checkRadius;
+  Vec2D size(radius, radius);
+  AABB boundingBox(position - size, position + size);
+  m_nearbyFoodQuantity = m_entityFactory.getGridmap().count(boundingBox);
 }

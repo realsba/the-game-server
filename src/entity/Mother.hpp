@@ -19,12 +19,12 @@ public:
 
   void explode();
   void generateFood();
-
-  uint32_t foodCount {0}; // TODO: make protected
+  void calculateNearbyFood();
 
 protected:
   std::uniform_real_distribution<float> m_foodVelocityDistribution;
   std::uniform_int_distribution<uint8_t> m_foodColorIndexDistribution;
+  uint32_t m_nearbyFoodQuantity {0};
 };
 
 #endif /* THEGAME_ENTITY_MOTHER_HPP */

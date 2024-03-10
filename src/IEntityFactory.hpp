@@ -14,6 +14,7 @@ class Virus;
 class Phage;
 class Mother;
 class Vec2D;
+class Gridmap;
 
 class IEntityFactory {
 public:
@@ -30,6 +31,8 @@ public:
 
   [[nodiscard]] virtual Vec2D getRandomPosition(double radius) const = 0;
   [[nodiscard]] virtual Vec2D getRandomDirection() const = 0;
+
+  virtual Gridmap& getGridmap() = 0;
 };
 
 #endif /* THEGAME_I_ENTITY_FACTORY_HPP */

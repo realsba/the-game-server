@@ -31,8 +31,8 @@ Room::Room(asio::any_io_executor executor, uint32_t id)
   , m_updateTimer(m_executor, [this] { update(); })
   , m_updateLeaderboardTimer(m_executor, [this] { updateLeaderboard(); })
   , m_destroyOutdatedCellsTimer(m_executor, [this] { destroyOutdatedCells(); })
-  , m_checkMothersTimer(m_executor, [this] { checkMothers(); })
-  , m_mothersGenerateFoodTimer(m_executor, [this] { generateFoodByMothers(); })
+  , m_updateNearbyFoodForMothersTimer(m_executor, [this] { updateNearbyFoodForMothers(); })
+  , m_generateFoodByMothersTimer(m_executor, [this] { generateFoodByMothers(); })
   , m_foodGeneratorTimer(m_executor, [this] { generateFood(); })
   , m_virusGeneratorTimer(m_executor, [this] { generateViruses(); })
   , m_phageGeneratorTimer(m_executor, [this] { generatePhages(); })
@@ -73,8 +73,8 @@ void Room::init(const config::Room& config)
   m_updateTimer.setInterval(m_config.updateInterval);
   m_updateLeaderboardTimer.setInterval(m_config.leaderboard.updateInterval);
   m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
-  m_checkMothersTimer.setInterval(m_config.checkMothersInterval);
-  m_mothersGenerateFoodTimer.setInterval(m_config.mother.foodGenerationInterval);
+  m_updateNearbyFoodForMothersTimer.setInterval(m_config.mother.foodCheckInterval);
+  m_generateFoodByMothersTimer.setInterval(m_config.mother.foodGenerationInterval);
   m_foodGeneratorTimer.setInterval(m_config.generator.food.interval);
   m_virusGeneratorTimer.setInterval(m_config.generator.virus.interval);
   m_phageGeneratorTimer.setInterval(m_config.generator.phage.interval);
@@ -95,8 +95,8 @@ void Room::start()
   m_updateTimer.start();
   m_updateLeaderboardTimer.start();
   m_destroyOutdatedCellsTimer.start();
-  m_checkMothersTimer.start();
-  m_mothersGenerateFoodTimer.start();
+  m_updateNearbyFoodForMothersTimer.start();
+  m_generateFoodByMothersTimer.start();
   if (m_config.generator.food.enabled) {
     m_foodGeneratorTimer.start();
   }
@@ -116,8 +116,8 @@ void Room::stop()
   m_updateTimer.stop();
   m_updateLeaderboardTimer.stop();
   m_destroyOutdatedCellsTimer.stop();
-  m_checkMothersTimer.stop();
-  m_mothersGenerateFoodTimer.stop();
+  m_updateNearbyFoodForMothersTimer.stop();
+  m_generateFoodByMothersTimer.stop();
   m_foodGeneratorTimer.stop();
   m_virusGeneratorTimer.stop();
   m_phageGeneratorTimer.stop();
@@ -210,6 +210,11 @@ Vec2D Room::getRandomDirection() const
   static auto angleDistribution = std::uniform_real_distribution<float>(0, 2 * M_PI);
   auto angle = angleDistribution(m_generator);
   return {std::sin(angle), std::cos(angle)};
+}
+
+Gridmap& Room::getGridmap()
+{
+  return m_gridmap;
 }
 
 void Room::doJoin(const SessionPtr& sess)
@@ -591,6 +596,7 @@ void Room::update()
   }
 
   for (auto* cell : m_createdCells) {
+    resolveCellPosition(*cell);
     m_gridmap.insert(cell);
   }
 
@@ -653,24 +659,20 @@ void Room::updateLeaderboard()
   }
 }
 
+void Room::updateNearbyFoodForMothers()
+{
+  for (auto* mother : m_motherContainer) {
+    mother->calculateNearbyFood();
+  }
+}
+
 void Room::generateFoodByMothers()
 {
   for (auto* mother : m_motherContainer) {
     if (m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
       return;
     }
-
     mother->generateFood();
-  }
-}
-
-void Room::checkMothers()
-{
-  for (auto* mother : m_motherContainer) {
-    auto radius = mother->radius + m_config.mother.checkRadius;
-    Vec2D size(radius, radius);
-    AABB boundingBox(mother->position - size, mother->position + size);
-    mother->foodCount = m_gridmap.count(boundingBox);
   }
 }
 

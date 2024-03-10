@@ -64,6 +64,7 @@ private:
   std::random_device& randomGenerator() override;
   Vec2D getRandomPosition(double radius) const override;
   Vec2D getRandomDirection() const override;
+  Gridmap& getGridmap() override;
 
   void doJoin(const SessionPtr& sess);
   void doLeave(const SessionPtr& sess);
@@ -92,7 +93,7 @@ private:
   void synchronize();
   void updateLeaderboard();
   void generateFoodByMothers();
-  void checkMothers();
+  void updateNearbyFoodForMothers();
 
   Player* createPlayer(uint32_t id, const std::string& name);
   void createBots();
@@ -137,8 +138,8 @@ private:
   Timer                       m_updateTimer;
   Timer                       m_updateLeaderboardTimer;
   Timer                       m_destroyOutdatedCellsTimer;
-  Timer                       m_checkMothersTimer;
-  Timer                       m_mothersGenerateFoodTimer;
+  Timer                       m_updateNearbyFoodForMothersTimer;
+  Timer                       m_generateFoodByMothersTimer;
   Timer                       m_foodGeneratorTimer;
   Timer                       m_virusGeneratorTimer;
   Timer                       m_phageGeneratorTimer;

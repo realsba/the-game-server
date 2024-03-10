@@ -219,6 +219,7 @@ struct from<config::Mother>
     result.checkRadius        = find<uint32_t>(v, "checkRadius");
     result.nearbyFoodLimit    = find<uint32_t>(v, "nearbyFoodLimit");
     result.baseFoodProduction = find<float>(v, "baseFoodProduction");
+    result.foodCheckInterval  = find<Duration>(v, "foodCheckInterval");
     result.foodGenerationInterval = find<Duration>(v, "foodGenerationInterval");
 
     return result;
@@ -275,7 +276,6 @@ struct from<config::Room>
 
     result.spawnPosTryCount             = find<uint32_t>(v, "spawnPosTryCount");
     result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
-    result.checkMothersInterval         = find<Duration>(v, "checkMothersInterval");
 
     result.viewportBase         = find<uint32_t>(v, "viewportBase");
     result.viewportBuffer       = find<float>(v, "viewportBuffer");

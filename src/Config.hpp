@@ -102,6 +102,7 @@ struct Mother {
   uint32_t  checkRadius {0};
   float     baseFoodProduction {0};
   uint32_t  nearbyFoodLimit {0};
+  Duration  foodCheckInterval;
   Duration  foodGenerationInterval;
 };
 
@@ -139,7 +140,6 @@ struct Room {
   uint32_t  spawnPosTryCount {0};
 
   Duration  destroyOutdatedCellsInterval;
-  Duration  checkMothersInterval;
 
   uint32_t  viewportBase {0};           // shorter side (height)
   float     viewportBuffer {0};         // buffer on each side
