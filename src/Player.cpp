@@ -324,7 +324,6 @@ void Player::synchronize(const std::set<Cell*>& modified, const std::vector<uint
 
   const auto& buffer = std::make_shared<Buffer>();
   serialize(*buffer, OutgoingPacket::Type::Frame);
-  serialize(*buffer, 0); // tick, TODO: remove
   serialize(*buffer, m_scale);
   serialize(*buffer, static_cast<uint16_t>(syncCells.size()));
   for (Cell* cell : syncCells) {
@@ -339,7 +338,6 @@ void Player::synchronize(const std::set<Cell*>& modified, const std::vector<uint
   for (const Avatar* avatar : m_avatars) {
     serialize(*buffer, avatar->id);
     serialize(*buffer, avatar->getMaxVelocity());
-    serialize(*buffer, 0); // protection TODO: remove
   }
   if (m_targetPlayer) {
     serialize(*buffer, m_targetPlayer->getId());

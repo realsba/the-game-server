@@ -481,9 +481,13 @@ void Room::recalculateFreeSpace()
 
 void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
 {
+  resolveCellPosition(*cell);
+  m_gridmap.insert(cell);
+
   m_createdCells.push_back(cell);
   m_activatedCells.insert(cell);
   m_modifiedCells.insert(cell);
+
   if (checkRandomPos) {
     m_forCheckRandomPos.insert(cell);
   }
@@ -587,21 +591,14 @@ void Room::handlePlayerRequests()
 void Room::update()
 {
   auto now{TimePoint::clock::now()};
-  auto deltaTime{now - m_lastUpdate};
+  double dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - m_lastUpdate).count();
   m_lastUpdate = now;
 
   handlePlayerRequests();
 
-  double dt = std::chrono::duration_cast<std::chrono::duration<double>>(deltaTime).count();
-
   for (auto* player : m_fighters) {
     player->applyPointerForce();
     player->recombine();
-  }
-
-  for (auto* cell : m_createdCells) {
-    resolveCellPosition(*cell);
-    m_gridmap.insert(cell);
   }
 
   if (!m_activatedCells.empty()) {
@@ -653,7 +650,7 @@ void Room::synchronize()
 void Room::updateLeaderboard()
 {
   if (m_updateLeaderboard) {
-    std::sort(m_leaderboard.begin(), m_leaderboard.end(), [] (Player* a, Player* b) { return *b < *a; });
+    std::sort(m_leaderboard.begin(), m_leaderboard.end(), [](Player* a, Player* b) { return *b < *a; });
     const auto& buffer = std::make_shared<Buffer>();
     OutgoingPacket::serializeLeaderboard(*buffer, m_leaderboard, m_config.leaderboard.limit);
     send(buffer);
