@@ -5,7 +5,6 @@
 #define THEGAME_USERS_CACHE_HPP
 
 #include "MySQLConnectionPool.hpp"
-#include "TimePoint.hpp"
 #include "User.hpp"
 
 #if !defined(NDEBUG)
@@ -23,17 +22,15 @@ class UsersCache {
 public:
   explicit UsersCache(MySQLConnectionPool& pool);
 
-  void setTtl(const Duration& v);
-  Duration getTtl() const;
   void save();
 
   UserPtr create(uint32_t ip);
   UserPtr getUserById(uint32_t id);
-  UserPtr getUserBySessId(const std::string& sid);
+  UserPtr getUserByToken(const std::string& sid);
 
 protected:
   struct ById { };
-  struct BySessId { };
+  struct ByToken { };
   struct ByLastAccess { };
 
   using Items = boost::multi_index::multi_index_container<
@@ -44,8 +41,8 @@ protected:
         boost::multi_index::const_mem_fun<User, uint32_t, &User::getId>
       >,
       boost::multi_index::ordered_unique<
-        boost::multi_index::tag<BySessId>,
-        boost::multi_index::const_mem_fun<User, std::string, &User::getSessId>
+        boost::multi_index::tag<ByToken>,
+        boost::multi_index::const_mem_fun<User, std::string, &User::getToken>
       >,
       boost::multi_index::ordered_non_unique<
         boost::multi_index::tag<ByLastAccess>,
@@ -58,7 +55,6 @@ protected:
   MySQLConnectionPool&          m_mysqlConnectionPool;
   mutable std::mutex            m_mutex;
   Items                         m_items;
-  Duration                      m_ttl;
 };
 
 #endif /* THEGAME_USERS_CACHE_HPP */

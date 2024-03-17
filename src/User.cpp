@@ -13,16 +13,16 @@ uint32_t User::getId() const
   return m_id;
 }
 
-std::string User::getSessId() const
+std::string User::getToken() const
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  return m_sessId;
+  return m_token;
 }
 
-void User::setSessId(const std::string& v)
+void User::setToken(const std::string& v)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  m_sessId = v;
+  m_token = v;
   m_modified = true;
 }
 

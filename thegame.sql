@@ -42,9 +42,7 @@ CREATE TABLE `sessions` (
 
 CREATE TABLE `users` (
   `id` int(10) UNSIGNED NOT NULL,
-  `sessId` varchar(32) NOT NULL,
-  `email` varchar(32) DEFAULT NULL,
-  `password` varchar(32) DEFAULT NULL,
+  `token` varchar(32) NOT NULL,
   `created` datetime NOT NULL,
   `ip` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

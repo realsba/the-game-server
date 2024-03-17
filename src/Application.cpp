@@ -184,7 +184,7 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
 
   const auto& buffer = std::make_shared<Buffer>();
   auto sid = deserialize<std::string>(request);
-  auto user = m_users.getUserBySessId(sid);
+  auto user = m_users.getUserByToken(sid);
   if (user) {
     const auto& prevSession = user->getSession();
     if (prevSession) {
@@ -197,7 +197,7 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
     OutgoingPacket::serializeGreeting(*buffer, "");
   } else {
     user = m_users.create(sess->getRemoteEndpoint().address().to_v4().to_ulong());
-    OutgoingPacket::serializeGreeting(*buffer, user->getSessId());
+    OutgoingPacket::serializeGreeting(*buffer, user->getToken());
     ++m_registrations;
   }
   user->setSession(sess);

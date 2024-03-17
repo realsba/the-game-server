@@ -19,7 +19,7 @@ public:
   explicit User(uint32_t id);
 
   uint32_t getId() const;
-  std::string getSessId() const;
+  std::string getToken() const;
   TimePoint getLastAccess() const;
   bool isModified() const;
 
@@ -36,13 +36,13 @@ public:
   };
 
 private:
-  void setSessId(const std::string& v);
+  void setToken(const std::string& v);
   void setLastAccess(const TimePoint& v);
 
 private:
   mutable std::mutex  m_mutex;
   SessionPtr          m_session;
-  std::string         m_sessId;
+  std::string         m_token;
   std::string         m_name;
   TimePoint           m_lastAccess {TimePoint::clock::now()};
   Room*               m_room {nullptr};
