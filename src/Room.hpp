@@ -6,6 +6,7 @@
 
 #include "IEntityFactory.hpp"
 
+#include "ChatMessage.hpp"
 #include "Gridmap.hpp"
 #include "NextId.hpp"
 #include "Config.hpp"
@@ -23,20 +24,6 @@ namespace asio = boost::asio;
 
 class Player;
 class Bot;
-
-// TODO: move to separate file
-struct ChatMessage {
-  ChatMessage(uint32_t authorId, std::string author, std::string text)
-    : text(std::move(text))
-    , author(std::move(author))
-    , authorId(authorId)
-  {
-  }
-
-  std::string text;
-  std::string author;
-  uint32_t authorId;
-};
 
 class Room : public IEntityFactory {
 public:
@@ -136,6 +123,7 @@ private:
   mutable std::random_device  m_generator;
   asio::any_io_executor       m_executor;
   Timer                       m_updateTimer;
+  Timer                       m_syncTimer;
   Timer                       m_updateLeaderboardTimer;
   Timer                       m_destroyOutdatedCellsTimer;
   Timer                       m_updateNearbyFoodForMothersTimer;

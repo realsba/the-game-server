@@ -136,6 +136,7 @@ struct Room {
 
   uint32_t  numThreads {0};
   Duration  updateInterval;
+  Duration  syncInterval;
 
   uint32_t  spawnPosTryCount {0};
 

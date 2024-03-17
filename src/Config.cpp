@@ -274,6 +274,8 @@ struct from<config::Room>
       throw std::runtime_error("room.updateInterval should be > 0");
     }
 
+    result.syncInterval = find<Duration>(v, "syncInterval");
+
     result.spawnPosTryCount             = find<uint32_t>(v, "spawnPosTryCount");
     result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
 

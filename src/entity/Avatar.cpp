@@ -248,7 +248,6 @@ void Avatar::annihilate()
   kill();
 }
 
-// TODO: revise
 void Avatar::explode()
 {
   const auto& avatars = player->getAvatars();
@@ -273,7 +272,7 @@ void Avatar::explode()
     obj.color = color;
     obj.modifyVelocity(direction * m_config.explodeVelocity);
     obj.startRecombination();
-    player->addAvatar(&obj);
+    player->addAvatar(&obj); // TODO: avoid using
     if (avatars.size() >= m_config.player.maxCells) {
       break;
     }

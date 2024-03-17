@@ -14,13 +14,7 @@ namespace asio = boost::asio;
 
 class Bot : public Player {
 public:
-  Bot(
-    const asio::any_io_executor& executor,
-    IEntityFactory& entityFactory,
-    const config::Room& config,
-    Gridmap& gridmap,
-    uint32_t id
-  );
+  Bot(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
   ~Bot() override;
 
   void start();

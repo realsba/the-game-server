@@ -41,6 +41,7 @@ add_executable(${PROJECT_NAME}
     src/AsioFormatter.hpp
     src/Bot.cpp
     src/Bot.hpp
+    src/ChatMessage.hpp
     src/Config.cpp
     src/Config.hpp
     src/EventEmitter.hpp

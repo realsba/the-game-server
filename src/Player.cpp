@@ -18,7 +18,6 @@ Player::Player(
   const asio::any_io_executor& executor,
   IEntityFactory& entityFactory,
   const config::Room& config,
-  Gridmap& gridmap,
   uint32_t id
 )
   : m_deflationTimer(executor)
@@ -28,7 +27,7 @@ Player::Player(
   , m_respawnEmitter(executor)
   , m_entityFactory(entityFactory)
   , m_config(config)
-  , m_gridmap(gridmap)
+  , m_gridmap(entityFactory.getGridmap())
   , m_id(id)
 {
   wakeUp();
@@ -164,7 +163,7 @@ void Player::setMainSession(const SessionPtr& sess)
 
 void Player::addSession(const SessionPtr& sess)
 {
-  if (m_sessions.emplace(sess).second) { // TODO: revise
+  if (m_sessions.emplace(sess).second) { // TODO: revise, make sense to send initial state only to new sess
     m_leftTopSector = nullptr;
     m_rightBottomSector = nullptr;
     m_sectors.clear();

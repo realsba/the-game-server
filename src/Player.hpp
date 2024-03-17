@@ -31,13 +31,7 @@ using Avatars = std::set<Avatar*>;
 
 class Player {
 public:
-  Player(
-    const asio::any_io_executor& executor,
-    IEntityFactory& entityFactory,
-    const config::Room& config,
-    Gridmap& gridmap,
-    uint32_t id
-  );
+  Player(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
   virtual ~Player() = default;
 
   [[nodiscard]] uint32_t getId() const;

@@ -29,6 +29,7 @@ using namespace std::placeholders;
 Room::Room(asio::any_io_executor executor, uint32_t id)
   : m_executor(std::move(executor))
   , m_updateTimer(m_executor, [this] { update(); })
+  , m_syncTimer(m_executor, [this] { synchronize(); })
   , m_updateLeaderboardTimer(m_executor, [this] { updateLeaderboard(); })
   , m_destroyOutdatedCellsTimer(m_executor, [this] { destroyOutdatedCells(); })
   , m_updateNearbyFoodForMothersTimer(m_executor, [this] { updateNearbyFoodForMothers(); })
@@ -71,6 +72,7 @@ void Room::init(const config::Room& config)
   m_config = config;
 
   m_updateTimer.setInterval(m_config.updateInterval);
+  m_syncTimer.setInterval(m_config.syncInterval);
   m_updateLeaderboardTimer.setInterval(m_config.leaderboard.updateInterval);
   m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
   m_updateNearbyFoodForMothersTimer.setInterval(m_config.mother.foodCheckInterval);
@@ -93,6 +95,7 @@ void Room::init(const config::Room& config)
 void Room::start()
 {
   m_updateTimer.start();
+  m_syncTimer.start();
   m_updateLeaderboardTimer.start();
   m_destroyOutdatedCellsTimer.start();
   m_updateNearbyFoodForMothersTimer.start();
@@ -114,6 +117,7 @@ void Room::start()
 void Room::stop()
 {
   m_updateTimer.stop();
+  m_syncTimer.stop();
   m_updateLeaderboardTimer.stop();
   m_destroyOutdatedCellsTimer.stop();
   m_updateNearbyFoodForMothersTimer.stop();
@@ -321,7 +325,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(m_executor, *this, m_config, m_gridmap, playerId);
+      player = new Player(m_executor, *this, m_config, playerId);
       player->setName("Player " + std::to_string(user->getId()));
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
@@ -625,8 +629,6 @@ void Room::update()
       });
     }
   }
-
-  synchronize(); // TODO: move to different timer
 }
 
 void Room::synchronize()
@@ -678,7 +680,7 @@ void Room::generateFoodByMothers()
 
 Player* Room::createPlayer(uint32_t id, const std::string& name)
 {
-  auto* player = new Player(m_executor, *this, m_config, m_gridmap, id);
+  auto* player = new Player(m_executor, *this, m_config, id);
   player->setName(name);
   player->subscribeToAnnihilation(this,
     [this, player] {
@@ -700,7 +702,7 @@ void Room::createBots()
 
   uint32_t id = 100;
   for (const auto& name : m_config.botNames) {
-    auto* bot = new Bot(m_executor, *this, m_config, m_gridmap, id++);
+    auto* bot = new Bot(m_executor, *this, m_config, id++);
     bot->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, bot));
     bot->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, bot));
     bot->setName(name);
