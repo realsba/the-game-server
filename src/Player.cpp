@@ -185,6 +185,10 @@ void Player::removeSession(const SessionPtr& sess)
 
 void Player::clearSessions()
 {
+  if (m_mainSession) {
+    m_mainSession->player(nullptr);
+    m_mainSession.reset();
+  }
   m_sessions.clear();
 }
 

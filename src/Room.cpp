@@ -681,6 +681,7 @@ Player* Room::createPlayer(uint32_t id, const std::string& name)
   player->setName(name);
   player->subscribeToAnnihilation(this,
     [this, player] {
+      player->clearSessions();
       m_players.erase(player->getId());
       delete player;
     }
