@@ -42,32 +42,32 @@ private:
   void sessionOpenHandler(const SessionPtr& sess);
   void sessionCloseHandler(const SessionPtr& sess);
 
-  void actionPing(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionGreeting(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionPlay(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionSpectate(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionMove(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionEject(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionSplit(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionChatMessage(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
-  void actionWatch(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request);
+  void actionPing(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionGreeting(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionPlay(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionSpectate(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionMove(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionEject(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionSplit(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionChatMessage(const SessionPtr& sess, beast::flat_buffer& request);
+  void actionWatch(const SessionPtr& sess, beast::flat_buffer& request);
 
   void statistic();
 
 private:
-  using MessageHandler = std::function<void(const UserPtr&, const SessionPtr& sess, beast::flat_buffer& ms)>;
+  using MessageHandler = std::function<void(const SessionPtr& sess, beast::flat_buffer& ms)>;
   using MessageHandlers = std::map<uint8_t, MessageHandler>;
 
   const MessageHandlers m_handlers {
-    {IncomingPacket::Type::Ping,        std::bind(&Application::actionPing, this, _1, _2, _3) },
-    {IncomingPacket::Type::Greeting,    std::bind(&Application::actionGreeting, this, _1, _2, _3) },
-    {IncomingPacket::Type::Play,        std::bind(&Application::actionPlay, this, _1, _2, _3) },
-    {IncomingPacket::Type::Spectate,    std::bind(&Application::actionSpectate, this, _1, _2, _3) },
-    {IncomingPacket::Type::Move,        std::bind(&Application::actionMove, this, _1, _2, _3) },
-    {IncomingPacket::Type::Eject,       std::bind(&Application::actionEject, this, _1, _2, _3) },
-    {IncomingPacket::Type::Split,       std::bind(&Application::actionSplit, this, _1, _2, _3) },
-    {IncomingPacket::Type::ChatMessage, std::bind(&Application::actionChatMessage, this, _1, _2, _3) },
-    {IncomingPacket::Type::Watch,       std::bind(&Application::actionWatch, this, _1, _2, _3) },
+    {IncomingPacket::Type::Ping,        std::bind(&Application::actionPing, this, _1, _2)},
+    {IncomingPacket::Type::Greeting,    std::bind(&Application::actionGreeting, this, _1, _2)},
+    {IncomingPacket::Type::Play,        std::bind(&Application::actionPlay, this, _1, _2)},
+    {IncomingPacket::Type::Spectate,    std::bind(&Application::actionSpectate, this, _1, _2)},
+    {IncomingPacket::Type::Move,        std::bind(&Application::actionMove, this, _1, _2)},
+    {IncomingPacket::Type::Eject,       std::bind(&Application::actionEject, this, _1, _2)},
+    {IncomingPacket::Type::Split,       std::bind(&Application::actionSplit, this, _1, _2)},
+    {IncomingPacket::Type::ChatMessage, std::bind(&Application::actionChatMessage, this, _1, _2)},
+    {IncomingPacket::Type::Watch,       std::bind(&Application::actionWatch, this, _1, _2)},
   };
 
   mutable std::mutex            m_mutex;

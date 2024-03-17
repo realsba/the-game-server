@@ -22,8 +22,6 @@ namespace websocket = beast::websocket;
 
 using tcp = boost::asio::ip::tcp;
 
-class Player;
-
 class UserData {
 public:
   SystemTimePoint created() const;

@@ -110,8 +110,6 @@ void Application::info()
 
 void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer)
 {
-  auto user = sess->user();
-
   while (buffer.size()) {
     auto type = deserialize<uint8_t>(buffer);
     const auto& it = m_handlers.find(type);
@@ -123,7 +121,7 @@ void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buff
       if (type != IncomingPacket::Ping) {
         sess->lastActivity(TimePoint::clock::now());
       }
-      it->second(user, sess, buffer);
+      it->second(sess, buffer);
     } catch (const std::exception& e) {
       spdlog::error("Exception caught while handling message: {}", e.what());
     }
@@ -169,15 +167,16 @@ void Application::sessionCloseHandler(const SessionPtr& sess)
   }
 }
 
-void Application::actionPing(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionPing(const SessionPtr& sess, beast::flat_buffer& request)
 {
   const auto& buffer = std::make_shared<Buffer>();
   OutgoingPacket::serializePong(*buffer);
   sess->send(buffer);
 }
 
-void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionGreeting(const SessionPtr& sess, beast::flat_buffer& request)
 {
+  const UserPtr& current = sess->user();
   if (current) {
     return; // user already logged in
   }
@@ -211,9 +210,11 @@ void Application::actionGreeting(const UserPtr& current, const SessionPtr& sess,
   room->join(sess);
 }
 
-void Application::actionPlay(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionPlay(const SessionPtr& sess, beast::flat_buffer& request)
 {
   static const uint NAME_MAX_LENGTH = 16;
+
+  const UserPtr& user = sess->user();
 
   auto name = deserialize<std::string>(request);
   auto color = deserialize<uint8_t>(request);
@@ -232,8 +233,9 @@ void Application::actionPlay(const UserPtr& user, const SessionPtr& sess, beast:
   }
 }
 
-void Application::actionSpectate(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionSpectate(const SessionPtr& sess, beast::flat_buffer& request)
 {
+  const UserPtr& user = sess->user();
   auto targetId = deserialize<uint32_t>(request);
   if (user) {
     auto* room = user->getRoom();
@@ -243,8 +245,9 @@ void Application::actionSpectate(const UserPtr& user, const SessionPtr& sess, be
   }
 }
 
-void Application::actionMove(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionMove(const SessionPtr& sess, beast::flat_buffer& request)
 {
+  const UserPtr& user = sess->user();
   Vec2D point;
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
@@ -256,8 +259,9 @@ void Application::actionMove(const UserPtr& user, const SessionPtr& sess, beast:
   }
 }
 
-void Application::actionEject(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionEject(const SessionPtr& sess, beast::flat_buffer& request)
 {
+  const UserPtr& user = sess->user();
   Vec2D point;
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
@@ -269,8 +273,9 @@ void Application::actionEject(const UserPtr& user, const SessionPtr& sess, beast
   }
 }
 
-void Application::actionSplit(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionSplit(const SessionPtr& sess, beast::flat_buffer& request)
 {
+  const UserPtr& user = sess->user();
   Vec2D point;
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
@@ -282,8 +287,9 @@ void Application::actionSplit(const UserPtr& user, const SessionPtr& sess, beast
   }
 }
 
-void Application::actionWatch(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionWatch(const SessionPtr& sess, beast::flat_buffer& request)
 {
+  const UserPtr& user = sess->user();
   auto playerId = deserialize<uint32_t>(request);
   if (user) {
     auto* room = user->getRoom();
@@ -293,8 +299,9 @@ void Application::actionWatch(const UserPtr& user, const SessionPtr& sess, beast
   }
 }
 
-void Application::actionChatMessage(const UserPtr& user, const SessionPtr& sess, beast::flat_buffer& request)
+void Application::actionChatMessage(const SessionPtr& sess, beast::flat_buffer& request)
 {
+  const UserPtr& user = sess->user();
   auto text = deserialize<std::string>(request);
   if (user) {
     auto* room = user->getRoom();
