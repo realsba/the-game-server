@@ -8,6 +8,8 @@
 
 class Avatar : public Cell {
 public:
+  using Avatars = std::vector<Avatar*>;
+
   Avatar(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
 
   void modifyMass(float value) override;
@@ -30,17 +32,20 @@ public:
   void applyPointAttractionForce(const Vec2D& point, float forceRatio);
 
   void eject(const Vec2D& point);
-  Avatar* split(const Vec2D& point);
+  bool split(const Vec2D& point);
   void startRecombination();
 
   void deflate();
   void annihilate();
   void explode();
 
+  void subscribeToAvatarCreation(void* tag, EventEmitter<Avatar*>::Handler&& handler);
+
 private:
-  TimePoint         m_fusionTime;
-  float             m_maxVelocity {0};
-  mutable bool      m_recombined {false};
+  EventEmitter<Avatar*> m_avatarCreationEmitter;
+  TimePoint             m_fusionTime;
+  float                 m_maxVelocity {0};
+  mutable bool          m_recombined {false};
 };
 
 #endif /* THEGAME_ENTITY_AVATAR_HPP */

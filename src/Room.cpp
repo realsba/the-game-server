@@ -588,12 +588,25 @@ void Room::handlePlayerRequests()
   m_splitRequests.clear();
 }
 
+void Room::removeDeadAvatars()
+{
+  if (!m_deadAvatars.empty()) {
+    for (auto *avatar: m_deadAvatars) {
+      m_avatarContainer.erase(avatar);
+      removeCell(avatar);
+    }
+    m_updateLeaderboard = true;
+    m_deadAvatars.clear();
+  }
+}
+
 void Room::update()
 {
   auto now{TimePoint::clock::now()};
   double dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - m_lastUpdate).count();
   m_lastUpdate = now;
 
+  removeDeadAvatars();
   handlePlayerRequests();
 
   for (auto* player : m_fighters) {
@@ -658,6 +671,15 @@ void Room::updateLeaderboard()
   }
 }
 
+void Room::removeFromLeaderboard(Player* player)
+{
+  auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), player);
+  if (it != m_leaderboard.end()) {
+    m_leaderboard.erase(it);
+    m_updateLeaderboard = true;
+  }
+}
+
 void Room::updateNearbyFoodForMothers()
 {
   for (auto* mother : m_motherContainer) {
@@ -679,15 +701,9 @@ Player* Room::createPlayer(uint32_t id, const std::string& name)
 {
   auto* player = new Player(m_executor, *this, m_config, id);
   player->setName(name);
-  player->subscribeToAnnihilation(this,
-    [this, player] {
-      player->clearSessions();
-      m_players.erase(player->getId());
-      delete player;
-    }
-  ); // TODO: revise
   player->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, player));
   player->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, player));
+  player->subscribeToAnnihilation(this, std::bind_front(&Room::onPlayerAnnihilates, this, player));
   m_players.emplace(id, player);
   sendPacketPlayer(*player);
   recalculateFreeSpace();
@@ -885,11 +901,7 @@ void Room::onPlayerRespawn(Player* player)
 void Room::onPlayerDeath(Player* player)
 {
   spdlog::debug("Room::onPlayerDeath {}:{}", player->getId(), player->getName());
-  auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), player);
-  if (it != m_leaderboard.end()) {
-    m_leaderboard.erase(it);
-    m_updateLeaderboard = true;
-  }
+  removeFromLeaderboard(player);
   m_fighters.erase(player);
   sendPacketPlayerDead(player->getId());
 
@@ -916,11 +928,18 @@ void Room::onPlayerDeath(Player* player)
   }
 }
 
+void Room::onPlayerAnnihilates(Player* player)
+{
+  player->clearSessions();
+  m_players.erase(player->getId());
+  m_fighters.erase(player);
+  removeFromLeaderboard(player);
+  delete player;
+}
+
 void Room::onAvatarDeath(Avatar* avatar)
 {
-  m_avatarContainer.erase(avatar);
-  removeCell(avatar);
-  m_updateLeaderboard = true;
+  m_deadAvatars.emplace_back(avatar);
 }
 
 void Room::onFoodDeath(Food* food)

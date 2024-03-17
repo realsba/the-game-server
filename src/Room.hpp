@@ -76,11 +76,13 @@ private:
   void resolveCellPosition(Cell& cell);
   void destroyOutdatedCells(); // TODO: move logic to target classes
   void handlePlayerRequests();
+  void removeDeadAvatars();
   void update();
   void synchronize();
   void updateLeaderboard();
-  void generateFoodByMothers();
+  void removeFromLeaderboard(Player* player);
   void updateNearbyFoodForMothers();
+  void generateFoodByMothers();
 
   Player* createPlayer(uint32_t id, const std::string& name);
   void createBots();
@@ -105,6 +107,7 @@ private:
 
   void onPlayerRespawn(Player* player);
   void onPlayerDeath(Player* player);
+  void onPlayerAnnihilates(Player* player);
   void onAvatarDeath(Avatar* avatar);
   void onFoodDeath(Food* food);
   void onBulletDeath(Bullet* bullet);
@@ -157,6 +160,7 @@ private:
   std::set<Cell*>             m_activatedCells;
   std::set<Cell*>             m_processingCells;
   std::set<Cell*>             m_forCheckRandomPos;
+  std::vector<Avatar*>        m_deadAvatars;
   std::list<ChatMessage>      m_chatHistory;
 
   TimePoint                   m_lastUpdate {TimePoint::clock::now()};

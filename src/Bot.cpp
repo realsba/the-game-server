@@ -45,9 +45,9 @@ void Bot::addAvatar(Avatar* avatar)
   m_mainAvatar = findTheBiggestAvatar();
 }
 
-void Bot::removeAvatar(Avatar* avatar, Player* killer)
+void Bot::removeAvatar(Avatar* avatar)
 {
-  Player::removeAvatar(avatar, killer);
+  Player::removeAvatar(avatar);
   m_mainAvatar = findTheBiggestAvatar();
   if (!m_status.isAlive) {
     scheduleRespawn();
@@ -74,7 +74,7 @@ void Bot::choseTarget()
 {
   Cell* target = nullptr;
   m_gridmap.query(getViewBox(), [&](Cell& cell) -> bool {
-    if (cell.player != this && !cell.zombie && cell.isAttractiveFor(*m_mainAvatar)) {
+    if (cell.isAttractiveFor(*m_mainAvatar)) {
       if (!target || target->mass < cell.mass) {
         target = &cell;
       }

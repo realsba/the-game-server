@@ -58,5 +58,5 @@ void Food::interact(Mother& mother)
 
 bool Food::isAttractiveFor(const Avatar& avatar)
 {
-  return true;
+  return !zombie;
 }

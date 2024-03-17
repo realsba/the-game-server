@@ -205,34 +205,6 @@ void Player::setTargetPlayer(Player* player)
   }
 }
 
-void Player::addAvatar(Avatar* avatar)
-{
-  spdlog::debug("Player::addAvatar {}", avatar->id);
-  avatar->player = this;
-  m_avatars.emplace(avatar);
-  m_status.isAlive = true;
-
-  //TODO: implement params calculating mass && position
-  // m_position = (m_position * (m_mass - newAvatar->mass) + newAvatar->position * newAvatar->mass) / m_mass;
-}
-
-void Player::removeAvatar(Avatar* avatar, Player* killer)
-{
-  spdlog::debug("Player::removeAvatar {}", avatar->id);
-  m_avatars.erase(avatar);
-  if (m_avatars.empty()) {
-    m_status.isAlive = false;
-    if (killer) {
-      if (m_killer) {
-        m_killer->unsubscribeFromAnnihilation(this);
-      }
-      m_killer = killer;
-      m_killer->subscribeToAnnihilation(this, [this] { m_killer = nullptr; });
-    }
-    m_deathEmitter.emit();
-  }
-}
-
 void Player::eject(const Vec2D& point)
 {
   if (!m_status.isAlive) {
@@ -249,21 +221,14 @@ void Player::split(const Vec2D& point)
     return;
   }
 
-  std::vector<Avatar*> createdAvatars;
   size_t count = m_avatars.size();
   for (auto* avatar : m_avatars) {
     if (count >= m_config.player.maxCells) {
       break;
     }
-    if (auto* obj = avatar->split(point)) {
-      createdAvatars.push_back(obj);
+    if (avatar->split(point)) {
       ++count;
     }
-  }
-
-  // TODO: revise, use addAvatar
-  if (!createdAvatars.empty()) {
-    m_avatars.insert(createdAvatars.begin(), createdAvatars.end());
   }
 }
 
@@ -448,9 +413,42 @@ void Player::subscribeToRespawn(void*tag, EventEmitter<>::Handler&& handler)
   m_respawnEmitter.subscribe(tag, std::move(handler));
 }
 
-void Player::subscribeToDeath(void *tag, EventEmitter<>::Handler &&handler)
+void Player::subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler)
 {
   m_deathEmitter.subscribe(tag, std::move(handler));
+}
+
+void Player::addAvatar(Avatar* avatar)
+{
+  spdlog::debug("Player::addAvatar {}", avatar->id);
+
+  avatar->player = this;
+  m_avatars.emplace(avatar);
+  m_status.isAlive = true;
+
+  //TODO: implement params calculating mass && position
+  // m_position = (m_position * (m_mass - newAvatar->mass) + newAvatar->position * newAvatar->mass) / m_mass;
+
+  avatar->subscribeToAvatarCreation(this, std::bind(&Player::addAvatar, this, std::placeholders::_1));
+  avatar->subscribeToDeath(this, std::bind_front(&Player::removeAvatar, this, avatar));
+}
+
+void Player::removeAvatar(Avatar* avatar)
+{
+  spdlog::debug("Player::removeAvatar {}", avatar->id);
+  m_avatars.erase(avatar);
+  if (m_avatars.empty()) {
+    m_status.isAlive = false;
+// TODO: implement
+//    if (killer) {
+//      if (m_killer) {
+//        m_killer->unsubscribeFromAnnihilation(this);
+//      }
+//      m_killer = killer;
+//      m_killer->subscribeToAnnihilation(this, [this] { m_killer = nullptr; });
+//    }
+    m_deathEmitter.emit();
+  }
 }
 
 void Player::recombine(Avatar& initiator, Avatar& target)
@@ -511,7 +509,9 @@ void Player::handleAnnihilation()
     avatar->annihilate();
   }
   m_avatars.clear();
+  m_status.isAlive = false;
   m_deflationTimer.cancel();
+  m_deathEmitter.emit();
   m_annihilationEmitter.emit();
 }
 

@@ -46,5 +46,5 @@ void Bullet::interact(Mother& mother)
 
 bool Bullet::isAttractiveFor(const Avatar& avatar)
 {
-  return true;
+  return !zombie;
 }

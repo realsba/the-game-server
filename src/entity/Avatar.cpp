@@ -10,9 +10,9 @@
 #include "Mother.hpp"
 
 #include "src/geometry/geometry.hpp"
+#include "src/serialization.hpp"
 #include "src/Player.hpp"
 #include "src/Config.hpp"
-#include "src/serialization.hpp"
 
 Avatar::Avatar(
   const asio::any_io_executor& executor,
@@ -21,6 +21,7 @@ Avatar::Avatar(
   uint32_t id
 )
   : Cell(executor, entityFactory, config, id)
+  , m_avatarCreationEmitter(executor)
 {
   type = typeAvatar;
 }
@@ -80,7 +81,6 @@ void Avatar::interact(Avatar& other)
   }
   attacker->modifyMass(defender->mass);
   defender->kill();
-  defender->player->removeAvatar(defender, attacker->player);
 }
 
 void Avatar::interact(Food& food)
@@ -138,7 +138,6 @@ void Avatar::interact(Mother& mother)
   if (mother.mass >= 1.25 * mass && dist < mother.radius - 0.25 * radius) {
     mother.modifyMass(mass);
     kill();
-    player->removeAvatar(this, nullptr);
   } else if (mass > 1.25 * mother.mass && dist < radius - 0.25 * mother.radius) {
     explode();
     mother.kill();
@@ -147,7 +146,7 @@ void Avatar::interact(Mother& mother)
 
 bool Avatar::isAttractiveFor(const Avatar& avatar)
 {
-  return mass * 1.25 < avatar.mass;
+  return player != avatar.player && !zombie && mass * 1.25 < avatar.mass;
 }
 
 float Avatar::getMaxVelocity() const
@@ -186,7 +185,6 @@ void Avatar::eject(const Vec2D& point)
   modifyMass(-massLoss);
   auto& obj = m_entityFactory.createBullet();
   obj.player = player;
-  obj.creator = this;
   obj.color = color;
   obj.position = position;
   obj.velocity = velocity;
@@ -199,15 +197,15 @@ void Avatar::eject(const Vec2D& point)
   }
 }
 
-Avatar* Avatar::split(const Vec2D& point)
+bool Avatar::split(const Vec2D& point)
 {
   if (zombie) {
-    return nullptr;
+    return false;
   }
 
   float m = 0.5 * mass;
   if (mass < m_config.avatar.splitMinMass || m < m_config.cellMinMass) {
-    return nullptr;
+    return false;
   }
 
   auto& obj = m_entityFactory.createAvatar();
@@ -225,7 +223,9 @@ Avatar* Avatar::split(const Vec2D& point)
   startRecombination();
   obj.startRecombination();
 
-  return &obj;
+  m_avatarCreationEmitter.emit(&obj);
+
+  return true;
 }
 
 void Avatar::startRecombination()
@@ -266,13 +266,14 @@ void Avatar::explode()
     }
     explodedMass += m;
     auto& obj = m_entityFactory.createAvatar();
+    obj.player = player;
     obj.modifyMass(m);
     const auto& direction = m_entityFactory.getRandomDirection();
     obj.position = position + direction * (radius + obj.radius);
     obj.color = color;
     obj.modifyVelocity(direction * m_config.explodeVelocity);
     obj.startRecombination();
-    player->addAvatar(&obj); // TODO: avoid using
+    m_avatarCreationEmitter.emit(&obj);
     if (avatars.size() >= m_config.player.maxCells) {
       break;
     }
@@ -281,4 +282,9 @@ void Avatar::explode()
     startRecombination();
     modifyMass(-explodedMass);
   }
+}
+
+void Avatar::subscribeToAvatarCreation(void* tag, EventEmitter<Avatar *>::Handler&& handler)
+{
+  m_avatarCreationEmitter.subscribe(tag, std::move(handler));
 }

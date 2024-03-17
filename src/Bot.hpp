@@ -22,10 +22,10 @@ public:
 
   void respawn() override;
 
-  void addAvatar(Avatar* avatar) override;
-  void removeAvatar(Avatar* avatar, Player* killer) override;
-
 protected:
+  void addAvatar(Avatar* avatar) override;
+  void removeAvatar(Avatar* avatar) override;
+
   void navigate();
   void choseTarget();
   void scheduleRespawn();

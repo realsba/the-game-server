@@ -57,8 +57,6 @@ public:
   void removeSession(const SessionPtr& sess);
   void clearSessions();
   void setTargetPlayer(Player* player);
-  virtual void addAvatar(Avatar* avatar);
-  virtual void removeAvatar(Avatar* avatar, Player* killer);
   void eject(const Vec2D& point);
   void split(const Vec2D& point);
   void synchronize(const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
@@ -73,6 +71,9 @@ public:
   void subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler);
 
 protected:
+  virtual void addAvatar(Avatar* avatar);
+  virtual void removeAvatar(Avatar* avatar);
+
   void recombine(Avatar& initiator, Avatar& target);
   void scheduleDeflation();
   void scheduleAnnihilation();
