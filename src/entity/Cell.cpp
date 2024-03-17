@@ -146,18 +146,7 @@ void Cell::subscribeToMotionStarted(void* tag, EventEmitter<>::Handler&& handler
   m_motionStartedEmitter.subscribe(tag, std::move(handler));
 }
 
-void Cell::unsubscribeFromMotionStarted(void* tag)
-{
-  m_motionStartedEmitter.unsubscribe(tag);
-}
-
 void Cell::subscribeToMotionStopped(void* tag, EventEmitter<>::Handler&& handler)
 {
   m_motionStoppedEmitter.subscribe(tag, std::move(handler));
 }
-
-void Cell::unsubscribeFromMotionStopped(void* tag)
-{
-  m_motionStoppedEmitter.unsubscribe(tag);
-}
-

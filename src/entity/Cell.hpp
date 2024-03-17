@@ -61,9 +61,7 @@ public:
   void subscribeToMassChange(void* tag, EventEmitter<float>::Handler&& handler);
   void unsubscribeFromMassChange(void* tag);
   void subscribeToMotionStarted(void* tag, EventEmitter<>::Handler&& handler);
-  void unsubscribeFromMotionStarted(void* tag);
   void subscribeToMotionStopped(void* tag, EventEmitter<>::Handler&& handler);
-  void unsubscribeFromMotionStopped(void* tag);
 
   enum Type {
     typeAvatar = 1,

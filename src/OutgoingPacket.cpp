@@ -28,14 +28,14 @@ void serializeFrame(Buffer& buffer)
 {
 }
 
-void serializeLeaderboard(Buffer& buffer, const std::vector<Player*>& items, size_t limit)
+void serializeLeaderboard(Buffer& buffer, const std::vector<PlayerPtr>& items, size_t limit)
 {
   serialize(buffer, OutgoingPacket::Type::Leaderboard);
   auto count = static_cast<uint8_t>(std::min(items.size(), limit));
   serialize(buffer, count);
   auto endIt = items.begin() + count;
   for (auto it = items.begin(); it != endIt; ++it) {
-    const auto* player = *it;
+    const auto& player = *it;
     serialize(buffer, player->getId());
     serialize(buffer, player->getMass());
   }

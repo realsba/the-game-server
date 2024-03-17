@@ -5,6 +5,7 @@
 #define THEGAME_SESSION_HPP
 
 #include "SessionFwd.hpp"
+#include "PlayerFwd.hpp"
 #include "UserFwd.hpp"
 
 #include "TimePoint.hpp"
@@ -28,21 +29,21 @@ public:
   SystemTimePoint created() const;
   TimePoint lastActivity() const;
   UserPtr user() const;
-  Player* player() const;
-  Player* observable() const;
+  PlayerPtr player() const;
+  PlayerPtr observable() const;
 
   void lastActivity(const TimePoint& value);
   void user(const UserPtr& value);
-  void player(Player* value);
-  void observable(Player* value);
+  void player(PlayerPtr value);
+  void observable(PlayerPtr value);
 
 private:
   mutable std::mutex    m_mutex;
   const SystemTimePoint m_created {SystemTimePoint::clock::now()};  // thread-safe, const
   TimePoint             m_lastActivity {TimePoint::clock::now()};
   UserPtr               m_user {nullptr};
-  Player*               m_player {nullptr};                         // thread-safe, accessed only from Room
-  Player*               m_observable {nullptr};                     // thread-safe, accessed only from Room
+  PlayerPtr             m_player {nullptr};                         // thread-safe, accessed only from Room
+  PlayerPtr             m_observable {nullptr};                     // thread-safe, accessed only from Room
 };
 
 class Session : public std::enable_shared_from_this<Session>, public UserData

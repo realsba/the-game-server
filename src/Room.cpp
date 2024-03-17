@@ -44,9 +44,6 @@ Room::Room(asio::any_io_executor executor, uint32_t id)
 
 Room::~Room()
 {
-  for (const auto& it : m_players) {
-    delete it.second;
-  }
   for (auto* it : m_avatarContainer) {
     delete it;
   }
@@ -126,7 +123,7 @@ void Room::stop()
   m_virusGeneratorTimer.stop();
   m_phageGeneratorTimer.stop();
   m_motherGeneratorTimer.stop();
-  for (auto* bot : m_bots) {
+  for (const auto& bot : m_bots) {
     bot->stop();
   }
 }
@@ -261,11 +258,11 @@ void Room::doLeave(const SessionPtr& sess)
     m_moveRequests.erase(sess);
     m_ejectRequests.erase(sess);
     m_splitRequests.erase(sess);
-    if (auto* player = sess->player()) {
+    if (const auto& player = sess->player()) {
       player->removeSession(sess);
       sendPacketPlayerLeave(player->getId());
     }
-    if (auto* observable = sess->observable()) {
+    if (const auto& observable = sess->observable()) {
       observable->removeSession(sess);
       sess->observable(nullptr);
     }
@@ -279,13 +276,12 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
     throw std::runtime_error("Room::play(): the user doesn't set");
   }
 
-  auto* observable = sess->observable();
-  if (observable) {
+  if (const auto& observable = sess->observable()) {
     observable->removeSession(sess);
     sess->observable(nullptr);
   }
 
-  auto* player = sess->player();
+  auto player = sess->player();
   if (!player) {
     uint32_t playerId = user->getId();
     const auto& it = m_players.find(playerId);
@@ -319,13 +315,13 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
   }
 
   uint32_t playerId = user->getId();
-  auto* player = sess->player();
+  auto player = sess->player();
   if (!player) {
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
       player = it->second;
     } else {
-      player = new Player(m_executor, *this, m_config, playerId);
+      player = std::make_shared<Player>(m_executor, *this, m_config, playerId);
       player->setName("Player " + std::to_string(user->getId()));
       m_players.emplace(playerId, player);
       recalculateFreeSpace();
@@ -339,7 +335,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
     return;
   }
 
-  Player* target = nullptr;
+  PlayerPtr target;
   const auto& it = m_players.find(targetId);
   if (it != m_players.end()) {
     target = it->second;
@@ -382,7 +378,7 @@ void Room::doSplit(const SessionPtr& sess, const Vec2D& point)
 
 void Room::doWatch(const SessionPtr& sess, uint32_t playerId)
 {
-  auto* player = sess->player();
+  auto player = sess->player();
   if (!player) {
     return;
   }
@@ -394,7 +390,7 @@ void Room::doWatch(const SessionPtr& sess, uint32_t playerId)
 
 void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
 {
-  auto* player = sess->player();
+  auto player = sess->player();
   if (!player){
     return;
   }
@@ -567,21 +563,21 @@ void Room::destroyOutdatedCells()
 void Room::handlePlayerRequests()
 {
   for (const auto& [sess, offset] : m_moveRequests) {
-    if (auto* player = sess->player()) {
+    if (const auto& player = sess->player()) {
       player->setPointerOffset(offset);
     }
   }
   m_moveRequests.clear();
 
   for (const auto& [sess, point] : m_ejectRequests) {
-    if (auto* player = sess->player()) {
+    if (const auto& player = sess->player()) {
       player->eject(point);
     }
   }
   m_ejectRequests.clear();
 
   for (const auto& [sess, point] : m_splitRequests) {
-    if (auto* player = sess->player()) {
+    if (const auto& player = sess->player()) {
       player->split(point);
     }
   }
@@ -609,7 +605,7 @@ void Room::update()
   removeDeadAvatars();
   handlePlayerRequests();
 
-  for (auto* player : m_fighters) {
+  for (const auto& player : m_fighters) {
     player->applyPointerForce();
     player->recombine();
   }
@@ -643,14 +639,14 @@ void Room::update()
 
 void Room::synchronize()
 {
-  for (auto* player : m_fighters) {
+  for (const auto& player : m_fighters) {
     player->calcParams();
     player->synchronize(m_modifiedCells, m_removedCellIds);
   }
   m_modifiedCells.clear();
   m_removedCellIds.clear();
 
-  std::erase_if(m_fighters, [&](Player* player) { return player->isDead(); });
+  std::erase_if(m_fighters, [&](const auto& player) { return player->isDead(); });
 
   if (!m_createdCells.empty()) {
     for (auto* cell : m_createdCells) {
@@ -663,7 +659,7 @@ void Room::synchronize()
 void Room::updateLeaderboard()
 {
   if (m_updateLeaderboard) {
-    std::sort(m_leaderboard.begin(), m_leaderboard.end(), [](Player* a, Player* b) { return *b < *a; });
+    std::sort(m_leaderboard.begin(), m_leaderboard.end(), [](const auto& a, const auto& b) { return *b < *a; });
     const auto& buffer = std::make_shared<Buffer>();
     OutgoingPacket::serializeLeaderboard(*buffer, m_leaderboard, m_config.leaderboard.limit);
     send(buffer);
@@ -671,7 +667,7 @@ void Room::updateLeaderboard()
   }
 }
 
-void Room::removeFromLeaderboard(Player* player)
+void Room::removeFromLeaderboard(const PlayerPtr& player)
 {
   auto it = std::find(m_leaderboard.begin(), m_leaderboard.end(), player);
   if (it != m_leaderboard.end()) {
@@ -697,9 +693,9 @@ void Room::generateFoodByMothers()
   }
 }
 
-Player* Room::createPlayer(uint32_t id, const std::string& name)
+PlayerPtr Room::createPlayer(uint32_t id, const std::string& name)
 {
-  auto* player = new Player(m_executor, *this, m_config, id);
+  auto player = std::make_shared<Player>(m_executor, *this, m_config, id);
   player->setName(name);
   player->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, player));
   player->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, player));
@@ -716,7 +712,7 @@ void Room::createBots()
 
   uint32_t id = 100;
   for (const auto& name : m_config.botNames) {
-    auto* bot = new Bot(m_executor, *this, m_config, id++);
+    auto bot = std::make_shared<Bot>(m_executor, *this, m_config, id++);
     bot->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, bot));
     bot->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, bot));
     bot->setName(name);
@@ -823,7 +819,7 @@ void Room::serialize(Buffer& buffer)
   }
   ::serialize(buffer, static_cast<uint8_t>(count));
   for (const auto& it : m_players) {
-    Player* player = it.second;
+    const auto& player = it.second;
     ::serialize(buffer, player->getId());
     ::serialize(buffer, player->getName());
     ::serialize(buffer, player->getStatus());
@@ -889,7 +885,7 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
   send(buffer);
 }
 
-void Room::onPlayerRespawn(Player* player)
+void Room::onPlayerRespawn(const PlayerPtr& player)
 {
   spdlog::debug("Room::onPlayerRespawn {}:{}", player->getId(), player->getName());
   m_leaderboard.emplace_back(player);
@@ -898,7 +894,7 @@ void Room::onPlayerRespawn(Player* player)
   sendPacketPlayerBorn(player->getId());
 }
 
-void Room::onPlayerDeath(Player* player)
+void Room::onPlayerDeath(const PlayerPtr& player)
 {
   spdlog::debug("Room::onPlayerDeath {}:{}", player->getId(), player->getName());
   removeFromLeaderboard(player);
@@ -907,7 +903,7 @@ void Room::onPlayerDeath(Player* player)
 
   const auto& sessions = player->getSessions();
   if (!sessions.empty()) {
-    auto* observable = player->getKiller();
+    auto observable = player->getKiller();
     if (!observable || observable->isDead()) {
       observable = m_leaderboard.empty() ? nullptr : *m_leaderboard.begin();
     }
@@ -928,13 +924,12 @@ void Room::onPlayerDeath(Player* player)
   }
 }
 
-void Room::onPlayerAnnihilates(Player* player)
+void Room::onPlayerAnnihilates(const PlayerPtr& player)
 {
   player->clearSessions();
   m_players.erase(player->getId());
   m_fighters.erase(player);
   removeFromLeaderboard(player);
-  delete player;
 }
 
 void Room::onAvatarDeath(Avatar* avatar)

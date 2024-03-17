@@ -62,6 +62,7 @@ add_executable(${PROJECT_NAME}
     src/OutgoingPacket.hpp
     src/Player.cpp
     src/Player.hpp
+    src/PlayerFwd.hpp
     src/Room.cpp
     src/Room.hpp
     src/RoomManager.cpp

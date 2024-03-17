@@ -4,6 +4,8 @@
 #ifndef THEGAME_ROOM_HPP
 #define THEGAME_ROOM_HPP
 
+#include "PlayerFwd.hpp"
+
 #include "IEntityFactory.hpp"
 
 #include "ChatMessage.hpp"
@@ -22,7 +24,6 @@
 
 namespace asio = boost::asio;
 
-class Player;
 class Bot;
 
 class Room : public IEntityFactory {
@@ -80,11 +81,11 @@ private:
   void update();
   void synchronize();
   void updateLeaderboard();
-  void removeFromLeaderboard(Player* player);
+  void removeFromLeaderboard(const PlayerPtr& player);
   void updateNearbyFoodForMothers();
   void generateFoodByMothers();
 
-  Player* createPlayer(uint32_t id, const std::string& name);
+  PlayerPtr createPlayer(uint32_t id, const std::string& name);
   void createBots();
 
   void generateFood();
@@ -105,9 +106,9 @@ private:
   void sendPacketPlayerBorn(uint32_t playerId);
   void sendPacketPlayerDead(uint32_t playerId);
 
-  void onPlayerRespawn(Player* player);
-  void onPlayerDeath(Player* player);
-  void onPlayerAnnihilates(Player* player);
+  void onPlayerRespawn(const PlayerPtr& player);
+  void onPlayerDeath(const PlayerPtr& player);
+  void onPlayerAnnihilates(const PlayerPtr& player);
   void onAvatarDeath(Avatar* avatar);
   void onFoodDeath(Food* food);
   void onBulletDeath(Bullet* bullet);
@@ -122,6 +123,8 @@ private:
 
 private:
   using RequestsMap = std::map<SessionPtr, Vec2D>;
+  using Players = std::map<uint32_t, PlayerPtr>;
+  using Bots = std::set<std::shared_ptr<Bot>>;
 
   mutable std::random_device  m_generator;
   asio::any_io_executor       m_executor;
@@ -139,11 +142,10 @@ private:
   config::Room                m_config;
   Gridmap                     m_gridmap;
   Sessions                    m_sessions;
-  std::map<uint32_t, Player*> m_players;
-  std::set<Player*>           m_fighters;
-  std::set<Player*>           m_inactivePlayers;
-  std::vector<Player*>        m_leaderboard;
-  std::set<Bot*>              m_bots;
+  Players                     m_players;
+  std::set<PlayerPtr>         m_fighters;
+  std::vector<PlayerPtr>      m_leaderboard;
+  Bots                        m_bots;
   RequestsMap                 m_moveRequests;
   RequestsMap                 m_ejectRequests;
   RequestsMap                 m_splitRequests;

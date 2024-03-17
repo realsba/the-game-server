@@ -29,12 +29,12 @@ UserPtr UserData::user() const
   return m_user;
 }
 
-Player* UserData::player() const
+PlayerPtr UserData::player() const
 {
   return m_player;
 }
 
-Player* UserData::observable() const
+PlayerPtr UserData::observable() const
 {
   return m_observable;
 }
@@ -51,14 +51,14 @@ void UserData::user(const UserPtr& value)
   m_user = value;
 }
 
-void UserData::player(Player* value)
+void UserData::player(PlayerPtr value)
 {
-  m_player = value;
+  m_player = std::move(value);
 }
 
-void UserData::observable(Player* value)
+void UserData::observable(PlayerPtr value)
 {
-  m_observable = value;
+  m_observable = std::move(value);
 }
 
 Session::Session(tcp::socket&& socket)

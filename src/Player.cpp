@@ -81,9 +81,9 @@ Avatar* Player::findTheBiggestAvatar() const
   return *maxElementIt;
 }
 
-Player* Player::getKiller() const
+PlayerPtr Player::getKiller() const
 {
-  return m_killer;
+  return m_killer.lock();
 }
 
 bool Player::isDead() const
@@ -155,7 +155,7 @@ void Player::setMainSession(const SessionPtr& sess)
       m_mainSession->player(nullptr);
     }
     m_mainSession = sess;
-    m_mainSession->player(this);
+    m_mainSession->player(shared_from_this());
     m_status.isOnline = true;
     addSession(sess);
   }
@@ -192,16 +192,10 @@ void Player::clearSessions()
   m_sessions.clear();
 }
 
-void Player::setTargetPlayer(Player* player)
+void Player::setTargetPlayer(const PlayerPtr& player)
 {
-  if (player != this) {
-    if (m_targetPlayer) {
-      m_targetPlayer->unsubscribeFromAnnihilation(this);
-    }
+  if (player.get() != this) {
     m_targetPlayer = player;
-    if (m_targetPlayer) {
-      m_targetPlayer->subscribeToAnnihilation(this, [this] { m_targetPlayer = nullptr; });
-    }
   }
 }
 
@@ -308,9 +302,9 @@ void Player::synchronize(const std::set<Cell*>& modified, const std::vector<uint
     serialize(*buffer, avatar->id);
     serialize(*buffer, avatar->getMaxVelocity());
   }
-  if (m_targetPlayer) {
-    serialize(*buffer, m_targetPlayer->getId());
-    const auto& position = m_targetPlayer->getPosition();
+  if (auto targetPlayer = m_targetPlayer.lock()) {
+    serialize(*buffer, targetPlayer->getId());
+    const auto& position = targetPlayer->getPosition();
     serialize(*buffer, position.x);
     serialize(*buffer, position.y);
   } else {
@@ -403,12 +397,7 @@ void Player::subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handle
   m_annihilationEmitter.subscribe(tag, std::move(handler));
 }
 
-void Player::unsubscribeFromAnnihilation(void* tag)
-{
-  m_annihilationEmitter.unsubscribe(tag);
-}
-
-void Player::subscribeToRespawn(void*tag, EventEmitter<>::Handler&& handler)
+void Player::subscribeToRespawn(void* tag, EventEmitter<>::Handler&& handler)
 {
   m_respawnEmitter.subscribe(tag, std::move(handler));
 }

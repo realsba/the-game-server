@@ -6,7 +6,7 @@
 
 #include "types.hpp"
 
-class Player;
+#include "PlayerFwd.hpp"
 
 namespace OutgoingPacket {
 
@@ -32,7 +32,7 @@ void serializePong(Buffer& buffer);
 void serializeGreeting(Buffer& buffer, const std::string& sid);
 void serializeRoom(Buffer& buffer);
 void serializeFrame(Buffer& buffer);
-void serializeLeaderboard(Buffer& buffer, const std::vector<Player*>& items, size_t limit);
+void serializeLeaderboard(Buffer& buffer, const std::vector<PlayerPtr>& items, size_t limit);
 void serializePlayer(Buffer& buffer, const Player& player);
 void serializePlayerRemove(Buffer& buffer, uint32_t playerId);
 void serializePlayerJoin(Buffer& buffer, uint32_t playerId);

@@ -4,6 +4,8 @@
 #ifndef THEGAME_PLAYER_HPP
 #define THEGAME_PLAYER_HPP
 
+#include "PlayerFwd.hpp"
+
 #include "geometry/Vec2D.hpp"
 #include "geometry/AABB.hpp"
 
@@ -29,7 +31,7 @@ namespace config {
 class Avatar;
 using Avatars = std::set<Avatar*>;
 
-class Player {
+class Player : public std::enable_shared_from_this<Player> {
 public:
   Player(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
   virtual ~Player() = default;
@@ -42,7 +44,7 @@ public:
   [[nodiscard]] Vec2D getPosition() const;
   [[nodiscard]] const Avatars& getAvatars() const;
   [[nodiscard]] Avatar* findTheBiggestAvatar() const;
-  [[nodiscard]] Player* getKiller() const;
+  [[nodiscard]] PlayerPtr getKiller() const;
   [[nodiscard]] bool isDead() const;
   [[nodiscard]] uint8_t getStatus() const;
   [[nodiscard]] const Sessions& getSessions() const;
@@ -56,7 +58,7 @@ public:
   void addSession(const SessionPtr& sess);
   void removeSession(const SessionPtr& sess);
   void clearSessions();
-  void setTargetPlayer(Player* player);
+  void setTargetPlayer(const PlayerPtr& player);
   void eject(const Vec2D& point);
   void split(const Vec2D& point);
   void synchronize(const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
@@ -66,7 +68,6 @@ public:
   void recombine();
 
   void subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handler);
-  void unsubscribeFromAnnihilation(void* tag);
   void subscribeToRespawn(void* tag, EventEmitter<>::Handler&& handler);
   void subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler);
 
@@ -110,8 +111,8 @@ protected:
   Vec2D                 m_pointerOffset;
   Sector*               m_leftTopSector {nullptr};
   Sector*               m_rightBottomSector {nullptr};
-  Player*               m_targetPlayer {nullptr};
-  Player*               m_killer {nullptr};
+  PlayerWPtr            m_targetPlayer;
+  PlayerWPtr            m_killer;
   uint32_t              m_mass {0};
   uint32_t              m_maxMass {0};
   float                 m_scale {0};
