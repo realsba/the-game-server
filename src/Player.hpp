@@ -101,7 +101,7 @@ protected:
 
   std::string           m_name;
   Sessions              m_sessions;
-  SessionPtr            m_mainSession {nullptr};
+  SessionPtr            m_mainSession;
   Avatars               m_avatars;
   std::set<uint32_t>    m_visibleIds;
   std::set<Sector*>     m_sectors;

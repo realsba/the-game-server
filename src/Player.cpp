@@ -500,7 +500,6 @@ void Player::handleAnnihilation()
   m_avatars.clear();
   m_status.isAlive = false;
   m_deflationTimer.cancel();
-  m_deathEmitter.emit();
   m_annihilationEmitter.emit();
 }
 

@@ -55,15 +55,3 @@ void User::setSession(const SessionPtr& sess)
   std::lock_guard<std::mutex> lock(m_mutex);
   m_session = sess;
 }
-
-Room* User::getRoom() const
-{
-  std::lock_guard<std::mutex> lock(m_mutex);
-  return m_room;
-}
-
-void User::setRoom(Room* room)
-{
-  std::lock_guard<std::mutex> lock(m_mutex);
-  m_room = room;
-}

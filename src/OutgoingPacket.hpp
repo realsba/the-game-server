@@ -30,8 +30,8 @@ enum class Type : uint8_t {
 
 void serializePong(Buffer& buffer);
 void serializeGreeting(Buffer& buffer, const std::string& sid);
-void serializeRoom(Buffer& buffer);
-void serializeFrame(Buffer& buffer);
+void serializeRoom(Buffer& buffer);   // TODO: implement
+void serializeFrame(Buffer& buffer);  // TODO: implement
 void serializeLeaderboard(Buffer& buffer, const std::vector<PlayerPtr>& items, size_t limit);
 void serializePlayer(Buffer& buffer, const Player& player);
 void serializePlayerRemove(Buffer& buffer, uint32_t playerId);

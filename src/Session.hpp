@@ -22,26 +22,34 @@ namespace websocket = beast::websocket;
 
 using tcp = boost::asio::ip::tcp;
 
+class Room;
+
 class UserData {
 public:
   SystemTimePoint created() const;
   TimePoint lastActivity() const;
   UserPtr user() const;
+  Room* room() const;
+  uint32_t playerId() const;
   PlayerPtr player() const;
   PlayerPtr observable() const;
 
   void lastActivity(const TimePoint& value);
   void user(const UserPtr& value);
+  void room(Room* value);
+  void playerId(uint32_t value);
   void player(PlayerPtr value);
   void observable(PlayerPtr value);
 
 private:
   mutable std::mutex    m_mutex;
   const SystemTimePoint m_created {SystemTimePoint::clock::now()};  // thread-safe, const
-  TimePoint             m_lastActivity {TimePoint::clock::now()};
-  UserPtr               m_user {nullptr};
-  PlayerPtr             m_player {nullptr};                         // thread-safe, accessed only from Room
-  PlayerPtr             m_observable {nullptr};                     // thread-safe, accessed only from Room
+  TimePoint             m_lastActivity {TimePoint::clock::now()};   // guarded by m_mutex
+  UserPtr               m_user;                                     // guarded by m_mutex
+  Room*                 m_room {nullptr};                           // guarded by m_mutex
+  uint32_t              m_playerId {0};                             // thread-safe, accessed only from Room
+  PlayerPtr             m_player;                                   // thread-safe, accessed only from Room
+  PlayerPtr             m_observable;                               // thread-safe, accessed only from Room
 };
 
 class Session : public std::enable_shared_from_this<Session>, public UserData

@@ -7,7 +7,6 @@
 #include "Session.hpp"
 #include "Player.hpp"
 #include "Bot.hpp"
-#include "User.hpp"
 
 #include "entity/Avatar.hpp"
 #include "entity/Food.hpp"
@@ -133,9 +132,9 @@ bool Room::hasFreeSpace() const
   return m_hasFreeSpace;
 }
 
-void Room::join(const SessionPtr& sess)
+void Room::join(const SessionPtr& sess, uint32_t playerId)
 {
-  asio::post(m_executor, std::bind_front(&Room::doJoin, this, sess));
+  asio::post(m_executor, std::bind_front(&Room::doJoin, this, sess, playerId));
 }
 
 void Room::leave(const SessionPtr& sess)
@@ -218,38 +217,28 @@ Gridmap& Room::getGridmap()
   return m_gridmap;
 }
 
-void Room::doJoin(const SessionPtr& sess)
+void Room::doJoin(const SessionPtr& sess, uint32_t playerId)
 {
   if (!m_sessions.emplace(sess).second) {
     return;
   }
 
-  const auto& user = sess->user();
-  if (!user) {
-    throw std::runtime_error("Room::join(): the user doesn't set");
-  }
+  sess->playerId(playerId);
 
   const auto& buffer = std::make_shared<Buffer>();
   serialize(*buffer);
 
-  // TODO: revise
-  uint32_t playerId = user->getId();
   const auto& it = m_players.find(playerId);
   if (it != m_players.end()) {
-    auto& player = *it->second;
-    player.setMainSession(sess);
-    OutgoingPacket::serializePlay(*buffer, player);
+    const auto& player = it->second;
+    player->setMainSession(sess);
+    sendPacketPlayerJoin(playerId);
+    OutgoingPacket::serializePlay(*buffer, *player);
   } else {
     OutgoingPacket::serializeFinish(*buffer);
-    playerId = 0;
   }
 
   sess->send(buffer);
-
-  if (playerId) {
-    sendPacketPlayerJoin(playerId);
-    m_updateLeaderboard = true;
-  }
 }
 
 void Room::doLeave(const SessionPtr& sess)
@@ -271,19 +260,15 @@ void Room::doLeave(const SessionPtr& sess)
 
 void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color)
 {
-  const auto& user = sess->user();
-  if (!user) {
-    throw std::runtime_error("Room::play(): the user doesn't set");
-  }
-
   if (const auto& observable = sess->observable()) {
     observable->removeSession(sess);
     sess->observable(nullptr);
   }
 
   auto player = sess->player();
+
   if (!player) {
-    uint32_t playerId = user->getId();
+    uint32_t playerId = sess->playerId();
     const auto& it = m_players.find(playerId);
     if (it != m_players.end()) {
       player = it->second;
@@ -309,29 +294,9 @@ void Room::doPlay(const SessionPtr& sess, const std::string& name, uint8_t color
 
 void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
 {
-  const auto& user = sess->user();
-  if (!user) {
-    throw std::runtime_error("Room::spectate(): the user doesn't set");
-  }
+  const auto& player = sess->player();
 
-  uint32_t playerId = user->getId();
-  auto player = sess->player();
-  if (!player) {
-    const auto& it = m_players.find(playerId);
-    if (it != m_players.end()) {
-      player = it->second;
-    } else {
-      player = std::make_shared<Player>(m_executor, *this, m_config, playerId);
-      player->setName("Player " + std::to_string(user->getId()));
-      m_players.emplace(playerId, player);
-      recalculateFreeSpace();
-      sendPacketPlayer(*player);
-    }
-    player->addSession(sess);
-    sendPacketPlayerJoin(player->getId());
-  }
-
-  if (!player->isDead()) {
+  if (player && !player->isDead()) {
     return;
   }
 
@@ -342,7 +307,7 @@ void Room::doSpectate(const SessionPtr& sess, uint32_t targetId)
   } else if (!m_leaderboard.empty()) {
     target = m_leaderboard.at(0);
   }
-  if (m_fighters.find(target) == m_fighters.end()) {
+  if (!m_fighters.contains(target)) {
     return;
   }
   if (player == target || sess->observable() == target) {
@@ -697,9 +662,10 @@ PlayerPtr Room::createPlayer(uint32_t id, const std::string& name)
 {
   auto player = std::make_shared<Player>(m_executor, *this, m_config, id);
   player->setName(name);
-  player->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, player));
-  player->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, player));
-  player->subscribeToAnnihilation(this, std::bind_front(&Room::onPlayerAnnihilates, this, player));
+  auto weakPlayer = std::weak_ptr(player);
+  player->subscribeToRespawn(this, std::bind_front(&Room::onPlayerRespawn, this, weakPlayer));
+  player->subscribeToDeath(this, std::bind_front(&Room::onPlayerDeath, this, weakPlayer));
+  player->subscribeToAnnihilation(this, std::bind_front(&Room::onPlayerAnnihilates, this, weakPlayer));
   m_players.emplace(id, player);
   sendPacketPlayer(*player);
   recalculateFreeSpace();
@@ -885,8 +851,13 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
   send(buffer);
 }
 
-void Room::onPlayerRespawn(const PlayerPtr& player)
+void Room::onPlayerRespawn(const PlayerWPtr& weakPlayer)
 {
+  const auto& player = weakPlayer.lock();
+  if (!player) {
+    return;
+  }
+
   spdlog::debug("Room::onPlayerRespawn {}:{}", player->getId(), player->getName());
   m_leaderboard.emplace_back(player);
   m_updateLeaderboard = true;
@@ -894,9 +865,13 @@ void Room::onPlayerRespawn(const PlayerPtr& player)
   sendPacketPlayerBorn(player->getId());
 }
 
-void Room::onPlayerDeath(const PlayerPtr& player)
+void Room::onPlayerDeath(const PlayerWPtr& weakPlayer)
 {
-  spdlog::debug("Room::onPlayerDeath {}:{}", player->getId(), player->getName());
+  const auto& player = weakPlayer.lock();
+  if (!player) {
+    return;
+  }
+
   removeFromLeaderboard(player);
   m_fighters.erase(player);
   sendPacketPlayerDead(player->getId());
@@ -924,12 +899,14 @@ void Room::onPlayerDeath(const PlayerPtr& player)
   }
 }
 
-void Room::onPlayerAnnihilates(const PlayerPtr& player)
+void Room::onPlayerAnnihilates(const PlayerWPtr& weakPlayer)
 {
-  player->clearSessions();
+  const auto& player = weakPlayer.lock();
+  if (!player) {
+    return;
+  }
+
   m_players.erase(player->getId());
-  m_fighters.erase(player);
-  removeFromLeaderboard(player);
 }
 
 void Room::onAvatarDeath(Avatar* avatar)

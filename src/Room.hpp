@@ -38,7 +38,7 @@ public:
 
   bool hasFreeSpace() const;
 
-  void join(const SessionPtr& sess);
+  void join(const SessionPtr& sess, uint32_t playerId);
   void leave(const SessionPtr& sess);
   void play(const SessionPtr& sess, const std::string& name, uint8_t color);
   void spectate(const SessionPtr& sess, uint32_t targetId);
@@ -54,7 +54,7 @@ private:
   Vec2D getRandomDirection() const override;
   Gridmap& getGridmap() override;
 
-  void doJoin(const SessionPtr& sess);
+  void doJoin(const SessionPtr& sess, uint32_t playerId);
   void doLeave(const SessionPtr& sess);
   void doPlay(const SessionPtr& sess, const std::string& name, uint8_t color);
   void doSpectate(const SessionPtr& sess, uint32_t targetId);
@@ -106,9 +106,9 @@ private:
   void sendPacketPlayerBorn(uint32_t playerId);
   void sendPacketPlayerDead(uint32_t playerId);
 
-  void onPlayerRespawn(const PlayerPtr& player);
-  void onPlayerDeath(const PlayerPtr& player);
-  void onPlayerAnnihilates(const PlayerPtr& player);
+  void onPlayerRespawn(const PlayerWPtr& weakPlayer);
+  void onPlayerDeath(const PlayerWPtr& weakPlayer);
+  void onPlayerAnnihilates(const PlayerWPtr& weakPlayer);
   void onAvatarDeath(Avatar* avatar);
   void onFoodDeath(Food* food);
   void onBulletDeath(Bullet* bullet);

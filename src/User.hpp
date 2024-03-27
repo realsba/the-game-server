@@ -12,8 +12,6 @@
 #include <string>
 #include <mutex>
 
-class Room;
-
 class User {
 public:
   explicit User(uint32_t id);
@@ -25,9 +23,6 @@ public:
 
   SessionPtr getSession() const;
   void setSession(const SessionPtr& sess);
-
-  Room* getRoom() const;
-  void setRoom(Room* room);
 
   struct Touch {
     void operator ()(const UserPtr& obj) {
@@ -45,7 +40,6 @@ private:
   std::string         m_token;
   std::string         m_name;
   TimePoint           m_lastAccess {TimePoint::clock::now()};
-  Room*               m_room {nullptr};
   const uint32_t      m_id {0};
   bool                m_modified {true};
 

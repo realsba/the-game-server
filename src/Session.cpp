@@ -29,6 +29,17 @@ UserPtr UserData::user() const
   return m_user;
 }
 
+Room* UserData::room() const
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  return m_room;
+}
+
+uint32_t UserData::playerId() const
+{
+  return m_playerId;
+}
+
 PlayerPtr UserData::player() const
 {
   return m_player;
@@ -49,6 +60,17 @@ void UserData::user(const UserPtr& value)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   m_user = value;
+}
+
+void UserData::room(Room* value)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  m_room = value;
+}
+
+void UserData::playerId(uint32_t value)
+{
+  m_playerId = value;
 }
 
 void UserData::player(PlayerPtr value)

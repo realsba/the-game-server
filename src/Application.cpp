@@ -144,14 +144,13 @@ void Application::sessionCloseHandler(const SessionPtr& sess)
       ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
       mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
       uint32_t userId = 0;
-      const auto& user = sess->user();
-      if (user) {
+      if (const auto& user = sess->user()) {
         userId = user->getId();
-        auto* room = user->getRoom();
-        if (room) {
-          room->leave(sess);
-        }
         sess->user(nullptr);
+      }
+      if (auto* room = sess->room()) {
+        room->leave(sess);
+        sess->room(nullptr);
       }
       auto query = db->query("INSERT INTO `sessions` (userId,begin,end,ip) VALUES (%0,%1q,%2q,%3)");
       query.parse();
@@ -176,38 +175,38 @@ void Application::actionPing(const SessionPtr& sess, beast::flat_buffer& request
 
 void Application::actionGreeting(const SessionPtr& sess, beast::flat_buffer& request)
 {
-  const UserPtr& current = sess->user();
-  if (current) {
+  if (sess->user()) {
     return; // user already logged in
   }
 
-  const auto& buffer = std::make_shared<Buffer>();
+  Room* room = nullptr;
+
   auto sid = deserialize<std::string>(request);
   auto user = m_users.getUserByToken(sid);
   if (user) {
-    const auto& prevSession = user->getSession();
-    if (prevSession) {
-      auto* room = user->getRoom();
+    if (const auto& prevSession = user->getSession()) {
+      room = prevSession->room();
       if (room) {
         room->leave(prevSession);
       }
       prevSession->close();
     }
-    OutgoingPacket::serializeGreeting(*buffer, "");
   } else {
     user = m_users.create(sess->getRemoteEndpoint().address().to_v4().to_ulong());
-    OutgoingPacket::serializeGreeting(*buffer, user->getToken());
     ++m_registrations;
+    const auto& buffer = std::make_shared<Buffer>();
+    OutgoingPacket::serializeGreeting(*buffer, user->getToken());
+    sess->send(buffer);
   }
+
   user->setSession(sess);
   sess->user(user);
-  auto* room = user->getRoom();
+
   if (!room) {
     room = m_roomManager.obtain();
-    user->setRoom(room);
+    sess->room(room);
   }
-  sess->send(buffer);
-  room->join(sess);
+  room->join(sess, user->getId());
 }
 
 void Application::actionPlay(const SessionPtr& sess, beast::flat_buffer& request)
@@ -221,13 +220,10 @@ void Application::actionPlay(const SessionPtr& sess, beast::flat_buffer& request
   if (user) {
     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cv;
     const auto& wstr = cv.from_bytes(name);
-    if (wstr.empty()) {
-      name = "Player " + std::to_string(user->getId());
-    } else if (wstr.length() > NAME_MAX_LENGTH) {
+    if (wstr.length() > NAME_MAX_LENGTH) {
       name = cv.to_bytes(wstr.substr(0, NAME_MAX_LENGTH));
     }
-    auto* room = user->getRoom();
-    if (room) {
+    if (auto* room = sess->room()) {
       room->play(sess, name, color);
     }
   }
@@ -235,41 +231,29 @@ void Application::actionPlay(const SessionPtr& sess, beast::flat_buffer& request
 
 void Application::actionSpectate(const SessionPtr& sess, beast::flat_buffer& request)
 {
-  const UserPtr& user = sess->user();
   auto targetId = deserialize<uint32_t>(request);
-  if (user) {
-    auto* room = user->getRoom();
-    if (room) {
-      room->spectate(sess, targetId);
-    }
+  if (auto* room = sess->room()) {
+    room->spectate(sess, targetId);
   }
 }
 
 void Application::actionMove(const SessionPtr& sess, beast::flat_buffer& request)
 {
-  const UserPtr& user = sess->user();
   Vec2D point;
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
-  if (user) {
-    auto* room = user->getRoom();
-    if (room) {
-      room->move(sess, point);
-    }
+  if (auto* room = sess->room()) {
+    room->move(sess, point);
   }
 }
 
 void Application::actionEject(const SessionPtr& sess, beast::flat_buffer& request)
 {
-  const UserPtr& user = sess->user();
   Vec2D point;
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
-  if (user) {
-    auto* room = user->getRoom();
-    if (room) {
-      room->eject(sess, point);
-    }
+  if (auto* room = sess->room()) {
+    room->eject(sess, point);
   }
 }
 
@@ -279,43 +263,32 @@ void Application::actionSplit(const SessionPtr& sess, beast::flat_buffer& reques
   Vec2D point;
   point.x = deserialize<int16_t>(request);
   point.y = deserialize<int16_t>(request);
-  if (user) {
-    auto* room = user->getRoom();
-    if (room) {
-      room->split(sess, point);
-    }
+  if (auto* room = sess->room()) {
+    room->split(sess, point);
   }
 }
 
 void Application::actionWatch(const SessionPtr& sess, beast::flat_buffer& request)
 {
-  const UserPtr& user = sess->user();
   auto playerId = deserialize<uint32_t>(request);
-  if (user) {
-    auto* room = user->getRoom();
-    if (room) {
-      room->watch(sess, playerId);
-    }
+  if (auto* room = sess->room()) {
+    room->watch(sess, playerId);
   }
 }
 
 void Application::actionChatMessage(const SessionPtr& sess, beast::flat_buffer& request)
 {
-  const UserPtr& user = sess->user();
   auto text = deserialize<std::string>(request);
-  if (user) {
-    auto* room = user->getRoom();
-    if (room) {
-      std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cv;
-      const auto& wstr = cv.from_bytes(text);
-      if (wstr.empty()) {
-        return;
-      }
-      if (wstr.length() > 128) {
-        text = cv.to_bytes(wstr.substr(0, 128));
-      }
-      room->chatMessage(sess, text);
+  if (auto* room = sess->room()) {
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cv;
+    const auto& wstr = cv.from_bytes(text);
+    if (wstr.empty()) {
+      return;
     }
+    if (wstr.length() > 128) {
+      text = cv.to_bytes(wstr.substr(0, 128));
+    }
+    room->chatMessage(sess, text);
   }
 }
 
