@@ -4,23 +4,21 @@
 #ifndef THEGAME_PLAYER_HPP
 #define THEGAME_PLAYER_HPP
 
-#include "PlayerFwd.hpp"
-
-#include "geometry/Vec2D.hpp"
-#include "geometry/AABB.hpp"
-
-#include "IEntityFactory.hpp"
 #include "EventEmitter.hpp"
-#include "TimePoint.hpp"
 #include "Gridmap.hpp"
-
+#include "IEntityFactory.hpp"
+#include "PlayerFwd.hpp"
+#include "TimePoint.hpp"
 #include "types.hpp"
+
+#include "geometry/AABB.hpp"
+#include "geometry/Vec2D.hpp"
 
 #include <boost/asio/steady_timer.hpp>
 
 #include <string>
+#include <unordered_set>
 #include <vector>
-#include <set>
 
 namespace asio = boost::asio;
 
@@ -61,7 +59,7 @@ public:
   void setTargetPlayer(const PlayerPtr& player);
   void eject(const Vec2D& point);
   void split(const Vec2D& point);
-  void synchronize(const std::set<Cell*>& modified, const std::vector<uint32_t>& removed);
+  void synchronize(const std::unordered_set<Cell*>& modified, const std::vector<uint32_t>& removed);
   void wakeUp();
   void calcParams(); // TODO: optimize using
   void applyPointerForce();

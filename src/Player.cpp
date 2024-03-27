@@ -3,13 +3,13 @@
 
 #include "Player.hpp"
 
-#include "serialization.hpp"
 #include "OutgoingPacket.hpp"
-#include "Session.hpp"
 #include "Room.hpp"
+#include "Session.hpp"
+#include "serialization.hpp"
 
-#include "entity/Cell.hpp"
 #include "entity/Avatar.hpp"
+#include "entity/Cell.hpp"
 #include "geometry/geometry.hpp"
 
 #include <spdlog/spdlog.h>
@@ -226,7 +226,7 @@ void Player::split(const Vec2D& point)
   }
 }
 
-void Player::synchronize(const std::set<Cell*>& modified, const std::vector<uint32_t>& removed)
+void Player::synchronize(const std::unordered_set<Cell*>& modified, const std::vector<uint32_t>& removed)
 {
   AABB viewport(m_gridmap.clip(m_viewport));
   auto* leftTop = m_gridmap.getSector(viewport.a);
@@ -409,8 +409,6 @@ void Player::subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler)
 
 void Player::addAvatar(Avatar* avatar)
 {
-  spdlog::debug("Player::addAvatar {}", avatar->id);
-
   avatar->player = this;
   m_avatars.emplace(avatar);
   m_status.isAlive = true;
@@ -424,7 +422,6 @@ void Player::addAvatar(Avatar* avatar)
 
 void Player::removeAvatar(Avatar* avatar)
 {
-  spdlog::debug("Player::removeAvatar {}", avatar->id);
   m_avatars.erase(avatar);
   if (m_avatars.empty()) {
     m_status.isAlive = false;

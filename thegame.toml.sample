@@ -33,7 +33,7 @@ spawnPosTryCount = 10
 updateInterval = '20ms'
 syncInterval = '60ms'
 updateLeaderboardInterval = '1s'
-destroyOutdatedCellsInterval = '3s'
+checkExpirableCellsInterval = '3s'
 
 viewportBase = 743
 viewportBuffer = 0.1

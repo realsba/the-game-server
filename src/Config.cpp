@@ -277,7 +277,7 @@ struct from<config::Room>
     result.syncInterval = find<Duration>(v, "syncInterval");
 
     result.spawnPosTryCount             = find<uint32_t>(v, "spawnPosTryCount");
-    result.destroyOutdatedCellsInterval = find<Duration>(v, "destroyOutdatedCellsInterval");
+    result.checkExpirableCellsInterval  = find<Duration>(v, "checkExpirableCellsInterval");
 
     result.viewportBase         = find<uint32_t>(v, "viewportBase");
     result.viewportBuffer       = find<float>(v, "viewportBuffer");

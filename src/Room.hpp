@@ -9,18 +9,19 @@
 #include "IEntityFactory.hpp"
 
 #include "ChatMessage.hpp"
+#include "Config.hpp"
 #include "Gridmap.hpp"
 #include "NextId.hpp"
-#include "Config.hpp"
 #include "Timer.hpp"
 #include "types.hpp"
 
-#include <utility>
-#include <random>
-#include <vector>
 #include <list>
 #include <map>
+#include <random>
 #include <set>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace asio = boost::asio;
 
@@ -75,9 +76,8 @@ private:
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
   void removeCell(Cell* cell);
   void resolveCellPosition(Cell& cell);
-  void destroyOutdatedCells(); // TODO: move logic to target classes
+  void killExpiredCells(); // TODO: move logic to target classes
   void handlePlayerRequests();
-  void removeDeadAvatars();
   void update();
   void synchronize();
   void updateLeaderboard();
@@ -92,10 +92,10 @@ private:
   void generateViruses();
   void generatePhages();
   void generateMothers();
-  void generateFood(uint32_t count);
-  void generateViruses(uint32_t count);
-  void generatePhages(uint32_t count);
-  void generateMothers(uint32_t count);
+  void generateFood(int quantity);
+  void generateViruses(int quantity);
+  void generatePhages(int quantity);
+  void generateMothers(int quantity);
 
   void serialize(Buffer& buffer);
   void send(const BufferPtr& buffer);
@@ -131,7 +131,7 @@ private:
   Timer                       m_updateTimer;
   Timer                       m_syncTimer;
   Timer                       m_updateLeaderboardTimer;
-  Timer                       m_destroyOutdatedCellsTimer;
+  Timer                       m_checkExpirableCellsTimer;
   Timer                       m_updateNearbyFoodForMothersTimer;
   Timer                       m_generateFoodByMothersTimer;
   Timer                       m_foodGeneratorTimer;
@@ -150,20 +150,21 @@ private:
   RequestsMap                 m_ejectRequests;
   RequestsMap                 m_splitRequests;
   NextId                      m_cellNextId;
-  std::set<Avatar*>           m_avatarContainer;
-  std::set<Food*>             m_foodContainer;
-  std::set<Bullet*>           m_bulletContainer;
-  std::set<Virus*>            m_virusContainer;
-  std::set<Phage*>            m_phageContainer;
-  std::set<Mother*>           m_motherContainer;
-  std::vector<uint32_t>       m_removedCellIds;
+  std::unordered_set<Cell*>   m_cells;
+  std::unordered_set<Virus*>  m_viruses;
+  std::unordered_set<Phage*>  m_phages;
+  std::unordered_set<Mother*> m_mothers;
+  std::unordered_set<Cell*>   m_modifiedCells;
+  std::unordered_set<Cell*>   m_activatedCells;
+  std::unordered_set<Cell*>   m_processingCells;
+  std::unordered_set<Cell*>   m_forCheckRandomPos;
   std::vector<Cell*>          m_createdCells;
-  std::set<Cell*>             m_modifiedCells;
-  std::set<Cell*>             m_activatedCells;
-  std::set<Cell*>             m_processingCells;
-  std::set<Cell*>             m_forCheckRandomPos;
-  std::vector<Avatar*>        m_deadAvatars;
+  std::vector<Cell*>          m_deadCells;
   std::list<ChatMessage>      m_chatHistory;
+  int                         m_foodQuantity {0};
+  int                         m_virusesQuantity {0};
+  int                         m_phagesQuantity {0};
+  int                         m_mothersQuantity {0};
 
   TimePoint                   m_lastUpdate {TimePoint::clock::now()};
   double                      m_mass {0};

@@ -73,6 +73,7 @@ void Gridmap::insert(Cell* cell)
 {
   if (cell->materialPoint) {
     Sector* sector = getSector(cell->position);
+    assert(sector);
     if (sector) {
       sector->cells.insert(cell);
       cell->sectors.insert(sector);
@@ -87,6 +88,8 @@ void Gridmap::insert(Cell* cell)
   }
   cell->leftTopSector = getSector(aabb.a);
   cell->rightBottomSector = getSector(aabb.b);
+  assert(cell->leftTopSector);
+  assert(cell->rightBottomSector);
   uint32_t rowStart = static_cast<uint32_t>(aabb.a.y) >> m_power;
   uint32_t rowEnd = static_cast<uint32_t>(aabb.b.y) >> m_power;
   uint32_t colStart = static_cast<uint32_t>(aabb.a.x) >> m_power;
@@ -121,6 +124,7 @@ void Gridmap::update(Cell* cell)
   if (cell->materialPoint) {
     Sector* current = *cell->sectors.begin();
     Sector* sector = getSector(cell->position);
+    assert(sector);
     if (current != sector) {
       current->cells.erase(cell);
       cell->sectors.clear();
@@ -137,6 +141,8 @@ void Gridmap::update(Cell* cell)
   }
   Sector* leftTopSector = getSector(aabb.a);
   Sector* rightBottomSector = getSector(aabb.b);
+  assert(leftTopSector);
+  assert(rightBottomSector);
   if (cell->leftTopSector == leftTopSector && cell->rightBottomSector == rightBottomSector) {
     return;
   }

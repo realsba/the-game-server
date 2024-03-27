@@ -30,7 +30,7 @@ Room::Room(asio::any_io_executor executor, uint32_t id)
   , m_updateTimer(m_executor, [this] { update(); })
   , m_syncTimer(m_executor, [this] { synchronize(); })
   , m_updateLeaderboardTimer(m_executor, [this] { updateLeaderboard(); })
-  , m_destroyOutdatedCellsTimer(m_executor, [this] { destroyOutdatedCells(); })
+  , m_checkExpirableCellsTimer(m_executor, [this] { killExpiredCells(); })
   , m_updateNearbyFoodForMothersTimer(m_executor, [this] { updateNearbyFoodForMothers(); })
   , m_generateFoodByMothersTimer(m_executor, [this] { generateFoodByMothers(); })
   , m_foodGeneratorTimer(m_executor, [this] { generateFood(); })
@@ -43,23 +43,8 @@ Room::Room(asio::any_io_executor executor, uint32_t id)
 
 Room::~Room()
 {
-  for (auto* it : m_avatarContainer) {
-    delete it;
-  }
-  for (auto* it : m_foodContainer) {
-    delete it;
-  }
-  for (auto* it : m_bulletContainer) {
-    delete it;
-  }
-  for (auto* it : m_virusContainer) {
-    delete it;
-  }
-  for (auto* it : m_phageContainer) {
-    delete it;
-  }
-  for (auto* it : m_motherContainer) {
-    delete it;
+  for (auto* cell : m_cells) {
+    delete cell;
   }
 }
 
@@ -70,7 +55,7 @@ void Room::init(const config::Room& config)
   m_updateTimer.setInterval(m_config.updateInterval);
   m_syncTimer.setInterval(m_config.syncInterval);
   m_updateLeaderboardTimer.setInterval(m_config.leaderboard.updateInterval);
-  m_destroyOutdatedCellsTimer.setInterval(m_config.destroyOutdatedCellsInterval);
+  m_checkExpirableCellsTimer.setInterval(m_config.checkExpirableCellsInterval);
   m_updateNearbyFoodForMothersTimer.setInterval(m_config.mother.foodCheckInterval);
   m_generateFoodByMothersTimer.setInterval(m_config.mother.foodGenerationInterval);
   m_foodGeneratorTimer.setInterval(m_config.generator.food.interval);
@@ -93,7 +78,7 @@ void Room::start()
   m_updateTimer.start();
   m_syncTimer.start();
   m_updateLeaderboardTimer.start();
-  m_destroyOutdatedCellsTimer.start();
+  m_checkExpirableCellsTimer.start();
   m_updateNearbyFoodForMothersTimer.start();
   m_generateFoodByMothersTimer.start();
   if (m_config.generator.food.enabled) {
@@ -115,7 +100,7 @@ void Room::stop()
   m_updateTimer.stop();
   m_syncTimer.stop();
   m_updateLeaderboardTimer.stop();
-  m_destroyOutdatedCellsTimer.stop();
+  m_checkExpirableCellsTimer.stop();
   m_updateNearbyFoodForMothersTimer.stop();
   m_generateFoodByMothersTimer.stop();
   m_foodGeneratorTimer.stop();
@@ -375,7 +360,6 @@ Avatar& Room::createAvatar()
   avatar->subscribeToMassChange(this, std::bind(&Room::onAvatarMassChange, this, avatar, _1));
   avatar->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, avatar));
   avatar->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, avatar));
-  m_avatarContainer.insert(avatar);
   updateNewCellRegistries(avatar);
   return *avatar;
 }
@@ -385,8 +369,8 @@ Food& Room::createFood()
   auto* food = new Food(m_executor, *this, m_config, m_cellNextId.pop());
   food->subscribeToDeath(this, std::bind_front(&Room::onFoodDeath, this, food));
   food->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, food));
-  m_foodContainer.insert(food);
   updateNewCellRegistries(food, false);
+  ++m_foodQuantity;
   return *food;
 }
 
@@ -395,7 +379,6 @@ Bullet& Room::createBullet()
   auto* bullet = new Bullet(m_executor, *this, m_config, m_cellNextId.pop());
   bullet->subscribeToDeath(this, std::bind_front(&Room::onBulletDeath, this, bullet));
   bullet->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, bullet));
-  m_bulletContainer.insert(bullet);
   updateNewCellRegistries(bullet, false);
   return *bullet;
 }
@@ -407,8 +390,9 @@ Virus& Room::createVirus()
   virus->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, virus, _1));
   virus->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, virus));
   virus->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, virus));
-  m_virusContainer.insert(virus);
   updateNewCellRegistries(virus);
+  m_viruses.insert(virus);
+  ++m_virusesQuantity;
   return *virus;
 }
 
@@ -419,8 +403,9 @@ Phage& Room::createPhage()
   phage->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, phage, _1));
   phage->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, phage));
   phage->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, phage));
-  m_phageContainer.insert(phage);
   updateNewCellRegistries(phage);
+  m_phages.insert(phage);
+  ++m_phagesQuantity;
   return *phage;
 }
 
@@ -430,8 +415,9 @@ Mother& Room::createMother()
   mother->subscribeToDeath(this, std::bind_front(&Room::onMotherDeath, this, mother));
   mother->subscribeToMassChange(this, std::bind(&Room::onMotherMassChange, this, mother, _1));
   mother->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, mother));
-  m_motherContainer.insert(mother);
   updateNewCellRegistries(mother);
+  m_mothers.insert(mother);
+  ++m_mothersQuantity;
   return *mother;
 }
 
@@ -445,6 +431,7 @@ void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
   resolveCellPosition(*cell);
   m_gridmap.insert(cell);
 
+  m_cells.insert(cell);
   m_createdCells.push_back(cell);
   m_activatedCells.insert(cell);
   m_modifiedCells.insert(cell);
@@ -463,8 +450,8 @@ void Room::removeCell(Cell* cell)
   m_modifiedCells.erase(cell);
   m_activatedCells.erase(cell);
   m_gridmap.erase(cell);
-  m_removedCellIds.push_back(cell->id);
   m_cellNextId.push(cell->id);
+  m_cells.erase(cell);
   delete cell;
 }
 
@@ -501,7 +488,7 @@ void Room::resolveCellPosition(Cell& cell)
   }
 }
 
-void Room::destroyOutdatedCells()
+void Room::killExpiredCells()
 {
   auto currentTime = TimePoint::clock::now();
   TimePoint expirationTime;
@@ -509,20 +496,20 @@ void Room::destroyOutdatedCells()
   auto expired = [&](Cell* cell)
     {
       if (cell->created < expirationTime) {
-        removeCell(cell);
+        cell->kill();
         return true;
       };
       return false;
     };
 
   expirationTime = currentTime - m_config.virus.lifeTime;
-  std::erase_if(m_virusContainer, expired);
+  m_virusesQuantity -= static_cast<int>(std::erase_if(m_viruses, expired));
 
   expirationTime = currentTime - m_config.phage.lifeTime;
-  std::erase_if(m_phageContainer, expired);
+  m_phagesQuantity -= static_cast<int>(std::erase_if(m_phages, expired));
 
   expirationTime = currentTime - m_config.mother.lifeTime;
-  std::erase_if(m_motherContainer, expired);
+  m_mothersQuantity -= static_cast<int>(std::erase_if(m_mothers, expired));
 }
 
 void Room::handlePlayerRequests()
@@ -549,25 +536,12 @@ void Room::handlePlayerRequests()
   m_splitRequests.clear();
 }
 
-void Room::removeDeadAvatars()
-{
-  if (!m_deadAvatars.empty()) {
-    for (auto *avatar: m_deadAvatars) {
-      m_avatarContainer.erase(avatar);
-      removeCell(avatar);
-    }
-    m_updateLeaderboard = true;
-    m_deadAvatars.clear();
-  }
-}
-
 void Room::update()
 {
   auto now{TimePoint::clock::now()};
   double dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - m_lastUpdate).count();
   m_lastUpdate = now;
 
-  removeDeadAvatars();
   handlePlayerRequests();
 
   for (const auto& player : m_fighters) {
@@ -604,21 +578,29 @@ void Room::update()
 
 void Room::synchronize()
 {
+  std::vector<uint32_t> removedCellIds;
+  removedCellIds.reserve(m_deadCells.size());
+  for (auto* cell : m_deadCells) {
+    removedCellIds.push_back(cell->id);
+  }
+
   for (const auto& player : m_fighters) {
     player->calcParams();
-    player->synchronize(m_modifiedCells, m_removedCellIds);
+    player->synchronize(m_modifiedCells, removedCellIds);
   }
   m_modifiedCells.clear();
-  m_removedCellIds.clear();
 
   std::erase_if(m_fighters, [&](const auto& player) { return player->isDead(); });
 
-  if (!m_createdCells.empty()) {
-    for (auto* cell : m_createdCells) {
-      cell->newly = false;
-    }
-    m_createdCells.clear();
+  for (auto* cell : m_createdCells) {
+    cell->newly = false;
   }
+  m_createdCells.clear();
+
+  for (auto* cell : m_deadCells) {
+    removeCell(cell);
+  }
+  m_deadCells.clear();
 }
 
 void Room::updateLeaderboard()
@@ -643,15 +625,15 @@ void Room::removeFromLeaderboard(const PlayerPtr& player)
 
 void Room::updateNearbyFoodForMothers()
 {
-  for (auto* mother : m_motherContainer) {
+  for (auto* mother : m_mothers) {
     mother->calculateNearbyFood();
   }
 }
 
 void Room::generateFoodByMothers()
 {
-  for (auto* mother : m_motherContainer) {
-    if (m_mass >= m_config.maxMass || m_foodContainer.size() >= m_config.food.maxQuantity) {
+  for (auto* mother : m_mothers) {
+    if (m_mass >= m_config.maxMass || m_foodQuantity >= m_config.food.maxQuantity) {
       return;
     }
     mother->generateFood();
@@ -694,46 +676,46 @@ void Room::createBots()
 
 void Room::generateFood()
 {
-  if (m_mass >= m_config.maxMass || m_foodContainer.size() > m_config.food.maxQuantity) {
+  if (m_mass >= m_config.maxMass || m_foodQuantity > m_config.food.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.food.maxQuantity - m_foodContainer.size());
-  generateFood(std::min(m_config.generator.food.quantity, availableSpace));
+  auto quantity = m_config.food.maxQuantity - m_foodQuantity;
+  generateFood(std::min(m_config.generator.food.quantity, quantity));
 }
 
 void Room::generateViruses()
 {
-  if (m_mass >= m_config.maxMass || m_virusContainer.size() > m_config.virus.maxQuantity) {
+  if (m_mass >= m_config.maxMass || m_virusesQuantity > m_config.virus.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.virus.maxQuantity - m_virusContainer.size());
-  generateViruses(std::min(m_config.generator.virus.quantity, availableSpace));
+  auto quantity = m_config.virus.maxQuantity - m_virusesQuantity;
+  generateViruses(std::min(m_config.generator.virus.quantity, quantity));
 }
 
 void Room::generatePhages()
 {
-  if (m_mass >= m_config.maxMass || m_phageContainer.size() > m_config.phage.maxQuantity) {
+  if (m_mass >= m_config.maxMass || m_phagesQuantity > m_config.phage.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.phage.maxQuantity - m_phageContainer.size());
-  generatePhages(std::min(m_config.generator.phage.quantity, availableSpace));
+  auto quantity = m_config.phage.maxQuantity - m_phagesQuantity;
+  generatePhages(std::min(m_config.generator.phage.quantity, quantity));
 }
 
 void Room::generateMothers()
 {
-  if (m_mass >= m_config.maxMass || m_motherContainer.size() > m_config.mother.maxQuantity) {
+  if (m_mass >= m_config.maxMass || m_mothersQuantity > m_config.mother.maxQuantity) {
     return;
   }
-  auto availableSpace = static_cast<uint32_t>(m_config.mother.maxQuantity - m_motherContainer.size());
-  generateMothers(std::min(m_config.generator.mother.quantity, availableSpace));
+  auto quantity = static_cast<uint32_t>(m_config.mother.maxQuantity - m_mothersQuantity);
+  generateMothers(std::min(m_config.generator.mother.quantity, quantity));
 }
 
-void Room::generateFood(uint32_t count)
+void Room::generateFood(int quantity)
 {
   auto colorIndexDistribution = std::uniform_int_distribution<uint8_t>(
     m_config.food.minColorIndex, m_config.food.maxColorIndex
   );
-  for (; count > 0; --count) {
+  while (--quantity >= 0) {
     auto& obj = createFood();
     obj.position = getRandomPosition(obj.radius);
     obj.color = colorIndexDistribution(m_generator);
@@ -741,27 +723,27 @@ void Room::generateFood(uint32_t count)
   }
 }
 
-void Room::generateViruses(uint32_t count)
+void Room::generateViruses(int quantity)
 {
-  for (; count > 0; --count) {
+  while (--quantity >= 0) {
     auto& obj = createVirus();
     obj.modifyMass(m_config.virus.mass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
 
-void Room::generatePhages(uint32_t count)
+void Room::generatePhages(int quantity)
 {
-  for (; count > 0; --count) {
+  while (--quantity >= 0) {
     auto& obj = createPhage();
     obj.modifyMass(m_config.phage.mass);
     obj.position = getRandomPosition(obj.radius);
   }
 }
 
-void Room::generateMothers(uint32_t count)
+void Room::generateMothers(int quantity)
 {
-  for (; count > 0; --count) {
+  while (--quantity >= 0) {
     auto& obj = createMother();
     obj.modifyMass(m_config.mother.mass);
     obj.position = getRandomPosition(obj.radius);
@@ -858,7 +840,6 @@ void Room::onPlayerRespawn(const PlayerWPtr& weakPlayer)
     return;
   }
 
-  spdlog::debug("Room::onPlayerRespawn {}:{}", player->getId(), player->getName());
   m_leaderboard.emplace_back(player);
   m_updateLeaderboard = true;
   m_fighters.insert(player);
@@ -911,37 +892,33 @@ void Room::onPlayerAnnihilates(const PlayerWPtr& weakPlayer)
 
 void Room::onAvatarDeath(Avatar* avatar)
 {
-  m_deadAvatars.emplace_back(avatar);
+  m_deadCells.push_back(avatar);
 }
 
 void Room::onFoodDeath(Food* food)
 {
-  m_foodContainer.erase(food);
-  removeCell(food);
+  --m_foodQuantity;
+  m_deadCells.push_back(food);
 }
 
 void Room::onBulletDeath(Bullet* bullet)
 {
-  m_bulletContainer.erase(bullet);
-  removeCell(bullet);
+  m_deadCells.push_back(bullet);
 }
 
 void Room::onVirusDeath(Virus* virus)
 {
-  m_virusContainer.erase(virus);
-  removeCell(virus);
+  m_deadCells.push_back(virus);
 }
 
 void Room::onPhageDeath(Phage* phage)
 {
-  m_phageContainer.erase(phage);
-  removeCell(phage);
+  m_deadCells.push_back(phage);
 }
 
 void Room::onMotherDeath(Mother* mother)
 {
-  m_motherContainer.erase(mother);
-  removeCell(mother);
+  m_deadCells.push_back(mother);
 }
 
 void Room::onMotionStarted(Cell* cell)
