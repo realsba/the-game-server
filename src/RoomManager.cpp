@@ -10,44 +10,17 @@
 void RoomManager::start(const config::Room& config)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-
   m_config = config;
-
-  m_threads.reserve(m_config.numThreads);
-  for (uint i = 0; i < m_config.numThreads; ++i) {
-    m_threads.emplace_back(
-      [this]
-      {
-        spdlog::info("Start \"Room worker\"");
-        while (true) {
-          try {
-            m_ioContext.run();
-            break;
-          } catch (const std::exception& e) {
-            spdlog::error("Exception caught in RoomManager: {}", e.what());
-          }
-        }
-        spdlog::info("Stop \"Room worker\"");
-      }
-    );
-  }
+  m_ioThreadPool.start(config.numThreads);
 }
 
 void RoomManager::stop()
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-
   for (const auto& room : m_items) {
     room->stop();
   }
-  m_ioContext.stop();
-  for (auto& thread : m_threads) {
-    if (thread.joinable()) {
-      thread.join();
-    }
-  }
-  m_threads.clear();
-  m_ioContext.reset();
+  m_ioThreadPool.stop();
 }
 
 Room* RoomManager::obtain()

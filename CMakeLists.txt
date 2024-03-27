@@ -33,9 +33,9 @@ add_executable(${PROJECT_NAME}
     src/geometry/Circle.hpp
     src/geometry/Vec2D.cpp
     src/geometry/Vec2D.hpp
+    src/geometry/formatter.hpp
     src/geometry/geometry.cpp
     src/geometry/geometry.hpp
-    src/geometry/formatter.hpp
     src/Application.cpp
     src/Application.hpp
     src/AsioFormatter.hpp
@@ -50,6 +50,8 @@ add_executable(${PROJECT_NAME}
     src/HttpClient.cpp
     src/HttpClient.hpp
     src/IEntityFactory.hpp
+    src/IOThreadPool.cpp
+    src/IOThreadPool.hpp
     src/IncomingPacket.hpp
     src/Listener.cpp
     src/Listener.hpp

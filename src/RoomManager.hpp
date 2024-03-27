@@ -4,16 +4,16 @@
 #ifndef THEGAME_ROOM_MANAGER_HPP
 #define THEGAME_ROOM_MANAGER_HPP
 
-#include "Room.hpp"
 #include "Config.hpp"
+#include "IOThreadPool.hpp"
+#include "Room.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 
 #include <memory>
-#include <thread>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 class RoomManager {
 public:
@@ -30,7 +30,7 @@ private:
   mutable std::mutex          m_mutex;
   asio::io_context            m_ioContext;
   WorkGuard                   m_workGuard {m_ioContext.get_executor()};
-  std::vector<std::thread>    m_threads;
+  IOThreadPool                m_ioThreadPool {"Room worker", m_ioContext};
   config::Room                m_config;
   Items                       m_items;
   uint32_t                    m_nextId {1};

@@ -3,16 +3,16 @@
 
 #include "Application.hpp"
 
-#include "OutgoingPacket.hpp"
 #include "AsioFormatter.hpp"
 #include "HttpClient.hpp"
+#include "OutgoingPacket.hpp"
 #include "ScopeExit.hpp"
 #include "User.hpp"
 
 #include "serialization.hpp"
 
-#include <spdlog/spdlog.h>
 #include <fmt/chrono.h>
+#include <spdlog/spdlog.h>
 
 #include <codecvt>
 
@@ -47,27 +47,10 @@ void Application::start()
   }
 
   m_listener->start();
-  spdlog::info("Server started. address={}", m_config.server.address);
-
   m_roomManager.start(m_config.room);
+  m_ioThreadPool.start(m_config.server.numThreads);
 
-  for (uint i = 0; i < m_config.server.numThreads; ++i) {
-    m_threads.emplace_back(
-      [this]
-      {
-        spdlog::info("Start \"IO worker\"");
-        while (true) {
-          try {
-            m_ioContext.run();
-            break;
-          } catch (const std::exception& e) {
-            spdlog::error("Application error: {}", e.what());
-          }
-        }
-        spdlog::info("Stop \"IO worker\"");
-      }
-    );
-  }
+  spdlog::info("Server started. address={}", m_config.server.address);
 }
 
 void Application::stop()
@@ -77,15 +60,7 @@ void Application::stop()
   m_influxdb.close();
   m_listener->stop();
   m_statisticTimer.stop();
-
-  m_ioContext.stop();
-  for (auto& thread : m_threads) {
-    if (thread.joinable()) {
-      thread.join();
-    }
-  }
-  m_threads.clear();
-  m_ioContext.reset();
+  m_ioThreadPool.stop();
   m_roomManager.stop();
 
   spdlog::info("Server stopped");

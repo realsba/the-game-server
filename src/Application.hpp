@@ -4,27 +4,25 @@
 #ifndef THEGAME_APPLICATION_HPP
 #define THEGAME_APPLICATION_HPP
 
-#include "Config.hpp"
-
 #include "ListenerFwd.hpp"
 
-#include "MySQLConnectionPool.hpp"
+#include "Config.hpp"
+#include "IOThreadPool.hpp"
 #include "IncomingPacket.hpp"
-#include "RoomManager.hpp"
-#include "UsersCache.hpp"
 #include "Listener.hpp"
+#include "MySQLConnectionPool.hpp"
+#include "RoomManager.hpp"
 #include "Session.hpp"
 #include "Timer.hpp"
+#include "UsersCache.hpp"
 
-
-#include <boost/noncopyable.hpp>
 #include <boost/asio.hpp>
+#include <boost/noncopyable.hpp>
 
-#include <thread>
+#include <map>
 #include <mutex>
 #include <string>
-#include <vector>
-#include <map>
+#include <thread>
 
 using namespace std::placeholders;
 
@@ -77,6 +75,7 @@ private:
   Sessions                      m_sessions;
   UsersCache                    m_users {m_mysqlConnectionPool};
   RoomManager                   m_roomManager;
+  IOThreadPool                  m_ioThreadPool {"IO worker", m_ioContext};
   std::vector<std::thread>      m_threads;
   std::string                   m_configFileName;
   config::Config                m_config;
