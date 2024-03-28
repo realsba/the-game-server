@@ -27,7 +27,7 @@ namespace config {
 }
 
 class Avatar;
-using Avatars = std::set<Avatar*>;
+using Avatars = std::unordered_set<Avatar*>;
 
 class Player : public std::enable_shared_from_this<Player> {
 public:
@@ -45,7 +45,7 @@ public:
   [[nodiscard]] PlayerPtr getKiller() const;
   [[nodiscard]] bool isDead() const;
   [[nodiscard]] uint8_t getStatus() const;
-  [[nodiscard]] const Sessions& getSessions() const;
+  [[nodiscard]] const Sessions& getSessions() const; // TODO: check if it is really needed
 
   virtual void respawn();
 
@@ -81,6 +81,8 @@ protected:
   void startMotion();
 
 protected:
+  using VisibleIds = std::unordered_set<uint32_t>;
+
   struct Status {
     bool isOnline : 1 {false};
     bool isAlive : 1 {false};
@@ -101,7 +103,7 @@ protected:
   Sessions              m_sessions;
   SessionPtr            m_mainSession;
   Avatars               m_avatars;
-  std::set<uint32_t>    m_visibleIds;
+  VisibleIds            m_visibleIds;
   std::set<Sector*>     m_sectors;
   AABB                  m_viewport;
   AABB                  m_viewbox;

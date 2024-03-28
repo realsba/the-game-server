@@ -34,6 +34,7 @@ public:
 
   [[nodiscard]] AABB getAABB() const;
 
+  virtual void setMass(float value);
   virtual void modifyMass(float value);
   void modifyVelocity(const Vec2D& value);
 

@@ -35,7 +35,7 @@ void Bot::stop()
 void Bot::respawn()
 {
   Player::respawn();
-  m_mainAvatar->modifyMass(static_cast<float>(m_config.bot.mass) - m_mainAvatar->mass);
+  m_mainAvatar->setMass(static_cast<float>(m_config.bot.mass));
   m_target = nullptr;
 }
 

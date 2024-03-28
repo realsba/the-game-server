@@ -465,6 +465,7 @@ void Room::prepareCellForDestruction(Cell* cell)
 void Room::removeCell(Cell* cell)
 {
   m_mass -= cell->mass;
+  spdlog::debug("Room::removeCell: {}; mass={}, m_mass={}", cell->id, cell->mass, m_mass);
   m_cellNextId.push(cell->id);
   m_cells.erase(cell);
   delete cell;
@@ -956,6 +957,7 @@ void Room::onCellMassChange(Cell* cell, float deltaMass)
 {
   m_mass += deltaMass;
   m_modifiedCells.insert(cell);
+  spdlog::debug("Room::onCellMassChange: {}; deltaMass={}, m_mass={}", cell->id, deltaMass, m_mass);
 }
 
 void Room::onAvatarMassChange(Avatar* avatar, float deltaMass)

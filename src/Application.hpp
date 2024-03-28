@@ -19,7 +19,6 @@
 #include <boost/asio.hpp>
 #include <boost/noncopyable.hpp>
 
-#include <map>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -54,7 +53,7 @@ private:
 
 private:
   using MessageHandler = std::function<void(const SessionPtr& sess, beast::flat_buffer& ms)>;
-  using MessageHandlers = std::map<uint8_t, MessageHandler>;
+  using MessageHandlers = std::unordered_map<uint8_t, MessageHandler>;
 
   const MessageHandlers m_handlers {
     {IncomingPacket::Type::Ping,        std::bind(&Application::actionPing, this, _1, _2)},

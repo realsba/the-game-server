@@ -111,7 +111,7 @@ void Player::respawn()
   }
 
   auto& avatar = m_entityFactory.createAvatar();
-  avatar.modifyMass(m_config.player.mass);
+  avatar.setMass(m_config.player.mass);
   avatar.position = m_entityFactory.getRandomPosition(avatar.radius);
   avatar.color = m_color;
   addAvatar(&avatar);
@@ -248,8 +248,8 @@ void Player::synchronize(const std::unordered_set<Cell*>& modified, const std::v
     return;
   }
 
-  std::set<Cell*> syncCells;
-  std::set<uint32_t> removedIds;
+  std::unordered_set<Cell*> syncCells;
+  std::unordered_set<uint32_t> removedIds;
 
   if (sectorsChanged) {
     const auto& sectors = m_gridmap.getSectors(viewport);
@@ -461,6 +461,9 @@ void Player::scheduleDeflation()
   m_deflationTimer.expires_after(m_config.player.deflationThreshold);
   m_deflationTimer.async_wait([this](const boost::system::error_code &error) {
     if (!error) {
+      for (auto* avatar : m_avatars) {
+        avatar->setupDeflation();
+      }
       handleDeflation();
     }
   });

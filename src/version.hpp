@@ -5,6 +5,6 @@
 #define THEGAME_VERSION_HPP
 
 #define APP_NAME "TheGame daemon"
-#define APP_VERSION "0.8.0.1"
+#define APP_VERSION "0.8.2"
 
 #endif /* THEGAME_VERSION_HPP */

@@ -26,9 +26,9 @@ Avatar::Avatar(
   type = typeAvatar;
 }
 
-void Avatar::modifyMass(float value)
+void Avatar::setMass(float value)
 {
-  Cell::modifyMass(value);
+  Cell::setMass(value >= m_config.cellMinMass ? value : m_config.cellMinMass);
   m_maxVelocity = m_config.avatar.maxVelocity - m_config.avatarVelocityDiff *
     (radius - m_config.cellMinRadius) / (m_config.cellRadiusDiff);
 }
@@ -234,9 +234,14 @@ void Avatar::startRecombination()
   m_recombined = false;
 }
 
+void Avatar::setupDeflation()
+{
+  m_deflationMass = mass * m_config.player.deflationRatio;
+}
+
 void Avatar::deflate()
 {
-  modifyMass(-mass * m_config.player.deflationRatio);
+  modifyMass(-m_deflationMass);
 }
 
 void Avatar::annihilate()
@@ -250,7 +255,7 @@ void Avatar::annihilate()
 
 void Avatar::explode()
 {
-  const auto& avatars = player->getAvatars();
+  const auto& avatars = player->getAvatars(); // TODO: do not use it
   if (avatars.size() >= m_config.player.maxCells) {
     return;
   }

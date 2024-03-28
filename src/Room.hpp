@@ -16,7 +16,7 @@
 #include "types.hpp"
 
 #include <list>
-#include <map>
+#include <unordered_map>
 #include <random>
 #include <set>
 #include <unordered_set>
@@ -125,9 +125,10 @@ private:
   void onMotherMassChange(Mother* mother, float deltaMass);
 
 private:
-  using RequestsMap = std::map<SessionPtr, Vec2D>;
-  using Players = std::map<uint32_t, PlayerPtr>;
-  using Bots = std::set<std::shared_ptr<Bot>>;
+  using RequestsMap = std::unordered_map<SessionPtr, Vec2D>;
+  using Players = std::unordered_map<uint32_t, PlayerPtr>;
+  using Fighters = std::unordered_set<PlayerPtr>;
+  using Bots = std::unordered_set<std::shared_ptr<Bot>>;
 
   mutable std::random_device  m_generator;
   asio::any_io_executor       m_executor;
@@ -150,7 +151,7 @@ private:
   Gridmap                     m_gridmap;
   Sessions                    m_sessions;
   Players                     m_players;
-  std::set<PlayerPtr>         m_fighters;
+  Fighters                    m_fighters;
   std::vector<PlayerPtr>      m_leaderboard;
   Bots                        m_bots;
   RequestsMap                 m_moveRequests;

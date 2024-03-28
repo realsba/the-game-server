@@ -8,11 +8,9 @@
 
 class Avatar : public Cell {
 public:
-  using Avatars = std::vector<Avatar*>;
-
   Avatar(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
 
-  void modifyMass(float value) override;
+  void setMass(float value) override;
 
   void format(Buffer& buffer) override;
 
@@ -35,6 +33,7 @@ public:
   bool split(const Vec2D& point);
   void startRecombination();
 
+  void setupDeflation();
   void deflate();
   void annihilate();
   void explode();
@@ -46,6 +45,7 @@ private:
   TimePoint             m_fusionTime;
   float                 m_maxVelocity {0};
   mutable bool          m_recombined {false};
+  float                 m_deflationMass {0};
 };
 
 #endif /* THEGAME_ENTITY_AVATAR_HPP */

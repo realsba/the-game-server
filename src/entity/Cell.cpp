@@ -32,17 +32,19 @@ AABB Cell::getAABB() const
   return {position - delta, position + delta};
 }
 
-void Cell::modifyMass(float value)
+void Cell::setMass(float value)
 {
-  auto old = mass;
-  mass += value;
-  if (mass < MIN_MASS) {
-    mass = MIN_MASS;
-  }
+  auto previousMass = mass;
+  mass = value >= MIN_MASS ? value : MIN_MASS;
   if (!materialPoint) {
     radius = m_config.cellRadiusRatio * sqrt(mass / M_PI);
   }
-  m_massChangedEmitter.emit(mass - old);
+  m_massChangedEmitter.emit(mass - previousMass);
+}
+
+void Cell::modifyMass(float value)
+{
+  setMass(mass + value);
 }
 
 void Cell::modifyVelocity(const Vec2D& value)

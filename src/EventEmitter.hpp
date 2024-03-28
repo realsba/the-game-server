@@ -5,7 +5,7 @@
 #define THEGAME_EVENT_EMITTER_HPP
 
 #include <functional>
-#include <map>
+#include <unordered_map>
 
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/post.hpp>
@@ -46,8 +46,8 @@ public:
   }
 
 private:
-  const asio::any_io_executor&  m_executor;
-  std::map<void*, Handler>      m_subscribers;
+  const asio::any_io_executor& m_executor;
+  std::unordered_map<void*, Handler> m_subscribers;
 };
 
 #endif /* THEGAME_EVENT_EMITTER_HPP */
