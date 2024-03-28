@@ -18,10 +18,10 @@ Cell::Cell(
   : id(id)
   , m_config(config)
   , m_entityFactory(entityFactory)
-  , m_deathEmitter(executor)
-  , m_massChangedEmitter(executor)
-  , m_motionStartedEmitter(executor)
-  , m_motionStoppedEmitter(executor)
+  , m_deathEmitter(entityFactory.getDeathExecutor())
+  , m_massChangedEmitter(entityFactory.getGameExecutor())
+  , m_motionStartedEmitter(entityFactory.getGameExecutor())
+  , m_motionStoppedEmitter(entityFactory.getGameExecutor())
 {
   resistanceRatio = config.resistanceRatio;
 }

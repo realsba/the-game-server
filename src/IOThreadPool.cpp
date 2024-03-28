@@ -41,5 +41,5 @@ void IOThreadPool::stop()
     }
   }
   m_threads.clear();
-  m_ioContext.reset();
+  m_ioContext.restart();
 }

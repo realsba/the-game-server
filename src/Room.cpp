@@ -162,6 +162,74 @@ void Room::chatMessage(const SessionPtr& sess, const std::string& text)
   asio::post(m_executor, std::bind_front(&Room::doChatMessage, this, sess, text));
 }
 
+Avatar& Room::createAvatar()
+{
+  auto* avatar = new Avatar(m_executor, *this, m_config, m_cellNextId.pop());
+  avatar->subscribeToDeath(this, std::bind_front(&Room::onAvatarDeath, this, avatar));
+  avatar->subscribeToMassChange(this, std::bind(&Room::onAvatarMassChange, this, avatar, _1));
+  avatar->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, avatar));
+  avatar->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, avatar));
+  updateNewCellRegistries(avatar);
+  return *avatar;
+}
+
+Food& Room::createFood()
+{
+  auto* food = new Food(m_executor, *this, m_config, m_cellNextId.pop());
+  food->subscribeToDeath(this, std::bind_front(&Room::onFoodDeath, this, food));
+  food->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, food));
+  updateNewCellRegistries(food, false);
+  ++m_foodQuantity;
+  return *food;
+}
+
+Bullet& Room::createBullet()
+{
+  auto* bullet = new Bullet(m_executor, *this, m_config, m_cellNextId.pop());
+  bullet->subscribeToDeath(this, std::bind_front(&Room::onBulletDeath, this, bullet));
+  bullet->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, bullet));
+  updateNewCellRegistries(bullet, false);
+  return *bullet;
+}
+
+Virus& Room::createVirus()
+{
+  auto* virus = new Virus(m_executor, *this, m_config, m_cellNextId.pop());
+  virus->subscribeToDeath(this, std::bind_front(&Room::onVirusDeath, this, virus));
+  virus->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, virus, _1));
+  virus->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, virus));
+  virus->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, virus));
+  updateNewCellRegistries(virus);
+  m_viruses.insert(virus);
+  ++m_virusesQuantity;
+  return *virus;
+}
+
+Phage& Room::createPhage()
+{
+  auto* phage = new Phage(m_executor, *this, m_config, m_cellNextId.pop());
+  phage->subscribeToDeath(this, std::bind_front(&Room::onPhageDeath, this, phage));
+  phage->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, phage, _1));
+  phage->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, phage));
+  phage->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, phage));
+  updateNewCellRegistries(phage);
+  m_phages.insert(phage);
+  ++m_phagesQuantity;
+  return *phage;
+}
+
+Mother& Room::createMother()
+{
+  auto* mother = new Mother(m_executor, *this, m_config, m_cellNextId.pop());
+  mother->subscribeToDeath(this, std::bind_front(&Room::onMotherDeath, this, mother));
+  mother->subscribeToMassChange(this, std::bind(&Room::onMotherMassChange, this, mother, _1));
+  mother->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, mother));
+  updateNewCellRegistries(mother);
+  m_mothers.insert(mother);
+  ++m_mothersQuantity;
+  return *mother;
+}
+
 std::random_device& Room::randomGenerator()
 {
   return m_generator;
@@ -200,6 +268,16 @@ Vec2D Room::getRandomDirection() const
 Gridmap& Room::getGridmap()
 {
   return m_gridmap;
+}
+
+asio::any_io_executor& Room::getGameExecutor()
+{
+  return m_gameExecutor;
+}
+
+asio::any_io_executor& Room::getDeathExecutor()
+{
+  return m_deathExecutor;
 }
 
 void Room::doJoin(const SessionPtr& sess, uint32_t playerId)
@@ -353,74 +431,6 @@ void Room::doChatMessage(const SessionPtr& sess, const std::string& text)
   }
 }
 
-Avatar& Room::createAvatar()
-{
-  auto* avatar = new Avatar(m_executor, *this, m_config, m_cellNextId.pop());
-  avatar->subscribeToDeath(this, std::bind_front(&Room::onAvatarDeath, this, avatar));
-  avatar->subscribeToMassChange(this, std::bind(&Room::onAvatarMassChange, this, avatar, _1));
-  avatar->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, avatar));
-  avatar->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, avatar));
-  updateNewCellRegistries(avatar);
-  return *avatar;
-}
-
-Food& Room::createFood()
-{
-  auto* food = new Food(m_executor, *this, m_config, m_cellNextId.pop());
-  food->subscribeToDeath(this, std::bind_front(&Room::onFoodDeath, this, food));
-  food->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, food));
-  updateNewCellRegistries(food, false);
-  ++m_foodQuantity;
-  return *food;
-}
-
-Bullet& Room::createBullet()
-{
-  auto* bullet = new Bullet(m_executor, *this, m_config, m_cellNextId.pop());
-  bullet->subscribeToDeath(this, std::bind_front(&Room::onBulletDeath, this, bullet));
-  bullet->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, bullet));
-  updateNewCellRegistries(bullet, false);
-  return *bullet;
-}
-
-Virus& Room::createVirus()
-{
-  auto* virus = new Virus(m_executor, *this, m_config, m_cellNextId.pop());
-  virus->subscribeToDeath(this, std::bind_front(&Room::onVirusDeath, this, virus));
-  virus->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, virus, _1));
-  virus->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, virus));
-  virus->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, virus));
-  updateNewCellRegistries(virus);
-  m_viruses.insert(virus);
-  ++m_virusesQuantity;
-  return *virus;
-}
-
-Phage& Room::createPhage()
-{
-  auto* phage = new Phage(m_executor, *this, m_config, m_cellNextId.pop());
-  phage->subscribeToDeath(this, std::bind_front(&Room::onPhageDeath, this, phage));
-  phage->subscribeToMassChange(this, std::bind(&Room::onCellMassChange, this, phage, _1));
-  phage->subscribeToMotionStarted(this, std::bind_front(&Room::onMotionStarted, this, phage));
-  phage->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, phage));
-  updateNewCellRegistries(phage);
-  m_phages.insert(phage);
-  ++m_phagesQuantity;
-  return *phage;
-}
-
-Mother& Room::createMother()
-{
-  auto* mother = new Mother(m_executor, *this, m_config, m_cellNextId.pop());
-  mother->subscribeToDeath(this, std::bind_front(&Room::onMotherDeath, this, mother));
-  mother->subscribeToMassChange(this, std::bind(&Room::onMotherMassChange, this, mother, _1));
-  mother->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, mother));
-  updateNewCellRegistries(mother);
-  m_mothers.insert(mother);
-  ++m_mothersQuantity;
-  return *mother;
-}
-
 void Room::recalculateFreeSpace()
 {
   m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
@@ -432,7 +442,7 @@ void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
   m_gridmap.insert(cell);
 
   m_cells.insert(cell);
-  m_createdCells.push_back(cell);
+  m_createdCells.insert(cell);
   m_activatedCells.insert(cell);
   m_modifiedCells.insert(cell);
 
@@ -441,15 +451,20 @@ void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
   }
 }
 
-void Room::removeCell(Cell* cell)
+void Room::prepareCellForDestruction(Cell* cell)
 {
-  spdlog::debug("Room::removeCell {}", cell->id);
-  m_mass -= cell->mass;
-  m_forCheckRandomPos.erase(cell);
-  m_processingCells.erase(cell);
+  m_deadCells.push_back(cell);
   m_modifiedCells.erase(cell);
   m_activatedCells.erase(cell);
+  m_processingCells.erase(cell);
+  m_forCheckRandomPos.erase(cell);
+  m_createdCells.erase(cell);
   m_gridmap.erase(cell);
+}
+
+void Room::removeCell(Cell* cell)
+{
+  m_mass -= cell->mass;
   m_cellNextId.push(cell->id);
   m_cells.erase(cell);
   delete cell;
@@ -491,25 +506,18 @@ void Room::resolveCellPosition(Cell& cell)
 void Room::killExpiredCells()
 {
   auto currentTime = TimePoint::clock::now();
-  TimePoint expirationTime;
-
-  auto expired = [&](Cell* cell)
+  auto killExpired = [](auto& container, const TimePoint& expirationTime)
     {
-      if (cell->created < expirationTime) {
-        cell->kill();
-        return true;
-      };
-      return false;
+      for (auto* cell : container) {
+        if (cell->created < expirationTime) {
+          cell->kill();
+        };
+      }
     };
 
-  expirationTime = currentTime - m_config.virus.lifeTime;
-  m_virusesQuantity -= static_cast<int>(std::erase_if(m_viruses, expired));
-
-  expirationTime = currentTime - m_config.phage.lifeTime;
-  m_phagesQuantity -= static_cast<int>(std::erase_if(m_phages, expired));
-
-  expirationTime = currentTime - m_config.mother.lifeTime;
-  m_mothersQuantity -= static_cast<int>(std::erase_if(m_mothers, expired));
+  killExpired(m_viruses, currentTime - m_config.virus.lifeTime);
+  killExpired(m_phages, currentTime - m_config.phage.lifeTime);
+  killExpired(m_mothers, currentTime - m_config.mother.lifeTime);
 }
 
 void Room::handlePlayerRequests()
@@ -574,6 +582,11 @@ void Room::update()
       });
     }
   }
+
+  m_gameContext.run();
+  m_gameContext.restart();
+  m_deathContext.run();
+  m_deathContext.restart();
 }
 
 void Room::synchronize()
@@ -892,33 +905,39 @@ void Room::onPlayerAnnihilates(const PlayerWPtr& weakPlayer)
 
 void Room::onAvatarDeath(Avatar* avatar)
 {
-  m_deadCells.push_back(avatar);
+  prepareCellForDestruction(avatar);
 }
 
 void Room::onFoodDeath(Food* food)
 {
   --m_foodQuantity;
-  m_deadCells.push_back(food);
+  prepareCellForDestruction(food);
 }
 
 void Room::onBulletDeath(Bullet* bullet)
 {
-  m_deadCells.push_back(bullet);
+  prepareCellForDestruction(bullet);
 }
 
 void Room::onVirusDeath(Virus* virus)
 {
-  m_deadCells.push_back(virus);
+  --m_virusesQuantity;
+  prepareCellForDestruction(virus);
+  m_viruses.erase(virus);
 }
 
 void Room::onPhageDeath(Phage* phage)
 {
-  m_deadCells.push_back(phage);
+  --m_phagesQuantity;
+  prepareCellForDestruction(phage);
+  m_phages.erase(phage);
 }
 
 void Room::onMotherDeath(Mother* mother)
 {
-  m_deadCells.push_back(mother);
+  --m_mothersQuantity;
+  prepareCellForDestruction(mother);
+  m_mothers.erase(mother);
 }
 
 void Room::onMotionStarted(Cell* cell)

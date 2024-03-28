@@ -16,6 +16,12 @@ class Mother;
 class Vec2D;
 class Gridmap;
 
+namespace boost::asio {
+  class any_io_executor;
+}
+
+namespace asio = boost::asio;
+
 class IEntityFactory {
 public:
   virtual ~IEntityFactory() = default;
@@ -33,6 +39,9 @@ public:
   [[nodiscard]] virtual Vec2D getRandomDirection() const = 0;
 
   virtual Gridmap& getGridmap() = 0;
+
+  virtual asio::any_io_executor& getGameExecutor() = 0;
+  virtual asio::any_io_executor& getDeathExecutor() = 0;
 };
 
 #endif /* THEGAME_I_ENTITY_FACTORY_HPP */

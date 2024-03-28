@@ -23,6 +23,8 @@
 #include <utility>
 #include <vector>
 
+#include <boost/asio/strand.hpp>
+
 namespace asio = boost::asio;
 
 class Bot;
@@ -50,10 +52,18 @@ public:
   void chatMessage(const SessionPtr& sess, const std::string& text);
 
 private:
+  Avatar& createAvatar() override;
+  Food& createFood() override;
+  Bullet& createBullet() override;
+  Virus& createVirus() override;
+  Phage& createPhage() override;
+  Mother& createMother() override;
   std::random_device& randomGenerator() override;
   Vec2D getRandomPosition(double radius) const override;
   Vec2D getRandomDirection() const override;
   Gridmap& getGridmap() override;
+  asio::any_io_executor& getGameExecutor() override;
+  asio::any_io_executor& getDeathExecutor() override;
 
   void doJoin(const SessionPtr& sess, uint32_t playerId);
   void doLeave(const SessionPtr& sess);
@@ -65,15 +75,9 @@ private:
   void doWatch(const SessionPtr& sess, uint32_t playerId);
   void doChatMessage(const SessionPtr& sess, const std::string& text);
 
-  Avatar& createAvatar() override;
-  Food& createFood() override;
-  Bullet& createBullet() override;
-  Virus& createVirus() override;
-  Phage& createPhage() override;
-  Mother& createMother() override;
-
   void recalculateFreeSpace();
   void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
+  void prepareCellForDestruction(Cell* cell);
   void removeCell(Cell* cell);
   void resolveCellPosition(Cell& cell);
   void killExpiredCells(); // TODO: move logic to target classes
@@ -84,7 +88,6 @@ private:
   void removeFromLeaderboard(const PlayerPtr& player);
   void updateNearbyFoodForMothers();
   void generateFoodByMothers();
-
   PlayerPtr createPlayer(uint32_t id, const std::string& name);
   void createBots();
 
@@ -128,6 +131,10 @@ private:
 
   mutable std::random_device  m_generator;
   asio::any_io_executor       m_executor;
+  asio::io_context            m_gameContext;
+  asio::io_context            m_deathContext;
+  asio::any_io_executor       m_gameExecutor {asio::make_strand(m_gameContext)};
+  asio::any_io_executor       m_deathExecutor {asio::make_strand(m_deathContext)};
   Timer                       m_updateTimer;
   Timer                       m_syncTimer;
   Timer                       m_updateLeaderboardTimer;
@@ -158,7 +165,7 @@ private:
   std::unordered_set<Cell*>   m_activatedCells;
   std::unordered_set<Cell*>   m_processingCells;
   std::unordered_set<Cell*>   m_forCheckRandomPos;
-  std::vector<Cell*>          m_createdCells;
+  std::unordered_set<Cell*>   m_createdCells;
   std::vector<Cell*>          m_deadCells;
   std::list<ChatMessage>      m_chatHistory;
   int                         m_foodQuantity {0};
