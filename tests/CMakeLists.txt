@@ -1,4 +1,5 @@
 find_package(Catch2 3 REQUIRED)
+find_package(fmt REQUIRED)
 
 add_executable(tests
     ../src/geometry/AABB.cpp
@@ -6,6 +7,7 @@ add_executable(tests
     ../src/geometry/Circle.hpp
     ../src/geometry/Vec2D.cpp
     ../src/geometry/Vec2D.hpp
+    ../src/geometry/formatter.hpp
     ../src/geometry/geometry.cpp
     ../src/geometry/geometry.hpp
     geometry/Test_AABB.cpp
@@ -13,7 +15,7 @@ add_executable(tests
     geometry/Test_geometry.cpp
 )
 
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain fmt::fmt)
 
 #include(Catch)
 #catch_discover_tests(tests)

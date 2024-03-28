@@ -1,6 +1,6 @@
 # Clion IDE CMake build & config
 .idea/
-cmake-build-*/
+cmake-build*/
 logs/
 thegame
 thegame.toml

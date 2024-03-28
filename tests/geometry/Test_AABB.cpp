@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "../../src/geometry/AABB.hpp"
+#include "../../src/geometry/formatter.hpp"
 
 TEST_CASE("AABB: Default Constructor", "[AABB]")
 {
@@ -90,9 +91,7 @@ TEST_CASE("AABB: height", "[AABB]")
 
 TEST_CASE("AABB: operator<<", "[AABB]")
 {
-  std::stringstream ss;
   AABB aabb{{10, 20}, {30, 40}};
-  ss << aabb;
-  CHECK(ss.str() == "[(10, 20); (30, 40)]");
+  CHECK(fmt::format("{}", aabb) == "[(10, 20); (30, 40)]");
 }
 

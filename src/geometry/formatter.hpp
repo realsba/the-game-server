@@ -4,9 +4,9 @@
 #ifndef THEGAME_GEOMETRY_FORMATTER_HPP
 #define THEGAME_GEOMETRY_FORMATTER_HPP
 
-#include <fmt/core.h>
-
 #include "AABB.hpp"
+
+#include <fmt/core.h>
 
 // Provide a specializations for fmt::format
 namespace fmt {

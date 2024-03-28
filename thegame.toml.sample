@@ -11,6 +11,7 @@ port        = 3333
 numThreads  = 2
 
 [influxdb]
+enabled     = false
 host        = '127.0.0.1'
 port        = 8086
 path        = '/api/v2/write?org=YOUR_ORG&bucket=YOUR_BUCKET&precision=ns'
