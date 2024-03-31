@@ -4,7 +4,9 @@
 ![GitHub](https://img.shields.io/github/license/realsba/the-game-server)
 ![GitHub issues](https://img.shields.io/github/issues/realsba/the-game-server)
 
-This is the server component for the multiplayer game "The Game".
+This project serves as the server component for the multiplayer game "The Game" which interprets the concept of the
+popular online game agar.io. Players control cells on a virtual petri dish, aiming to accumulate as much mass as
+possible by consuming smaller cells and avoiding becoming prey for larger ones.
 
 ## Installation
 

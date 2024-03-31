@@ -4,6 +4,8 @@
 #ifndef THEGAME_I_ENTITY_FACTORY_HPP
 #define THEGAME_I_ENTITY_FACTORY_HPP
 
+#include "PlayerFwd.hpp"
+
 #include <cstdint>
 #include <random>
 
@@ -39,6 +41,8 @@ public:
   [[nodiscard]] virtual Vec2D getRandomDirection() const = 0;
 
   virtual Gridmap& getGridmap() = 0;
+
+  virtual PlayerPtr getTopPlayer() const = 0;
 
   virtual asio::any_io_executor& getGameExecutor() = 0;
   virtual asio::any_io_executor& getDeathExecutor() = 0;

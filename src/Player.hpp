@@ -42,10 +42,8 @@ public:
   [[nodiscard]] Vec2D getPosition() const;
   [[nodiscard]] const Avatars& getAvatars() const;
   [[nodiscard]] Avatar* findTheBiggestAvatar() const;
-  [[nodiscard]] PlayerPtr getKiller() const;
   [[nodiscard]] bool isDead() const;
   [[nodiscard]] uint8_t getStatus() const;
-  [[nodiscard]] const Sessions& getSessions() const; // TODO: check if it is really needed
 
   virtual void respawn();
 
@@ -64,6 +62,7 @@ public:
   void calcParams(); // TODO: optimize using
   void applyPointerForce();
   void recombine();
+  void setKiller(const PlayerPtr& killer);
 
   void subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handler);
   void subscribeToRespawn(void* tag, EventEmitter<>::Handler&& handler);
@@ -79,6 +78,7 @@ protected:
   void handleDeflation();
   void handleAnnihilation();
   void startMotion();
+  void onDeath();
 
 protected:
   using VisibleIds = std::unordered_set<uint32_t>;

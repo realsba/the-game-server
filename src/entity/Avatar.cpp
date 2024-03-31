@@ -81,6 +81,7 @@ void Avatar::interact(Avatar& other)
   }
   attacker->modifyMass(defender->mass);
   defender->kill();
+  defender->player->setKiller(attacker->player->shared_from_this());
 }
 
 void Avatar::interact(Food& food)

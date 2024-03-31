@@ -62,6 +62,7 @@ private:
   Vec2D getRandomPosition(double radius) const override;
   Vec2D getRandomDirection() const override;
   Gridmap& getGridmap() override;
+  PlayerPtr getTopPlayer() const override;
   asio::any_io_executor& getGameExecutor() override;
   asio::any_io_executor& getDeathExecutor() override;
 
@@ -138,7 +139,7 @@ private:
   asio::any_io_executor       m_deathExecutor {asio::make_strand(m_deathContext)};
   Timer                       m_updateTimer;
   Timer                       m_syncTimer;
-  Timer                       m_updateLeaderboardTimer;
+  Timer                       m_updateLeaderboardTimer; // TODO: use delayed call
   Timer                       m_checkExpirableCellsTimer;
   Timer                       m_updateNearbyFoodForMothersTimer;
   Timer                       m_generateFoodByMothersTimer;
@@ -169,6 +170,7 @@ private:
   std::unordered_set<Cell*>   m_createdCells;
   std::vector<Cell*>          m_deadCells;
   std::list<ChatMessage>      m_chatHistory;
+  PlayerWPtr                  m_topPlayer;
   int                         m_foodQuantity {0};
   int                         m_virusesQuantity {0};
   int                         m_phagesQuantity {0};

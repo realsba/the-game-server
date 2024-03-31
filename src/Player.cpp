@@ -81,11 +81,6 @@ Avatar* Player::findTheBiggestAvatar() const
   return *maxElementIt;
 }
 
-PlayerPtr Player::getKiller() const
-{
-  return m_killer.lock();
-}
-
 bool Player::isDead() const
 {
   return !m_status.isAlive;
@@ -97,11 +92,6 @@ uint8_t Player::getStatus() const
   status |= (m_status.isOnline ? 1 : 0) << 0;
   status |= (m_status.isAlive ? 1 : 0) << 1;
   return status;
-}
-
-const Sessions& Player::getSessions() const
-{
-  return m_sessions;
 }
 
 void Player::respawn()
@@ -392,6 +382,11 @@ void Player::recombine()
   }
 }
 
+void Player::setKiller(const PlayerPtr& killer)
+{
+  m_killer = killer;
+}
+
 void Player::subscribeToAnnihilation(void* tag, EventEmitter<>::Handler&& handler)
 {
   m_annihilationEmitter.subscribe(tag, std::move(handler));
@@ -424,16 +419,7 @@ void Player::removeAvatar(Avatar* avatar)
 {
   m_avatars.erase(avatar);
   if (m_avatars.empty()) {
-    m_status.isAlive = false;
-// TODO: implement
-//    if (killer) {
-//      if (m_killer) {
-//        m_killer->unsubscribeFromAnnihilation(this);
-//      }
-//      m_killer = killer;
-//      m_killer->subscribeToAnnihilation(this, [this] { m_killer = nullptr; });
-//    }
-    m_deathEmitter.emit();
+    onDeath();
   }
 }
 
@@ -508,6 +494,31 @@ void Player::startMotion()
   for (auto* avatar : m_avatars) {
     avatar->startMotion();
   }
+}
+
+void Player::onDeath()
+{
+  m_status.isAlive = false;
+  m_deathEmitter.emit();
+
+  auto observable = m_killer.lock();
+  if (!observable || observable->isDead()) {
+    observable = m_entityFactory.getTopPlayer();
+  }
+  const auto& buffer = std::make_shared<Buffer>();
+  if (!observable || observable->isDead()) {
+    OutgoingPacket::serializeFinish(*buffer);
+  } else {
+    OutgoingPacket::serializeSpectate(*buffer, *observable);
+    for (const auto& sess : m_sessions) {
+      observable->addSession(sess);
+      sess->observable(observable);
+    }
+  }
+  for (const auto& sess : m_sessions) {
+    sess->send(buffer);
+  }
+  clearSessions();
 }
 
 bool operator<(const Player& l, const Player& r)

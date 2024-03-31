@@ -270,6 +270,11 @@ Gridmap& Room::getGridmap()
   return m_gridmap;
 }
 
+PlayerPtr Room::getTopPlayer() const
+{
+  return m_topPlayer.lock();
+}
+
 asio::any_io_executor& Room::getGameExecutor()
 {
   return m_gameExecutor;
@@ -620,7 +625,12 @@ void Room::synchronize()
 void Room::updateLeaderboard()
 {
   if (m_updateLeaderboard) {
-    std::sort(m_leaderboard.begin(), m_leaderboard.end(), [](const auto& a, const auto& b) { return *b < *a; });
+    if (m_leaderboard.empty()) {
+      m_topPlayer.reset();
+    } else {
+      std::sort(m_leaderboard.begin(), m_leaderboard.end(), [](const auto& a, const auto& b) { return *b < *a; });
+      m_topPlayer = m_leaderboard[0];
+    }
     const auto& buffer = std::make_shared<Buffer>();
     OutgoingPacket::serializeLeaderboard(*buffer, m_leaderboard, m_config.leaderboard.limit);
     send(buffer);
@@ -849,59 +859,28 @@ void Room::sendPacketPlayerDead(uint32_t playerId)
 
 void Room::onPlayerRespawn(const PlayerWPtr& weakPlayer)
 {
-  const auto& player = weakPlayer.lock();
-  if (!player) {
-    return;
+  if (const auto& player = weakPlayer.lock()) {
+    m_leaderboard.emplace_back(player);
+    m_updateLeaderboard = true;
+    m_fighters.insert(player);
+    sendPacketPlayerBorn(player->getId());
   }
-
-  m_leaderboard.emplace_back(player);
-  m_updateLeaderboard = true;
-  m_fighters.insert(player);
-  sendPacketPlayerBorn(player->getId());
 }
 
 void Room::onPlayerDeath(const PlayerWPtr& weakPlayer)
 {
-  const auto& player = weakPlayer.lock();
-  if (!player) {
-    return;
-  }
-
-  removeFromLeaderboard(player);
-  m_fighters.erase(player);
-  sendPacketPlayerDead(player->getId());
-
-  const auto& sessions = player->getSessions();
-  if (!sessions.empty()) {
-    auto observable = player->getKiller();
-    if (!observable || observable->isDead()) {
-      observable = m_leaderboard.empty() ? nullptr : *m_leaderboard.begin();
-    }
-    const auto& buffer = std::make_shared<Buffer>();
-    if (!observable || observable->isDead()) {
-      OutgoingPacket::serializeFinish(*buffer);
-    } else {
-      OutgoingPacket::serializeSpectate(*buffer, *observable);
-      for (const auto& sess : sessions) {
-        observable->addSession(sess);
-        sess->observable(observable);
-      }
-    }
-    for (const auto& sess : sessions) {
-      sess->send(buffer);
-    }
-    player->clearSessions();
+  if (const auto& player = weakPlayer.lock()) {
+    removeFromLeaderboard(player);
+    m_fighters.erase(player);
+    sendPacketPlayerDead(player->getId());
   }
 }
 
 void Room::onPlayerAnnihilates(const PlayerWPtr& weakPlayer)
 {
-  const auto& player = weakPlayer.lock();
-  if (!player) {
-    return;
+  if (const auto& player = weakPlayer.lock()) {
+    m_players.erase(player->getId());
   }
-
-  m_players.erase(player->getId());
 }
 
 void Room::onAvatarDeath(Avatar* avatar)
