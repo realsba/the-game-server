@@ -1,12 +1,11 @@
 // file   : src/entity/Bullet.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#include "Bullet.hpp"
-
 #include "Avatar.hpp"
-#include "Virus.hpp"
-#include "Phage.hpp"
+#include "Bullet.hpp"
 #include "Mother.hpp"
+#include "Phage.hpp"
+#include "Virus.hpp"
 
 Bullet::Bullet(
   const asio::any_io_executor& executor,

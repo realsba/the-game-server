@@ -4,12 +4,11 @@
 #ifndef THEGAME_ENTITY_CELL_HPP
 #define THEGAME_ENTITY_CELL_HPP
 
-#include "src/IEntityFactory.hpp"
-
-#include "src/geometry/Circle.hpp"
-#include "src/TimePoint.hpp"
-#include "src/EventEmitter.hpp"
-#include "src/types.hpp"
+#include "../EventEmitter.hpp"
+#include "../IEntityFactory.hpp"
+#include "../TimePoint.hpp"
+#include "../geometry/Circle.hpp"
+#include "../types.hpp"
 
 #include <string>
 

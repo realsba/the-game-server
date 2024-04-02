@@ -4,7 +4,7 @@
 #ifndef THEGAME_PACKET_SERIALIZATION_HPP
 #define THEGAME_PACKET_SERIALIZATION_HPP
 
-#include "src/types.hpp"
+#include "types.hpp"
 
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/endian/conversion.hpp>

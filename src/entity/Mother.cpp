@@ -1,18 +1,17 @@
 // file   : src/entity/Mother.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#include "Mother.hpp"
-
 #include "Avatar.hpp"
-#include "Food.hpp"
 #include "Bullet.hpp"
-#include "Virus.hpp"
+#include "Food.hpp"
+#include "Mother.hpp"
 #include "Phage.hpp"
+#include "Virus.hpp"
 
-#include "src/geometry/geometry.hpp"
-#include "src/geometry/AABB.hpp"
-#include "src/Gridmap.hpp"
-#include "src/Config.hpp"
+#include "../Config.hpp"
+#include "../Gridmap.hpp"
+#include "../geometry/AABB.hpp"
+#include "../geometry/geometry.hpp"
 
 Mother::Mother(
   const asio::any_io_executor& executor,

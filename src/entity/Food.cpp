@@ -1,16 +1,15 @@
 // file   : src/entity/Food.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#include "Food.hpp"
-
 #include "Avatar.hpp"
 #include "Bullet.hpp"
-#include "Virus.hpp"
-#include "Phage.hpp"
+#include "Food.hpp"
 #include "Mother.hpp"
+#include "Phage.hpp"
+#include "Virus.hpp"
 
-#include "src/geometry/geometry.hpp"
-#include "src/Config.hpp"
+#include "../Config.hpp"
+#include "../geometry/geometry.hpp"
 
 Food::Food(
   const asio::any_io_executor& executor,

@@ -1,16 +1,15 @@
 // file   : src/entity/Virus.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
+#include "Avatar.hpp"
+#include "Bullet.hpp"
+#include "Food.hpp"
+#include "Mother.hpp"
+#include "Phage.hpp"
 #include "Virus.hpp"
 
-#include "Avatar.hpp"
-#include "Food.hpp"
-#include "Bullet.hpp"
-#include "Phage.hpp"
-#include "Mother.hpp"
-
-#include "src/geometry/geometry.hpp"
-#include "src/Config.hpp"
+#include "../Config.hpp"
+#include "../geometry/geometry.hpp"
 
 Virus::Virus(
   const asio::any_io_executor& executor,

@@ -2,17 +2,16 @@
 // author : sba <bohdan.sadovyak@gmail.com>
 
 #include "Avatar.hpp"
-
-#include "Food.hpp"
 #include "Bullet.hpp"
-#include "Virus.hpp"
-#include "Phage.hpp"
+#include "Food.hpp"
 #include "Mother.hpp"
+#include "Phage.hpp"
+#include "Virus.hpp"
 
-#include "src/geometry/geometry.hpp"
-#include "src/serialization.hpp"
-#include "src/Player.hpp"
-#include "src/Config.hpp"
+#include "../Config.hpp"
+#include "../Player.hpp"
+#include "../geometry/geometry.hpp"
+#include "../serialization.hpp"
 
 Avatar::Avatar(
   const asio::any_io_executor& executor,

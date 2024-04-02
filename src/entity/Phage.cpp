@@ -1,16 +1,15 @@
 // file   : src/entity/Phage.cpp
 // author : sba <bohdan.sadovyak@gmail.com>
 
-#include "Phage.hpp"
-
 #include "Avatar.hpp"
-#include "Food.hpp"
 #include "Bullet.hpp"
-#include "Virus.hpp"
+#include "Food.hpp"
 #include "Mother.hpp"
+#include "Phage.hpp"
+#include "Virus.hpp"
 
-#include "src/geometry/geometry.hpp"
-#include "src/Config.hpp"
+#include "../Config.hpp"
+#include "../geometry/geometry.hpp"
 
 Phage::Phage(
   const asio::any_io_executor& executor,

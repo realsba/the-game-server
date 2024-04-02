@@ -3,11 +3,10 @@
 
 #include "Cell.hpp"
 
-#include "src/geometry/geometry.hpp"
-#include "src/geometry/AABB.hpp"
-#include "src/Config.hpp"
-
-#include "src/serialization.hpp"
+#include "../Config.hpp"
+#include "../geometry/AABB.hpp"
+#include "../geometry/geometry.hpp"
+#include "../serialization.hpp"
 
 Cell::Cell(
   const asio::any_io_executor& executor,

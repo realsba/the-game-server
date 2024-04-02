@@ -33,7 +33,6 @@ spawnPosTryCount = 10
 
 updateInterval = '20ms'
 syncInterval = '60ms'
-updateLeaderboardInterval = '1s'
 checkExpirableCellsInterval = '3s'
 
 viewportBase = 743
@@ -45,7 +44,6 @@ height = 6144
 maxMass = 50000
 maxPlayers = 50
 maxRadius = 100
-leaderboardVisibleItems = 20
 scaleRatio = 0.75
 explodeVelocity = 500
 

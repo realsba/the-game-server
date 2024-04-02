@@ -100,7 +100,7 @@ void Player::respawn()
   avatar.position = m_entityFactory.getRandomPosition(avatar.radius);
   avatar.color = m_color;
   addAvatar(&avatar);
-  calcParams(); // TODO: do not use
+  calcParams();
   wakeUp();
 
   if (m_mainSession) {

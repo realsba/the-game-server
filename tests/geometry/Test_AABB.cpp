@@ -3,8 +3,6 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <sstream>
-
 #include "../../src/geometry/AABB.hpp"
 #include "../../src/geometry/formatter.hpp"
 
