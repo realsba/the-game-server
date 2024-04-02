@@ -16,9 +16,8 @@
 #include "types.hpp"
 
 #include <list>
-#include <unordered_map>
 #include <random>
-#include <set>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -52,6 +51,13 @@ public:
   void chatMessage(const SessionPtr& sess, const std::string& text);
 
 private:
+  enum RegistryModificationOptions {
+    None = 0,
+    ForRandomPositionCheck = 1,
+    Activated = 2,
+    All = ForRandomPositionCheck | Activated
+  };
+
   Avatar& createAvatar() override;
   Food& createFood() override;
   Bullet& createBullet() override;
@@ -77,7 +83,7 @@ private:
   void doChatMessage(const SessionPtr& sess, const std::string& text);
 
   void recalculateFreeSpace();
-  void updateNewCellRegistries(Cell* cell, bool checkRandomPos = true);
+  void updateNewCellRegistries(Cell* cell, RegistryModificationOptions options = RegistryModificationOptions::All);
   void prepareCellForDestruction(Cell* cell);
   void removeCell(Cell* cell);
   void resolveCellPosition(Cell& cell);
@@ -163,11 +169,12 @@ private:
   std::unordered_set<Virus*>  m_viruses;
   std::unordered_set<Phage*>  m_phages;
   std::unordered_set<Mother*> m_mothers;
-  std::unordered_set<Cell*>   m_modifiedCells;
-  std::unordered_set<Cell*>   m_activatedCells;
   std::unordered_set<Cell*>   m_processingCells;
-  std::unordered_set<Cell*>   m_forCheckRandomPos;
+  std::unordered_set<Cell*>   m_forRandomPositionCheck;
+  std::unordered_set<Cell*>   m_newCells;
   std::unordered_set<Cell*>   m_createdCells;
+  std::unordered_set<Cell*>   m_activatedCells;
+  std::unordered_set<Cell*>   m_modifiedCells;
   std::vector<Cell*>          m_deadCells;
   std::list<ChatMessage>      m_chatHistory;
   PlayerWPtr                  m_topPlayer;

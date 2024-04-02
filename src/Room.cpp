@@ -178,7 +178,7 @@ Food& Room::createFood()
   auto* food = new Food(m_executor, *this, m_config, m_cellNextId.pop());
   food->subscribeToDeath(this, std::bind_front(&Room::onFoodDeath, this, food));
   food->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, food));
-  updateNewCellRegistries(food, false);
+  updateNewCellRegistries(food, RegistryModificationOptions::None);
   ++m_foodQuantity;
   return *food;
 }
@@ -188,7 +188,7 @@ Bullet& Room::createBullet()
   auto* bullet = new Bullet(m_executor, *this, m_config, m_cellNextId.pop());
   bullet->subscribeToDeath(this, std::bind_front(&Room::onBulletDeath, this, bullet));
   bullet->subscribeToMotionStopped(this, std::bind_front(&Room::onMotionStopped, this, bullet));
-  updateNewCellRegistries(bullet, false);
+  updateNewCellRegistries(bullet, RegistryModificationOptions::Activated);
   return *bullet;
 }
 
@@ -245,7 +245,7 @@ Vec2D Room::getRandomPosition(double radius) const
     bool isIntersecting = false;
     circle.position.x = xDistribution(m_generator);
     circle.position.y = yDistribution(m_generator);
-    for (const auto& cell : m_forCheckRandomPos) {
+    for (const auto& cell : m_forRandomPositionCheck) {
       if (geometry::intersects(*cell, circle)) {
         isIntersecting = true;
         break;
@@ -441,36 +441,35 @@ void Room::recalculateFreeSpace()
   m_hasFreeSpace = m_players.size() < m_config.maxPlayers;
 }
 
-void Room::updateNewCellRegistries(Cell* cell, bool checkRandomPos)
+void Room::updateNewCellRegistries(Cell* cell, RegistryModificationOptions options)
 {
-  resolveCellPosition(*cell);
-  m_gridmap.insert(cell);
-
   m_cells.insert(cell);
+  m_newCells.insert(cell);
   m_createdCells.insert(cell);
-  m_activatedCells.insert(cell);
+  if (options & RegistryModificationOptions::Activated) {
+    m_activatedCells.insert(cell);
+  }
   m_modifiedCells.insert(cell);
-
-  if (checkRandomPos) {
-    m_forCheckRandomPos.insert(cell);
+  if (options & RegistryModificationOptions::ForRandomPositionCheck) {
+    m_forRandomPositionCheck.insert(cell);
   }
 }
 
 void Room::prepareCellForDestruction(Cell* cell)
 {
   m_deadCells.push_back(cell);
-  m_modifiedCells.erase(cell);
-  m_activatedCells.erase(cell);
   m_processingCells.erase(cell);
-  m_forCheckRandomPos.erase(cell);
+  m_forRandomPositionCheck.erase(cell);
+  m_newCells.erase(cell);
   m_createdCells.erase(cell);
+  m_activatedCells.erase(cell);
+  m_modifiedCells.erase(cell);
   m_gridmap.erase(cell);
 }
 
 void Room::removeCell(Cell* cell)
 {
   m_mass -= cell->mass;
-  //spdlog::debug("Room::removeCell: {}; mass={}, m_mass={}", cell->id, cell->mass, m_mass);
   m_cellNextId.push(cell->id);
   m_cells.erase(cell);
   delete cell;
@@ -563,6 +562,17 @@ void Room::update()
     player->recombine();
   }
 
+  if (!m_createdCells.empty()) {
+    for (auto* cell: m_createdCells) {
+      resolveCellPosition(*cell);
+      m_gridmap.insert(cell);
+      if (cell->velocity) {
+        m_processingCells.insert(cell);
+      }
+    }
+    m_createdCells.clear();
+  }
+
   if (!m_activatedCells.empty()) {
     m_processingCells.insert(m_activatedCells.begin(), m_activatedCells.end());
     m_activatedCells.clear();
@@ -611,10 +621,10 @@ void Room::synchronize()
 
   std::erase_if(m_fighters, [&](const auto& player) { return player->isDead(); });
 
-  for (auto* cell : m_createdCells) {
+  for (auto* cell : m_newCells) {
     cell->newly = false;
   }
-  m_createdCells.clear();
+  m_newCells.clear();
 
   for (auto* cell : m_deadCells) {
     removeCell(cell);
@@ -936,7 +946,6 @@ void Room::onCellMassChange(Cell* cell, float deltaMass)
 {
   m_mass += deltaMass;
   m_modifiedCells.insert(cell);
-  //spdlog::debug("Room::onCellMassChange: {}; deltaMass={}, m_mass={}", cell->id, deltaMass, m_mass);
 }
 
 void Room::onAvatarMassChange(Avatar* avatar, float deltaMass)
