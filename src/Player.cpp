@@ -63,11 +63,6 @@ Vec2D Player::getPosition() const
   return m_position;
 }
 
-const Avatars& Player::getAvatars() const
-{
-  return m_avatars;
-}
-
 Avatar* Player::findTheBiggestAvatar() const
 {
   if (m_avatars.empty()) {
@@ -206,13 +201,37 @@ void Player::split(const Vec2D& point)
   }
 
   size_t count = m_avatars.size();
+  std::vector<Avatar*> newAvatars;
   for (auto* avatar : m_avatars) {
-    if (count >= m_config.player.maxCells) {
+    if (count >= m_config.player.maxAvatars) {
       break;
     }
-    if (avatar->split(point)) {
-      ++count;
+
+    float mass = 0.5 * avatar->mass;
+    if (avatar->mass < m_config.avatar.splitMinMass || mass < m_config.cellMinMass) {
+      continue;
     }
+
+    auto& obj = m_entityFactory.createAvatar();
+    obj.color = m_color;
+    obj.position = avatar->position;
+    obj.velocity = avatar->velocity;
+    obj.modifyMass(mass);
+    avatar->modifyMass(-mass);
+    auto direction = point - avatar->position;
+    if (direction) {
+      direction.normalize();
+      obj.modifyVelocity(direction * m_config.avatar.splitVelocity);
+    }
+    avatar->startRecombination();
+    obj.startRecombination();
+
+    newAvatars.emplace_back(&obj);
+    ++count;
+  }
+
+  for (auto* avatar : newAvatars) {
+    addAvatar(avatar);
   }
 }
 
@@ -404,6 +423,7 @@ void Player::subscribeToDeath(void* tag, EventEmitter<>::Handler&& handler)
 
 void Player::addAvatar(Avatar* avatar)
 {
+  avatar->setExplosionCallback(std::bind_front(&Player::onAvatarExplode, this, avatar));
   avatar->player = this;
   m_avatars.emplace(avatar);
   m_status.isAlive = true;
@@ -411,7 +431,6 @@ void Player::addAvatar(Avatar* avatar)
   //TODO: implement params calculating mass && position
   // m_position = (m_position * (m_mass - newAvatar->mass) + newAvatar->position * newAvatar->mass) / m_mass;
 
-  avatar->subscribeToAvatarCreation(this, std::bind(&Player::addAvatar, this, std::placeholders::_1));
   avatar->subscribeToDeath(this, std::bind_front(&Player::removeAvatar, this, avatar));
 }
 
@@ -493,6 +512,32 @@ void Player::startMotion()
 {
   for (auto* avatar : m_avatars) {
     avatar->startMotion();
+  }
+}
+
+void Player::onAvatarExplode(Avatar* avatar)
+{
+  if (m_avatars.size() >= m_config.player.maxAvatars) {
+    return;
+  }
+  uint32_t availableParts = m_config.player.maxAvatars - m_avatars.size();
+  auto mass = std::max(
+    {static_cast<uint32_t>(0.125 * avatar->mass), m_config.avatar.explosionMinMass, m_config.cellMinMass}
+  );
+  auto parts = std::min({availableParts, static_cast<uint32_t>(avatar->mass) / mass, m_config.avatar.explosionParts});
+  for (auto i = 0; i < parts; ++i) {
+    auto& obj = m_entityFactory.createAvatar();
+    obj.modifyMass(mass);
+    const auto& direction = m_entityFactory.getRandomDirection();
+    obj.position = avatar->position + direction * (avatar->radius + obj.radius);
+    obj.color = m_color;
+    obj.modifyVelocity(direction * m_config.explodeVelocity);
+    obj.startRecombination();
+    addAvatar(&obj);
+  }
+  if (parts > 0) {
+    avatar->modifyMass(-static_cast<float>(mass * parts));
+    avatar->startRecombination();
   }
 }
 

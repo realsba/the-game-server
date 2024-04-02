@@ -43,7 +43,7 @@ struct Leaderboard {
 
 struct Player {
   uint32_t  mass {0};
-  uint32_t  maxCells {0};
+  uint32_t  maxAvatars {0};
   Duration  deflationThreshold;
   Duration  deflationInterval;
   float     deflationRatio {0};

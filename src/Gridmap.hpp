@@ -8,13 +8,14 @@
 
 #include <cstdint>
 #include <functional>
-#include <vector>
 #include <set>
+#include <unordered_set>
+#include <vector>
 
 class Cell;
 
 struct Sector {
-  std::set<Cell*> cells;
+  std::unordered_set<Cell*> cells;
   AABB box;
 };
 

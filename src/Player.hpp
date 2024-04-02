@@ -27,7 +27,6 @@ namespace config {
 }
 
 class Avatar;
-using Avatars = std::unordered_set<Avatar*>;
 
 class Player : public std::enable_shared_from_this<Player> {
 public:
@@ -40,7 +39,6 @@ public:
   [[nodiscard]] uint32_t getMaxMass() const;
   [[nodiscard]] const AABB& getViewBox() const;
   [[nodiscard]] Vec2D getPosition() const;
-  [[nodiscard]] const Avatars& getAvatars() const;
   [[nodiscard]] Avatar* findTheBiggestAvatar() const;
   [[nodiscard]] bool isDead() const;
   [[nodiscard]] uint8_t getStatus() const;
@@ -78,9 +76,11 @@ protected:
   void handleDeflation();
   void handleAnnihilation();
   void startMotion();
+  void onAvatarExplode(Avatar* avatar);
   void onDeath();
 
 protected:
+  using Avatars = std::unordered_set<Avatar*>;
   using VisibleIds = std::unordered_set<uint32_t>;
 
   struct Status {

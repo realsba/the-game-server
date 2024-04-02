@@ -63,7 +63,7 @@ updateInterval = '1s'
 
 [room.player]
 mass = 250
-maxCells = 16
+maxAvatars = 16
 deflationThreshold = '30s'
 deflationInterval = '500ms'
 deflationRatio = 0.1

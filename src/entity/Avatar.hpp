@@ -8,6 +8,8 @@
 
 class Avatar : public Cell {
 public:
+  using ExplosionCallback = std::function<void()>;
+
   Avatar(const asio::any_io_executor& executor, IEntityFactory& entityFactory, const config::Room& config, uint32_t id);
 
   void setMass(float value) override;
@@ -30,18 +32,16 @@ public:
   void applyPointAttractionForce(const Vec2D& point, float forceRatio);
 
   void eject(const Vec2D& point);
-  bool split(const Vec2D& point);
   void startRecombination();
 
   void setupDeflation();
   void deflate();
   void annihilate();
   void explode();
-
-  void subscribeToAvatarCreation(void* tag, EventEmitter<Avatar*>::Handler&& handler);
+  void setExplosionCallback(const ExplosionCallback& callback);
 
 private:
-  EventEmitter<Avatar*> m_avatarCreationEmitter;
+  ExplosionCallback     m_explosionCallback;
   TimePoint             m_fusionTime;
   float                 m_maxVelocity {0};
   mutable bool          m_recombined {false};

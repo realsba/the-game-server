@@ -21,7 +21,6 @@ Avatar::Avatar(
   uint32_t id
 )
   : Cell(executor, entityFactory, config, id)
-  , m_avatarCreationEmitter(executor)
 {
   type = typeAvatar;
 }
@@ -179,7 +178,7 @@ void Avatar::eject(const Vec2D& point)
   }
 
   float massLoss = m_config.avatar.ejectionMassLoss;
-  if (zombie || mass < m_config.avatar.ejectionMinMass || mass - massLoss < m_config.cellMinMass) {
+  if (mass < m_config.avatar.ejectionMinMass || mass - massLoss < m_config.cellMinMass) {
     return;
   }
 
@@ -196,37 +195,6 @@ void Avatar::eject(const Vec2D& point)
     obj.modifyVelocity(direction * m_config.avatar.ejectionVelocity);
     obj.position += direction * radius;
   }
-}
-
-bool Avatar::split(const Vec2D& point)
-{
-  if (zombie) {
-    return false;
-  }
-
-  float m = 0.5 * mass;
-  if (mass < m_config.avatar.splitMinMass || m < m_config.cellMinMass) {
-    return false;
-  }
-
-  auto& obj = m_entityFactory.createAvatar();
-  obj.color = color;
-  obj.position = position;
-  obj.velocity = velocity;
-  obj.player = player;
-  obj.modifyMass(m);
-  modifyMass(-m);
-  auto direction = point - position;
-  if (direction) {
-    direction.normalize();
-    obj.modifyVelocity(direction * m_config.avatar.splitVelocity);
-  }
-  startRecombination();
-  obj.startRecombination();
-
-  m_avatarCreationEmitter.emit(&obj);
-
-  return true;
 }
 
 void Avatar::startRecombination()
@@ -256,41 +224,12 @@ void Avatar::annihilate()
 
 void Avatar::explode()
 {
-  const auto& avatars = player->getAvatars(); // TODO: do not use it
-  if (avatars.size() >= m_config.player.maxCells) {
-    return;
-  }
-  float explodedMass = 0;
-  float minMass = std::max(m_config.avatar.explosionMinMass, m_config.cellMinMass);
-  for (auto n = m_config.avatar.explosionParts; n > 0; --n) {
-    float m = 0.125 * mass;
-    if (m < minMass) {
-      m = minMass;
-    }
-    if (explodedMass + m > mass) {
-      break;
-    }
-    explodedMass += m;
-    auto& obj = m_entityFactory.createAvatar();
-    obj.player = player;
-    obj.modifyMass(m);
-    const auto& direction = m_entityFactory.getRandomDirection();
-    obj.position = position + direction * (radius + obj.radius);
-    obj.color = color;
-    obj.modifyVelocity(direction * m_config.explodeVelocity);
-    obj.startRecombination();
-    m_avatarCreationEmitter.emit(&obj);
-    if (avatars.size() >= m_config.player.maxCells) {
-      break;
-    }
-  }
-  if (explodedMass) {
-    startRecombination();
-    modifyMass(-explodedMass);
+  if (m_explosionCallback) {
+    m_explosionCallback();
   }
 }
 
-void Avatar::subscribeToAvatarCreation(void* tag, EventEmitter<Avatar *>::Handler&& handler)
+void Avatar::setExplosionCallback(const ExplosionCallback& callback)
 {
-  m_avatarCreationEmitter.subscribe(tag, std::move(handler));
+  m_explosionCallback = callback;
 }

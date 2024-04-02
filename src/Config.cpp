@@ -117,7 +117,7 @@ struct from<config::Player>
     config::Player result{};
 
     result.mass                   = find<uint32_t>(v, "mass");
-    result.maxCells               = find<uint32_t>(v, "maxCells");
+    result.maxAvatars             = find<uint32_t>(v, "maxAvatars");
     result.deflationThreshold     = find<Duration>(v, "deflationThreshold");
     result.deflationInterval      = find<Duration>(v, "deflationInterval");
     result.deflationRatio         = find<float>(v, "deflationRatio");

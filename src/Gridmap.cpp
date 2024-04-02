@@ -3,10 +3,10 @@
 
 #include "Gridmap.hpp"
 
-#include "geometry/geometry.hpp"
 #include "entity/Cell.hpp"
-
 #include "geometry/formatter.hpp"
+#include "geometry/geometry.hpp"
+
 #include <spdlog/spdlog.h>
 
 void Gridmap::resize(uint32_t width, uint32_t height, uint8_t power)
