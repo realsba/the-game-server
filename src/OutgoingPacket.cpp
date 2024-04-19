@@ -11,12 +11,12 @@ namespace OutgoingPacket {
 
 void serializePong(Buffer& buffer)
 {
-  serialize(buffer, OutgoingPacket::Type::Pong);
+  serialize(buffer, Type::Pong);
 }
 
 void serializeGreeting(Buffer& buffer, const std::string& sid)
 {
-  serialize(buffer, OutgoingPacket::Type::Greeting);
+  serialize(buffer, Type::Greeting);
   serialize(buffer, sid);
 }
 
@@ -30,7 +30,7 @@ void serializeFrame(Buffer& buffer)
 
 void serializeLeaderboard(Buffer& buffer, const std::vector<PlayerPtr>& items, size_t limit)
 {
-  serialize(buffer, OutgoingPacket::Type::Leaderboard);
+  serialize(buffer, Type::Leaderboard);
   auto count = static_cast<uint8_t>(std::min(items.size(), limit));
   serialize(buffer, count);
   auto endIt = items.begin() + count;
@@ -43,44 +43,44 @@ void serializeLeaderboard(Buffer& buffer, const std::vector<PlayerPtr>& items, s
 
 void serializePlayer(Buffer& buffer, const Player& player)
 {
-  serialize(buffer, OutgoingPacket::Type::Player);
+  serialize(buffer, Type::Player);
   serialize(buffer, player.getId());
   serialize(buffer, player.getName());
 }
 
 void serializePlayerRemove(Buffer& buffer, uint32_t playerId)
 {
-  serialize(buffer, OutgoingPacket::Type::PlayerRemove);
+  serialize(buffer, Type::PlayerRemove);
   serialize(buffer, playerId);
 }
 
 void serializePlayerJoin(Buffer& buffer, uint32_t playerId)
 {
-  serialize(buffer, OutgoingPacket::Type::PlayerJoin);
+  serialize(buffer, Type::PlayerJoin);
   serialize(buffer, playerId);
 }
 
 void serializePlayerLeave(Buffer& buffer, uint32_t playerId)
 {
-  serialize(buffer, OutgoingPacket::Type::PlayerLeave);
+  serialize(buffer, Type::PlayerLeave);
   serialize(buffer, playerId);
 }
 
 void serializePlayerBorn(Buffer& buffer, uint32_t playerId)
 {
-  serialize(buffer, OutgoingPacket::Type::PlayerBorn);
+  serialize(buffer, Type::PlayerBorn);
   serialize(buffer, playerId);
 }
 
 void serializePlayerDead(Buffer& buffer, uint32_t playerId)
 {
-  serialize(buffer, OutgoingPacket::Type::PlayerDead);
+  serialize(buffer, Type::PlayerDead);
   serialize(buffer, playerId);
 }
 
 void serializePlay(Buffer& buffer, const Player& player)
 {
-  serialize(buffer, OutgoingPacket::Type::Play);
+  serialize(buffer, Type::Play);
   serialize(buffer, player.getId());
   const auto& position = player.getPosition();
   serialize(buffer, static_cast<uint16_t>(position.x));
@@ -90,7 +90,7 @@ void serializePlay(Buffer& buffer, const Player& player)
 
 void serializeSpectate(Buffer& buffer, const Player& player)
 {
-  serialize(buffer, OutgoingPacket::Type::Spectate);
+  serialize(buffer, Type::Spectate);
   serialize(buffer, player.getId());
   const auto& position = player.getPosition();
   serialize(buffer, static_cast<uint16_t>(position.x));
@@ -100,14 +100,20 @@ void serializeSpectate(Buffer& buffer, const Player& player)
 
 void serializeFinish(Buffer& buffer)
 {
-  serialize(buffer, OutgoingPacket::Type::Finish);
+  serialize(buffer, Type::Finish);
 }
 
 void serializeChatMessage(Buffer& buffer, uint32_t playerId, const std::string& text)
 {
-  serialize(buffer, OutgoingPacket::Type::ChatMessage);
+  serialize(buffer, Type::ChatMessage);
   serialize(buffer, playerId);
   serialize(buffer, text);
+}
+
+void serializeChangeTargetPlayer(Buffer& buffer, uint32_t playerId)
+{
+  serialize(buffer, Type::ChangeTargetPlayer);
+  serialize(buffer, playerId);
 }
 
 } // namespace OutgoingPacket

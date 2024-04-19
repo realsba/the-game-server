@@ -179,8 +179,13 @@ void Player::clearSessions()
 
 void Player::setTargetPlayer(const PlayerPtr& player)
 {
-  if (player.get() != this) {
+  if (player.get() != this && m_targetPlayer.lock() != player) {
     m_targetPlayer = player;
+    const auto& buffer = std::make_shared<Buffer>();
+    OutgoingPacket::serializeChangeTargetPlayer(*buffer, player->getId());
+    for (const auto& session : m_sessions) {
+      session->send(buffer);
+    }
   }
 }
 
@@ -294,31 +299,61 @@ void Player::synchronize(const std::unordered_set<Cell*>& modified, const std::v
     }
   }
 
+  enum Flags {
+    Scale = 1,
+    SyncCells = 2,
+    RemovedIds = 4,
+    DirectionToTargetPlayer = 8
+  };
+
+  uint8_t flags = Scale; // TODO: implement
+
+  if (!syncCells.empty()) {
+    flags |= SyncCells;
+  }
+
+  if (!removedIds.empty()) {
+    flags |= RemovedIds;
+  }
+
+  if (auto targetPlayer = m_targetPlayer.lock()) {
+    auto direction = targetPlayer->getPosition() - m_position;
+    auto angle = std::atan2(direction.y, direction.x) + M_PI;
+    auto encodedAngle = static_cast<uint8_t>(std::round(angle / (2 * M_PI) * 255));
+    if (m_directionToTargetPlayer != encodedAngle) {
+      m_directionToTargetPlayer = encodedAngle;
+      flags |= DirectionToTargetPlayer;
+    }
+  }
+
   const auto& buffer = std::make_shared<Buffer>();
   serialize(*buffer, OutgoingPacket::Type::Frame);
-  serialize(*buffer, m_scale);
-  serialize(*buffer, static_cast<uint16_t>(syncCells.size()));
-  for (Cell* cell : syncCells) {
-    cell->format(*buffer);
-    m_visibleIds.insert(cell->id);
+  serialize(*buffer, flags);
+  if (flags & Scale) {
+    serialize(*buffer, m_scale);
   }
-  serialize(*buffer, static_cast<uint16_t>(removedIds.size()));
-  for (auto id : removedIds) {
-    serialize(*buffer, id);
+  if (flags & SyncCells) {
+    serialize(*buffer, static_cast<uint16_t>(syncCells.size()));
+    for (Cell* cell: syncCells) {
+      cell->format(*buffer);
+      m_visibleIds.insert(cell->id);
+    }
+  }
+  if (flags & RemovedIds) {
+    serialize(*buffer, static_cast<uint16_t>(removedIds.size()));
+    for (auto id: removedIds) {
+      serialize(*buffer, id);
+    }
   }
   serialize(*buffer, static_cast<uint8_t>(m_avatars.size()));
   for (const Avatar* avatar : m_avatars) {
     serialize(*buffer, avatar->id);
     serialize(*buffer, avatar->getMaxVelocity());
   }
-  if (auto targetPlayer = m_targetPlayer.lock()) {
-    serialize(*buffer, targetPlayer->getId());
-    const auto& position = targetPlayer->getPosition();
-    serialize(*buffer, position.x);
-    serialize(*buffer, position.y);
-  } else {
-    serialize(*buffer, static_cast<uint32_t>(0));
+  if (flags & DirectionToTargetPlayer) {
+    serialize(*buffer, m_directionToTargetPlayer);
   }
+
   for (const auto& session : m_sessions) {
     session->send(buffer);
   }
@@ -560,9 +595,14 @@ void Player::onDeath()
       sess->observable(observable);
     }
   }
+
+  m_targetPlayer.reset();
+  OutgoingPacket::serializeChangeTargetPlayer(*buffer, 0);
+
   for (const auto& sess : m_sessions) {
     sess->send(buffer);
   }
+
   clearSessions();
 }
 

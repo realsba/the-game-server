@@ -117,6 +117,7 @@ protected:
   uint32_t              m_maxMass {0};
   float                 m_scale {0};
   uint8_t               m_color {0};
+  uint8_t               m_directionToTargetPlayer {0};
   Status                m_status;
 
   friend bool operator<(const Player& l, const Player& r);

@@ -26,6 +26,7 @@ enum class Type : uint8_t {
   Spectate = 13,
   Finish = 14,
   ChatMessage = 15,
+  ChangeTargetPlayer = 16,
 };
 
 void serializePong(Buffer& buffer);
@@ -43,6 +44,7 @@ void serializePlay(Buffer& buffer, const Player& player);
 void serializeSpectate(Buffer& buffer, const Player& player);
 void serializeFinish(Buffer& buffer);
 void serializeChatMessage(Buffer& buffer, uint32_t playerId, const std::string& text);
+void serializeChangeTargetPlayer(Buffer& buffer, uint32_t playerId);
 
 } // namespace OutgoingPacket
 
