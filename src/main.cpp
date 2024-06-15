@@ -3,8 +3,6 @@
 
 #include "Application.hpp"
 
-#include "version.hpp"
-
 #include <boost/asio.hpp>
 
 #include <fmt/chrono.h>
@@ -64,13 +62,15 @@ void sigUsr2Handler(const boost::system::error_code& ec, int signal)
 
 int main(int argc, char** argv)
 {
+  static const auto appName = "TheGame daemon";
+
   std::setlocale(LC_ALL, "");
 
   spdlog::cfg::load_env_levels();
   spdlog::cfg::load_argv_levels(argc, argv);
   spdlog::set_pattern("%Y-%m-%d %T.%f|%^%l%$|%t|%v");
 
-  spdlog::info("{} ({}) started", APP_NAME, APP_VERSION);
+  spdlog::info("{} ({}) started", appName, PROJECT_VERSION);
 
   try {
     application = std::make_unique<Application>("thegame.toml");
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
   application.reset();
 
-  spdlog::info("{} ({}) stopped", APP_NAME, APP_VERSION);
+  spdlog::info("{} ({}) stopped", appName, PROJECT_VERSION);
 
   return EXIT_SUCCESS;
 }

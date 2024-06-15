@@ -11,8 +11,8 @@
 class MySQLConnectionPool : public mysqlpp::ConnectionPool {
 public:
 	MySQLConnectionPool();
-	MySQLConnectionPool(const config::MySql& config);
-	~MySQLConnectionPool();
+	explicit MySQLConnectionPool(const config::MySql& config);
+	~MySQLConnectionPool() final;
 
   void init(const config::MySql& config);
   size_t size() const;

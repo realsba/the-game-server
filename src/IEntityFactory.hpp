@@ -6,7 +6,6 @@
 
 #include "PlayerFwd.hpp"
 
-#include <cstdint>
 #include <random>
 
 class Avatar;
@@ -35,14 +34,14 @@ public:
   virtual Phage& createPhage() = 0;
   virtual Mother& createMother() = 0;
 
-  virtual std::random_device& randomGenerator() = 0;
+  [[nodiscard]] virtual std::random_device& randomGenerator() = 0;
 
   [[nodiscard]] virtual Vec2D getRandomPosition(double radius) const = 0;
   [[nodiscard]] virtual Vec2D getRandomDirection() const = 0;
 
-  virtual Gridmap& getGridmap() = 0;
+  [[nodiscard]] virtual Gridmap& getGridmap() = 0;
 
-  virtual PlayerPtr getTopPlayer() const = 0;
+  [[nodiscard]] virtual PlayerPtr getTopPlayer() const = 0;
 
   virtual asio::any_io_executor& getGameExecutor() = 0;
   virtual asio::any_io_executor& getDeathExecutor() = 0;

@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(thegame LANGUAGES CXX)
+project(thegame VERSION 0.8.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 
 add_compile_definitions(
     MYSQLPP_MYSQL_HEADERS_BURIED
+    PROJECT_VERSION="${PROJECT_VERSION}"
 )
 
 find_package(Boost REQUIRED COMPONENTS headers)
@@ -89,7 +90,6 @@ set(HEADER_FILES
     src/serialization.hpp
     src/types.hpp
     src/util.hpp
-    src/version.hpp
 )
 
 add_executable(${PROJECT_NAME}

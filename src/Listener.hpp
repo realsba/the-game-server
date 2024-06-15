@@ -29,7 +29,6 @@ private:
   void doAccept();
   void onAccept(beast::error_code ec, tcp::socket socket);
 
-private:
   mutable asio::io_context::strand      m_strand;
   asio::io_context&                     m_ioContext;
   tcp::endpoint                         m_endpoint;

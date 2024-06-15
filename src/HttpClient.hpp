@@ -7,12 +7,9 @@
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
 #include <boost/asio/strand.hpp>
 
 #include <cstdlib>
-#include <functional>
-#include <iostream>
 #include <memory>
 #include <string>
 
@@ -36,7 +33,6 @@ private:
   void onWrite(const beast::error_code& ec, std::size_t bytesTransferred);
   void onRead(const beast::error_code& ec, std::size_t bytesTransferred);
 
-private:
   tcp::resolver m_resolver;
   beast::tcp_stream m_stream;
   beast::flat_buffer m_buffer;

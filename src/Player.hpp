@@ -8,7 +8,6 @@
 #include "Gridmap.hpp"
 #include "IEntityFactory.hpp"
 #include "PlayerFwd.hpp"
-#include "TimePoint.hpp"
 #include "types.hpp"
 
 #include "geometry/AABB.hpp"
@@ -79,7 +78,6 @@ protected:
   void onAvatarExplode(Avatar* avatar);
   void onDeath();
 
-protected:
   using Avatars = std::unordered_set<Avatar*>;
   using VisibleIds = std::unordered_set<uint32_t>;
 

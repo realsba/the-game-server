@@ -69,8 +69,8 @@ Avatar* Player::findTheBiggestAvatar() const
     return nullptr;
   }
 
-  auto maxElementIt = std::max_element(
-    m_avatars.begin(), m_avatars.end(), [](const Cell* a, const Cell* b) { return a->mass < b->mass; }
+  auto maxElementIt = std::ranges::max_element(
+    m_avatars, [] (const Cell* a, const Cell* b) { return a->mass < b->mass; }
   );
 
   return *maxElementIt;
@@ -223,8 +223,7 @@ void Player::split(const Vec2D& point)
     obj.velocity = avatar->velocity;
     obj.modifyMass(mass);
     avatar->modifyMass(-mass);
-    auto direction = point - avatar->position;
-    if (direction) {
+    if (auto direction = point - avatar->position) {
       direction.normalize();
       obj.modifyVelocity(direction * m_config.avatar.splitVelocity);
     }

@@ -35,7 +35,7 @@ public:
   void info();
 
 private:
-  void sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer);
+  void sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer) const;
   void sessionOpenHandler(const SessionPtr& sess);
   void sessionCloseHandler(const SessionPtr& sess);
 

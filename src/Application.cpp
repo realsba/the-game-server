@@ -35,7 +35,7 @@ Application::Application(std::string configFileName)
 
 void Application::start()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
 
   m_config.load(m_configFileName);
 
@@ -55,7 +55,7 @@ void Application::start()
 
 void Application::stop()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
 
   m_influxdb.close();
   m_listener->stop();
@@ -77,13 +77,13 @@ void Application::save()
 
 void Application::info()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   spdlog::info("Websocket sessions: {}", m_sessions.size());
   spdlog::info("MySQL connections: {}", m_mysqlConnectionPool.size());
   spdlog::info("Rooms: {}", m_roomManager.size());
 }
 
-void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer)
+void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buffer& buffer) const
 {
   while (buffer.size()) {
     auto type = deserialize<uint8_t>(buffer);
@@ -105,18 +105,18 @@ void Application::sessionMessageHandler(const SessionPtr& sess, beast::flat_buff
 
 void Application::sessionOpenHandler(const SessionPtr& sess)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   m_sessions.emplace(sess);
   m_maxSessions = std::max(m_maxSessions, m_sessions.size());
 }
 
 void Application::sessionCloseHandler(const SessionPtr& sess)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   if (m_sessions.erase(sess)) {
     try {
       mysqlpp::Connection::thread_start();
-      ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
+      ScopeExit onExit([] { mysqlpp::Connection::thread_end(); });
       mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
       uint32_t userId = 0;
       if (const auto& user = sess->user()) {
@@ -186,7 +186,7 @@ void Application::actionGreeting(const SessionPtr& sess, beast::flat_buffer& req
 
 void Application::actionPlay(const SessionPtr& sess, beast::flat_buffer& request)
 {
-  static const uint NAME_MAX_LENGTH = 16;
+  static constexpr uint NAME_MAX_LENGTH = 16;
 
   const UserPtr& user = sess->user();
 
@@ -194,8 +194,7 @@ void Application::actionPlay(const SessionPtr& sess, beast::flat_buffer& request
   auto color = deserialize<uint8_t>(request);
   if (user) {
     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cv;
-    const auto& wstr = cv.from_bytes(name);
-    if (wstr.length() > NAME_MAX_LENGTH) {
+    if (const auto& wstr = cv.from_bytes(name); wstr.length() > NAME_MAX_LENGTH) {
       name = cv.to_bytes(wstr.substr(0, NAME_MAX_LENGTH));
     }
     if (auto* room = sess->room()) {
@@ -269,7 +268,7 @@ void Application::actionChatMessage(const SessionPtr& sess, beast::flat_buffer& 
 
 void Application::statistic()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
 
   std::stringstream ss;
   if (m_maxSessions > 0) {

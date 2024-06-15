@@ -7,7 +7,6 @@
 #include "UserFwd.hpp"
 #include "SessionFwd.hpp"
 #include "TimePoint.hpp"
-#include "types.hpp"
 
 #include <string>
 #include <mutex>
@@ -25,7 +24,8 @@ public:
   void setSession(const SessionPtr& sess);
 
   struct Touch {
-    void operator ()(const UserPtr& obj) {
+    void operator ()(const UserPtr& obj) const
+    {
       obj->setLastAccess(TimePoint::clock::now());
     }
   };
@@ -34,7 +34,6 @@ private:
   void setToken(const std::string& v);
   void setLastAccess(const TimePoint& v);
 
-private:
   mutable std::mutex  m_mutex;
   SessionPtr          m_session;
   std::string         m_token;

@@ -12,12 +12,12 @@
 namespace fmt {
 
 template <>
-struct formatter<boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>> {
+struct formatter<asio::ip::basic_endpoint<asio::ip::tcp>> {
   template <typename ParseContext>
   constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
   template <typename FormatContext>
-  auto format(const boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>& ep, FormatContext& ctx)
+  auto format(const asio::ip::basic_endpoint<asio::ip::tcp>& ep, FormatContext& ctx)
   {
     return fmt::format_to(ctx.out(), "{}:{}", ep.address().to_string(), ep.port());
   }

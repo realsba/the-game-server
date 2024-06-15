@@ -5,12 +5,11 @@
 
 #include <chrono>
 #include <algorithm>
-#include <sstream>
 #include <random>
 
 std::string randomString(size_t length)
 {
-  const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  constexpr char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
   std::random_device generator;
   std::uniform_int_distribution<uint> distribution(0, sizeof(charset) - 2);
   auto randchar = [&]() -> char

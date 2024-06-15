@@ -51,7 +51,6 @@ protected:
     >
   >;
 
-protected:
   MySQLConnectionPool&          m_mysqlConnectionPool;
   mutable std::mutex            m_mutex;
   Items                         m_items;

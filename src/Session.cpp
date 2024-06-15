@@ -19,19 +19,19 @@ SystemTimePoint UserData::created() const
 
 TimePoint UserData::lastActivity() const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   return m_lastActivity;
 }
 
 UserPtr UserData::user() const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   return m_user;
 }
 
 Room* UserData::room() const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   return m_room;
 }
 
@@ -52,19 +52,19 @@ PlayerPtr UserData::observable() const
 
 void UserData::lastActivity(const TimePoint& value)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   m_lastActivity = value;
 }
 
 void UserData::user(const UserPtr& value)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   m_user = value;
 }
 
 void UserData::room(Room* value)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   m_room = value;
 }
 

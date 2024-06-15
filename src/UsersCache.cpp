@@ -29,7 +29,7 @@ UsersCache::UsersCache(MySQLConnectionPool& pool)
 
 void UsersCache::save()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   if (m_items.empty()) {
     return;
   }
@@ -37,8 +37,9 @@ void UsersCache::save()
   ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
   mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
   auto query = db->query();
-  DboUser orig, dbo;
+  DboUser dbo;
   for (const UserPtr& item : m_items) {
+    DboUser orig;
     orig.id = item->getId();
     dbo.id = orig.id;
     dbo.token = item->getToken();
@@ -49,13 +50,13 @@ void UsersCache::save()
 
 UserPtr UsersCache::create(uint32_t ip)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   auto& ind = m_items.get<ByToken>();
   DboUserCreate dbo;
   dbo.created = mysqlpp::String(fmt::to_string(std::chrono::system_clock::now()));
   uint32_t id = 0;
   mysqlpp::Connection::thread_start();
-  ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
+  ScopeExit onExit([] { mysqlpp::Connection::thread_end(); });
   mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
   do {
     dbo.token = randomString(32);
@@ -79,14 +80,14 @@ UserPtr UsersCache::create(uint32_t ip)
 
 UserPtr UsersCache::getUserById(uint32_t id)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   const auto& it = m_items.find(id);
   if (it != m_items.end()) {
     m_items.modify(it, User::Touch());
     return *it;
   }
   mysqlpp::Connection::thread_start();
-  ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
+  ScopeExit onExit([] { mysqlpp::Connection::thread_end(); });
   mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
   auto query = db->query();
   query << "SELECT id,token FROM users WHERE id=" << mysqlpp::quote_only << id;
@@ -105,20 +106,18 @@ UserPtr UsersCache::getUserById(uint32_t id)
 
 UserPtr UsersCache::getUserByToken(const std::string& sid)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   auto& ind = m_items.get<ByToken>();
-  const auto& it = ind.find(sid);
-  if (it != ind.end()) {
+  if (const auto& it = ind.find(sid); it != ind.end()) {
     ind.modify(it, User::Touch());
     return *it;
   }
   mysqlpp::Connection::thread_start();
-  ScopeExit onExit([](){ mysqlpp::Connection::thread_end(); });
+  ScopeExit onExit([] { mysqlpp::Connection::thread_end(); });
   mysqlpp::ScopedConnection db(m_mysqlConnectionPool, true);
   auto query = db->query();
   query << "SELECT id,token FROM users WHERE token=" << mysqlpp::quote_only << sid;
-  auto res = query.store();
-  if (!res.empty()) {
+  if (auto res = query.store(); !res.empty()) {
     const DboUser& dbo = res[0];
     const auto& user = std::make_shared<User>(dbo.id);
     user->setToken(dbo.token);

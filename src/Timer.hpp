@@ -11,7 +11,7 @@
 
 namespace asio = boost::asio;
 
-class Timer final : private boost::noncopyable {
+class Timer final : boost::noncopyable {
 public:
   using Handler = std::function<void()>;
 
@@ -28,7 +28,6 @@ public:
 private:
   void tick();
 
-private:
   asio::steady_timer          m_timer;
   Handler                     m_handler;
   Duration                    m_interval {1s};

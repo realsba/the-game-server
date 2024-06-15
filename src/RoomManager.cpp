@@ -9,14 +9,14 @@
 
 void RoomManager::start(const config::Room& config)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   m_config = config;
   m_ioThreadPool.start(config.numThreads);
 }
 
 void RoomManager::stop()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   for (const auto& room : m_items) {
     room->stop();
   }
@@ -25,7 +25,7 @@ void RoomManager::stop()
 
 Room* RoomManager::obtain()
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
 
   for (const auto& room : m_items) {
     if (room->hasFreeSpace()) {
@@ -48,6 +48,6 @@ Room* RoomManager::obtain()
 
 size_t RoomManager::size() const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  std::lock_guard lock(m_mutex);
   return m_items.size();
 }
