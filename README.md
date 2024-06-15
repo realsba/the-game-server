@@ -8,6 +8,8 @@ This project serves as the server component for the multiplayer game "The Game" 
 popular online game agar.io. Players control cells on a virtual petri dish, aiming to accumulate as much mass as
 possible by consuming smaller cells and avoiding becoming prey for larger ones.
 
+![](media/Screenshot01.png)
+
 ## Installation
 
 ### Prerequisites
